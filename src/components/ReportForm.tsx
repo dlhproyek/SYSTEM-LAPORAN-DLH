@@ -341,9 +341,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
         <Card className="border-t-4 border-t-green-500">
           <CardHeader>
-            <CardTitle className="text-lg">
-              {selectedCategory === "Tim Pohon" ? "Volume Pekerjaan" : "Luas Pekerjaan"}
-            </CardTitle>
+            <CardTitle className="text-lg">Volume Pekerjaan</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -351,7 +349,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               name="volume"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{selectedCategory === "Tim Pohon" ? "Jumlah" : "Luas"}</FormLabel>
+                  <FormLabel>{selectedCategory === "Tim Pohon" ? "Jumlah" : "Volume"}</FormLabel>
                   <FormControl><Input type="number" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
