@@ -351,7 +351,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               name="volume"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{selectedCategory === "Tim Pohon" ? "Jumlah Pohon" : "Luas"}</FormLabel>
+                  <FormLabel>{selectedCategory === "Tim Pohon" ? "Jumlah" : "Luas"}</FormLabel>
                   <FormControl><Input type="number" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
