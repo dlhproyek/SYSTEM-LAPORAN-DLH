@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess } from '@/utils/toast';
-import { Report, Location, Equipment, Personnel, ReportCategory } from '@/types/report';
+import { Report, ReportCategory } from '@/types/report';
+import { medanDistricts } from '@/data/medan-districts';
 
 const categories: ReportCategory[] = [
   "Taman Kota", 
@@ -98,6 +99,23 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     },
   });
 
+  const selectedSubDistrict = form.watch("location.subDistrict");
+
+  const handleSubDistrictChange = (value: string) => {
+    form.setValue("location.subDistrict", value);
+    form.setValue("location.village", "");
+  };
+
+  const handleVillageChange = (value: string) => {
+    form.setValue("location.village", value);
+    const district = Object.keys(medanDistricts).find(d => 
+      medanDistricts[d].includes(value)
+    );
+    if (district) {
+      form.setValue("location.subDistrict", district);
+    }
+  };
+
   const { fields: equipFields, append: appendEquip, remove: removeEquip } = useFieldArray({
     control: form.control,
     name: "equipment",
@@ -111,52 +129,31 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const reports = JSON.parse(localStorage.getItem('reports') || '[]');
     
-    const locationData: Location = {
-      street: values.location.street,
-      village: values.location.village,
-      subDistrict: values.location.subDistrict,
-    };
-
-    const equipmentData: Equipment[] = values.equipment.map(e => ({
-      type: e.type,
-      quantity: e.quantity
-    }));
-
-    const heavyEquipmentData: Equipment[] = values.heavyEquipment.map(e => ({
-      type: e.type,
-      quantity: e.quantity
-    }));
-
-    const personnelData: Personnel = {
-      coordinator: values.personnel.coordinator,
-      members: values.personnel.members,
-    };
-
-    const fuelData = {
-      pertamax: values.fuel.pertamax || 0,
-      dexlite: values.fuel.dexlite || 0,
-      solar: values.fuel.solar || 0,
-      remarks: values.fuel.remarks || "",
-    };
-
-    const photosData = {
-      zero: values.photos.zero || "",
-      fifty: values.photos.fifty || "",
-      hundred: values.photos.hundred || "",
-    };
-
     const reportData = {
       date: values.date,
       category: values.category as ReportCategory,
       description: values.description,
-      location: locationData,
-      photos: photosData,
+      location: {
+        street: values.location.street,
+        village: values.location.village,
+        subDistrict: values.location.subDistrict,
+      },
+      photos: {
+        zero: values.photos.zero || "",
+        fifty: values.photos.fifty || "",
+        hundred: values.photos.hundred || "",
+      },
       volume: values.volume,
       unit: values.unit,
-      equipment: equipmentData,
-      heavyEquipment: heavyEquipmentData,
-      fuel: fuelData,
-      personnel: personnelData,
+      equipment: values.equipment,
+      heavyEquipment: values.heavyEquipment,
+      fuel: {
+        pertamax: values.fuel.pertamax,
+        dexlite: values.fuel.dexlite,
+        solar: values.fuel.solar,
+        remarks: values.fuel.remarks || "",
+      },
+      personnel: values.personnel,
       remarks: values.remarks || "",
       syncStatus: 'pending' as const,
     };
@@ -200,7 +197,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </Button>
         </div>
 
-        {/* Informasi Dasar */}
         <Card className="border-t-4 border-t-blue-500">
           <CardHeader>
             <CardTitle className="text-lg">Informasi Dasar & Lokasi</CardTitle>
@@ -252,35 +248,66 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                 )}
               />
             </div>
+            
             <FormField
               control={form.control}
               name="location.street"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="md:col-span-2">
                   <FormLabel>Nama Jalan</FormLabel>
                   <FormControl><Input placeholder="Jl. Contoh No. 123" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="location.village"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kelurahan</FormLabel>
-                  <FormControl><Input placeholder="Kelurahan..." {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="location.subDistrict"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kecamatan</FormLabel>
-                  <FormControl><Input placeholder="Kecamatan..." {...field} /></FormControl>
+                  <Select onValueChange={handleSubDistrictChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Kecamatan..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.keys(medanDistricts).map((district) => (
+                        <SelectItem key={district} value={district}>{district}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="location.village"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kelurahan</FormLabel>
+                  <Select onValueChange={handleVillageChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Kelurahan..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {selectedSubDistrict ? (
+                        medanDistricts[selectedSubDistrict].map((village) => (
+                          <SelectItem key={village} value={village}>{village}</SelectItem>
+                        ))
+                      ) : (
+                        (Object.values(medanDistricts).flat() as string[]).sort().map((village) => (
+                          <SelectItem key={village} value={village}>{village}</SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -288,7 +315,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Volume & Satuan */}
         <Card className="border-t-4 border-t-green-500">
           <CardHeader>
             <CardTitle className="text-lg">Volume Pekerjaan</CardTitle>
@@ -319,7 +345,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Foto Dokumentasi */}
         <Card className="border-t-4 border-t-orange-500">
           <CardHeader>
             <CardTitle className="text-lg">Foto Dokumentasi (URL)</CardTitle>
@@ -361,7 +386,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Peralatan */}
         <Card className="border-t-4 border-t-purple-500">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Peralatan</CardTitle>
@@ -406,7 +430,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Alat Berat */}
         <Card className="border-t-4 border-t-red-500">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Operasional Alat Berat</CardTitle>
@@ -451,7 +474,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Bahan Bakar */}
         <Card className="border-t-4 border-t-yellow-500">
           <CardHeader>
             <CardTitle className="text-lg">Bahan Bakar (Liter)</CardTitle>
@@ -506,7 +528,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Personil */}
         <Card className="border-t-4 border-t-cyan-500">
           <CardHeader>
             <CardTitle className="text-lg">Jumlah Personil</CardTitle>
@@ -537,7 +558,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        {/* Keterangan Tambahan */}
         <Card className="border-t-4 border-t-gray-500">
           <CardHeader>
             <CardTitle className="text-lg">Keterangan Tambahan</CardTitle>
