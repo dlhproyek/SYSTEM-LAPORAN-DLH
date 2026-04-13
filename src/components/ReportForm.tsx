@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,9 +23,9 @@ const formSchema = z.object({
     subDistrict: z.string().min(1, "Kecamatan wajib diisi"),
   }),
   photos: z.object({
-    zero: z.string().optional(),
-    fifty: z.string().optional(),
-    hundred: z.string().optional(),
+    zero: z.string().optional().default(""),
+    fifty: z.string().optional().default(""),
+    hundred: z.string().optional().default(""),
   }),
   volume: z.coerce.number().min(0),
   unit: z.string().min(1, "Satuan wajib diisi"),
@@ -41,13 +41,13 @@ const formSchema = z.object({
     pertamax: z.coerce.number().default(0),
     dexlite: z.coerce.number().default(0),
     solar: z.coerce.number().default(0),
-    remarks: z.string().optional(),
+    remarks: z.string().optional().default(""),
   }),
   personnel: z.object({
     coordinator: z.coerce.number().min(0),
     members: z.coerce.number().min(0),
   }),
-  remarks: z.string().optional(),
+  remarks: z.string().optional().default(""),
 });
 
 interface ReportFormProps {
@@ -59,7 +59,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      ...initialData,
+      photos: {
+        zero: initialData.photos.zero || "",
+        fifty: initialData.photos.fifty || "",
+        hundred: initialData.photos.hundred || "",
+      },
+      fuel: {
+        ...initialData.fuel,
+        remarks: initialData.fuel.remarks || "",
+      },
+      remarks: initialData.remarks || "",
+    } : {
       date: new Date().toISOString().split('T')[0],
       description: "",
       location: { street: "", village: "", subDistrict: "" },
@@ -89,18 +101,44 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     
     if (isEditing && initialData) {
       const updatedReports = reports.map((r: Report) => 
-        r.id === initialData.id ? { ...values, id: r.id, createdAt: r.createdAt } : r
+        r.id === initialData.id ? { 
+          ...values, 
+          id: r.id, 
+          createdAt: r.createdAt,
+          syncStatus: 'pending',
+          photos: {
+            zero: values.photos.zero || "",
+            fifty: values.photos.fifty || "",
+            hundred: values.photos.hundred || "",
+          },
+          fuel: {
+            ...values.fuel,
+            remarks: values.fuel.remarks || "",
+          },
+          remarks: values.remarks || "",
+        } : r
       );
       localStorage.setItem('reports', JSON.stringify(updatedReports));
       showSuccess("Laporan berhasil diperbarui!");
     } else {
-      const newReport = {
+      const newReport: Report = {
         ...values,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
+        syncStatus: 'pending',
+        photos: {
+          zero: values.photos.zero || "",
+          fifty: values.photos.fifty || "",
+          hundred: values.photos.hundred || "",
+        },
+        fuel: {
+          ...values.fuel,
+          remarks: values.fuel.remarks || "",
+        },
+        remarks: values.remarks || "",
       };
       localStorage.setItem('reports', JSON.stringify([newReport, ...reports]));
-      showSuccess("Laporan berhasil disimpan!");
+      showSuccess("Laporan berhasil disimpan secara lokal!");
     }
     navigate('/');
   }

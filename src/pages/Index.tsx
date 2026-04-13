@@ -4,16 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, FileText, MapPin, Calendar, Users, Fuel, Trash2, Eye, Search, Edit, BarChart3 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { 
+  Plus, FileText, MapPin, Calendar, Users, Fuel, 
+  Trash2, Eye, Search, Edit, Cloud, CloudOff, RefreshCw 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess } from '@/utils/toast';
+import { useSync } from '@/hooks/use-sync';
 
 const Index = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const { isOnline, isSyncing, syncData } = useSync();
 
   useEffect(() => {
     const savedReports = JSON.parse(localStorage.getItem('reports') || '[]');
@@ -36,32 +42,54 @@ const Index = () => {
     report.location.village.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Statistics
   const stats = {
     total: reports.length,
-    totalFuel: reports.reduce((acc, r) => acc + r.fuel.pertamax + r.fuel.dexlite + r.fuel.solar, 0),
-    totalPersonnel: reports.reduce((acc, r) => acc + r.personnel.coordinator + r.personnel.members, 0),
+    totalFuel: reports.reduce((acc, r) => acc + (r.fuel?.pertamax || 0) + (r.fuel?.dexlite || 0) + (r.fuel?.solar || 0), 0),
+    totalPersonnel: reports.reduce((acc, r) => acc + (r.personnel?.coordinator || 0) + (r.personnel?.members || 0), 0),
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <FileText className="text-white h-6 w-6" />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <FileText className="text-white h-6 w-6" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-900 hidden md:block">Sistem Laporan</h1>
             </div>
-            <h1 className="text-xl font-bold text-slate-900">Sistem Laporan Kegiatan</h1>
+            
+            <Badge variant={isOnline ? "outline" : "destructive"} className="flex gap-1 items-center">
+              {isOnline ? (
+                <><Cloud className="h-3 w-3 text-green-500" /> Online</>
+              ) : (
+                <><CloudOff className="h-3 w-3" /> Offline</>
+              )}
+            </Badge>
           </div>
-          <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="mr-2 h-4 w-4" /> Laporan Baru
-          </Button>
+
+          <div className="flex items-center gap-2">
+            {isOnline && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={syncData} 
+                disabled={isSyncing}
+                className="text-slate-500"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                Sync
+              </Button>
+            )}
+            <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="mr-2 h-4 w-4" /> Laporan Baru
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="bg-white border-none shadow-sm">
             <CardContent className="p-6 flex items-center gap-4">
@@ -80,7 +108,7 @@ const Index = () => {
                 <Fuel className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total BBM Digunakan</p>
+                <p className="text-sm text-slate-500">Total BBM</p>
                 <p className="text-2xl font-bold">{stats.totalFuel} L</p>
               </div>
             </CardContent>
@@ -91,14 +119,13 @@ const Index = () => {
                 <Users className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total Personil Terlibat</p>
+                <p className="text-sm text-slate-500">Total Personil</p>
                 <p className="text-2xl font-bold">{stats.totalPersonnel}</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search & Filter */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -115,8 +142,8 @@ const Index = () => {
         {filteredReports.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-slate-200">
             <FileText className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">Tidak ada laporan ditemukan</h3>
-            <p className="text-slate-500 mt-1">Coba ubah kata kunci pencarian Anda.</p>
+            <h3 className="text-lg font-medium text-slate-900">Tidak ada laporan</h3>
+            <p className="text-slate-500 mt-1">Mulai dengan membuat laporan baru.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -132,26 +159,33 @@ const Index = () => {
                       <Calendar className="h-3 w-3 mr-1" />
                       {new Date(report.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-blue-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/edit/${report.id}`);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-red-500"
-                        onClick={(e) => handleDelete(e, report.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      {report.syncStatus === 'pending' ? (
+                        <Badge variant="secondary" className="text-[10px] h-5">Pending</Badge>
+                      ) : (
+                        <Cloud className="h-3 w-3 text-green-500" />
+                      )}
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/edit/${report.id}`);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-red-500"
+                          onClick={(e) => handleDelete(e, report.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <CardTitle className="text-lg line-clamp-1 group-hover:text-blue-600 transition-colors">{report.description}</CardTitle>
@@ -165,11 +199,11 @@ const Index = () => {
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <div className="bg-slate-50 p-2 rounded flex items-center gap-2">
                       <Users className="h-4 w-4 text-blue-500" />
-                      <span className="text-xs font-medium">{report.personnel.coordinator + report.personnel.members} Orang</span>
+                      <span className="text-xs font-medium">{(report.personnel?.coordinator || 0) + (report.personnel?.members || 0)} Orang</span>
                     </div>
                     <div className="bg-slate-50 p-2 rounded flex items-center gap-2">
                       <Fuel className="h-4 w-4 text-yellow-600" />
-                      <span className="text-xs font-medium">{report.fuel.pertamax + report.fuel.dexlite + report.fuel.solar} L</span>
+                      <span className="text-xs font-medium">{(report.fuel?.pertamax || 0) + (report.fuel?.dexlite || 0) + (report.fuel?.solar || 0)} L</span>
                     </div>
                   </div>
 
