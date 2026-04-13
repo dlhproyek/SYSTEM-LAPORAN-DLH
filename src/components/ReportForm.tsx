@@ -102,6 +102,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
   const selectedCategory = form.watch("category");
   const selectedSubDistrict = form.watch("location.subDistrict");
+  const heavyEquipmentList = form.watch("heavyEquipment");
 
   useEffect(() => {
     if (!isEditing) {
@@ -524,59 +525,61 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-t-4 border-t-yellow-500">
-          <CardHeader>
-            <CardTitle className="text-lg">Bahan Bakar (Liter)</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="fuel.pertamax"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pertamax</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="fuel.dexlite"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dexlite</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="fuel.solar"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Solar</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="md:col-span-3">
+        {heavyEquipmentList.length > 0 && (
+          <Card className="border-t-4 border-t-yellow-500">
+            <CardHeader>
+              <CardTitle className="text-lg">Bahan Bakar (Liter)</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="fuel.remarks"
+                name="fuel.pertamax"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Keterangan BBM</FormLabel>
-                    <FormControl><Input placeholder="Catatan penggunaan BBM..." {...field} /></FormControl>
+                    <FormLabel>Pertamax</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-          </CardContent>
-        </Card>
+              <FormField
+                control={form.control}
+                name="fuel.dexlite"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dexlite</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fuel.solar"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Solar</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="md:col-span-3">
+                <FormField
+                  control={form.control}
+                  name="fuel.remarks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Keterangan BBM</FormLabel>
+                      <FormControl><Input placeholder="Catatan penggunaan BBM..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-t-4 border-t-cyan-500">
           <CardHeader>
