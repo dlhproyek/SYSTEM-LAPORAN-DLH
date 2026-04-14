@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, Users, Fuel, 
-  Trash2, Eye, Search, Edit, Cloud, CloudOff, Download, Tag, Table 
+  Trash2, Eye, Search, Edit, Cloud, CloudOff, Tag, Table 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -45,25 +45,79 @@ const Index = () => {
   const handleExportExcel = () => {
     if (reports.length === 0) return;
 
-    const data = reports.map(r => ({
-      Tanggal: r.date,
-      Kategori: r.category,
-      Uraian: r.description,
-      Jalan: r.location.street,
-      Kelurahan: r.location.village,
-      Kecamatan: r.location.subDistrict,
-      Volume: `${r.volume} ${getUnitByCategory(r.category)}`,
-      Koordinator: r.personnel.coordinator,
-      Anggota: r.personnel.members,
-      Pertamax: r.fuel.pertamax,
-      Dexlite: r.fuel.dexlite,
-      Solar: r.fuel.solar
-    }));
+    // Menyiapkan Header Judul
+    const header = [
+      ["REKAPITULASI LAPORAN KEGIATAN HARIAN"],
+      ["DINAS LINGKUNGAN HIDUP KOTA MEDAN"],
+      ["Tanggal Cetak: " + new Date().toLocaleDateString('id-ID')],
+      [], // Baris kosong
+      [
+        "NO", 
+        "HARI / TANGGAL", 
+        "KATEGORI / TIM", 
+        "URAIAN KEGIATAN", 
+        "LOKASI (JALAN)", 
+        "KELURAHAN", 
+        "KECAMATAN", 
+        "VOLUME", 
+        "SATUAN", 
+        "KOORDINATOR", 
+        "ANGGOTA", 
+        "PERTAMAX (RP)", 
+        "DEXLITE (L)", 
+        "SOLAR (L)",
+        "KETERANGAN"
+      ]
+    ];
 
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Menyiapkan Data
+    const rows = reports.map((r, index) => [
+      index + 1,
+      new Date(r.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      r.category,
+      r.description,
+      r.location.street,
+      r.location.village,
+      r.location.subDistrict,
+      r.volume,
+      getUnitByCategory(r.category),
+      r.personnel.coordinator,
+      r.personnel.members,
+      r.fuel.pertamax,
+      r.fuel.dexlite,
+      r.fuel.solar,
+      r.remarks || "-"
+    ]);
+
+    // Menggabungkan Header dan Data
+    const worksheetData = [...header, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Mengatur lebar kolom (opsional tapi membantu tampilan)
+    const wscols = [
+      { wch: 5 },  // NO
+      { wch: 25 }, // TANGGAL
+      { wch: 15 }, // KATEGORI
+      { wch: 40 }, // URAIAN
+      { wch: 30 }, // JALAN
+      { wch: 20 }, // KELURAHAN
+      { wch: 20 }, // KECAMATAN
+      { wch: 10 }, // VOLUME
+      { wch: 10 }, // SATUAN
+      { wch: 20 }, // KOORDINATOR
+      { wch: 10 }, // ANGGOTA
+      { wch: 15 }, // PERTAMAX
+      { wch: 12 }, // DEXLITE
+      { wch: 12 }, // SOLAR
+      { wch: 30 }  // KETERANGAN
+    ];
+    ws['!cols'] = wscols;
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Semua Laporan");
-    XLSX.writeFile(wb, `Rekap_Laporan_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Laporan");
+    
+    // Download file
+    XLSX.writeFile(wb, `Rekap_Laporan_DLH_${new Date().toISOString().split('T')[0]}.xlsx`);
     showSuccess("Rekap Excel berhasil diunduh");
   };
 
