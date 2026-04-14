@@ -3,17 +3,20 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Edit, CheckCircle2, HardHat, FileText, Calendar, Users, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, CheckCircle2, HardHat, FileText, Calendar, Users, FileSpreadsheet, FileDown } from 'lucide-react';
 import { Report } from '@/types/report';
 import { showSuccess, showError } from '@/utils/toast';
 import { getUnitByCategory } from '@/utils/report-helpers';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ReportDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [report, setReport] = useState<Report | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const reports = JSON.parse(localStorage.getItem('reports') || '[]');
@@ -36,6 +39,40 @@ const ReportDetail = () => {
     }
   };
 
+  const exportToPDF = async () => {
+    const element = document.getElementById('report-content');
+    if (!element || !report) return;
+
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // Meningkatkan kualitas gambar
+        useCORS: true,
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a3'
+      });
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Laporan_${report.category}_${report.date}.pdf`);
+      showSuccess("PDF berhasil diunduh!");
+    } catch (error) {
+      console.error("Gagal ekspor PDF:", error);
+      showError("Gagal membuat PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const exportToExcel = async () => {
     if (!report) return;
 
@@ -45,7 +82,7 @@ const ReportDetail = () => {
         paperSize: 8 as any, 
         orientation: 'landscape',
         scale: 65,
-        horizontalCentered: true, // Membuat konten berada di tengah secara horizontal saat diprint
+        horizontalCentered: true,
         margins: { 
           left: 0.3, 
           right: 0.3, 
@@ -57,29 +94,27 @@ const ReportDetail = () => {
       }
     });
 
-    // 1. Set Column Widths (A-R)
     worksheet.columns = [
-      { key: 'no', width: 3.73 },       // A
-      { key: 'tgl', width: 11.18 },     // B
-      { key: 'uraian', width: 17.82 },  // C
-      { key: 'lokasi', width: 27.91 },  // D
-      { key: 'foto0', width: 27.82 },   // E
-      { key: 'foto50', width: 27.82 },  // F
-      { key: 'foto100', width: 27.82 }, // G
-      { key: 'vol', width: 10.09 },     // H
-      { key: 'alat_jns', width: 13.82 },// I
-      { key: 'alat_jlh', width: 9.91 }, // J
-      { key: 'berat_jns', width: 12.36 },// K
-      { key: 'berat_jlh', width: 6 },    // L
-      { key: 'bbm_p', width: 12.73 },   // M
-      { key: 'bbm_d', width: 9.73 },    // N
-      { key: 'bbm_s', width: 12.73 },   // O
-      { key: 'pers_k', width: 17.18 },  // P
-      { key: 'pers_p', width: 7.73 },   // Q
-      { key: 'ket', width: 24.64 },     // R
+      { key: 'no', width: 3.73 },
+      { key: 'tgl', width: 11.18 },
+      { key: 'uraian', width: 17.82 },
+      { key: 'lokasi', width: 27.91 },
+      { key: 'foto0', width: 27.82 },
+      { key: 'foto50', width: 27.82 },
+      { key: 'foto100', width: 27.82 },
+      { key: 'vol', width: 10.09 },
+      { key: 'alat_jns', width: 13.82 },
+      { key: 'alat_jlh', width: 9.91 },
+      { key: 'berat_jns', width: 12.36 },
+      { key: 'berat_jlh', width: 6 },
+      { key: 'bbm_p', width: 12.73 },
+      { key: 'bbm_d', width: 9.73 },
+      { key: 'bbm_s', width: 12.73 },
+      { key: 'pers_k', width: 17.18 },
+      { key: 'pers_p', width: 7.73 },
+      { key: 'ket', width: 24.64 },
     ];
 
-    // 2. Judul (Baris 1-5)
     const titles = [
       "PEMERINTAH KOTA MEDAN",
       "DINAS LINGKUNGAN HIDUP",
@@ -96,21 +131,20 @@ const ReportDetail = () => {
       row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     });
 
-    // 3. Header Tabel (Baris 6 & 7)
     const headerRow6 = worksheet.getRow(6);
     const headerRow7 = worksheet.getRow(7);
 
-    worksheet.mergeCells('A6:A7'); // NO
-    worksheet.mergeCells('B6:B7'); // HARI/TANGGAL
-    worksheet.mergeCells('C6:C7'); // URAIAN
-    worksheet.mergeCells('D6:D7'); // LOKASI
-    worksheet.mergeCells('E6:G6'); // FOTO DOKUMENTASI
-    worksheet.mergeCells('H6:H7'); // VOLUME
-    worksheet.mergeCells('I6:J6'); // PERALATAN
-    worksheet.mergeCells('K6:L6'); // OPERASIONAL ALAT BERAT
-    worksheet.mergeCells('M6:O6'); // BAHAN BAKAR
-    worksheet.mergeCells('P6:Q6'); // JUMLAH PERSONIL
-    worksheet.mergeCells('R6:R7'); // KETERANGAN
+    worksheet.mergeCells('A6:A7');
+    worksheet.mergeCells('B6:B7');
+    worksheet.mergeCells('C6:C7');
+    worksheet.mergeCells('D6:D7');
+    worksheet.mergeCells('E6:G6');
+    worksheet.mergeCells('H6:H7');
+    worksheet.mergeCells('I6:J6');
+    worksheet.mergeCells('K6:L6');
+    worksheet.mergeCells('M6:O6');
+    worksheet.mergeCells('P6:Q6');
+    worksheet.mergeCells('R6:R7');
 
     headerRow6.getCell(1).value = 'NO';
     headerRow6.getCell(2).value = 'HARI/TANGGAL';
@@ -147,11 +181,8 @@ const ReportDetail = () => {
       });
     });
 
-    // 4. Isi Data
     const startRow = 8;
     const dataRow = worksheet.getRow(startRow);
-    
-    // Row Height: 1.86" * 72 points/inch = 133.92 points
     dataRow.height = 133.92;
 
     dataRow.getCell(1).value = 1;
@@ -179,14 +210,12 @@ const ReportDetail = () => {
     
     dataRow.getCell(18).value = report.remarks;
 
-    // Styling Isi Data & Wrap Text
     dataRow.eachCell((cell) => {
       cell.font = { name: 'Times New Roman', size: 11 };
       cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
       cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
     });
 
-    // 5. Tambahkan Foto (Place in Cell)
     const addImage = async (base64: string, col: number) => {
       if (!base64) return;
       try {
@@ -196,7 +225,7 @@ const ReportDetail = () => {
         });
         worksheet.addImage(imageId, {
           tl: { col: col - 1, row: startRow - 1 },
-          ext: { width: 199, height: 178 }, // Sesuai ukuran 2.08" x 1.86"
+          ext: { width: 199, height: 178 },
           editAs: 'oneCell'
         });
       } catch (e) {
@@ -208,7 +237,6 @@ const ReportDetail = () => {
     await addImage(report.photos.fifty, 6);
     await addImage(report.photos.hundred, 7);
 
-    // Simpan File
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `Rekap_Laporan_${report.category}_${report.date}.xlsx`);
     showSuccess("Excel berhasil diunduh!");
@@ -256,6 +284,9 @@ const ReportDetail = () => {
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
           </Button>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={exportToPDF} disabled={isExporting} className="bg-red-600 hover:bg-red-700 text-white">
+              <FileDown className="mr-2 h-4 w-4" /> {isExporting ? "Memproses..." : "Export PDF"}
+            </Button>
             <Button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white">
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Rekap Excel
             </Button>
