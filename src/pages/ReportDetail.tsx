@@ -10,6 +10,7 @@ import { showSuccess, showError } from '@/utils/toast';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getUnitByCategory } from '@/utils/report-helpers';
 
 const ReportDetail = () => {
   const { id } = useParams();
@@ -83,7 +84,7 @@ const ReportDetail = () => {
     });
 
     data.push([""]);
-    data.push(["VOLUME PEKERJAAN", report.volume]);
+    data.push(["VOLUME PEKERJAAN", `${report.volume} ${getUnitByCategory(report.category)}`]);
     data.push(["BBM PERTAMAX", report.fuel.pertamax]);
     data.push(["BBM DEXLITE", report.fuel.dexlite]);
     data.push(["BBM SOLAR", report.fuel.solar]);
@@ -281,7 +282,7 @@ const ReportDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Volume Pekerjaan</p>
-                  <p className="text-xl font-bold text-blue-700">{report.volume}</p>
+                  <p className="text-xl font-bold text-blue-700">{report.volume} {getUnitByCategory(report.category)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Keterangan Tambahan</p>

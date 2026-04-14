@@ -17,6 +17,7 @@ import { Report, ReportCategory, Equipment } from '@/types/report';
 import { medanDistricts } from '@/data/medan-districts';
 import ImageUpload from './ImageUpload';
 import { Badge } from "@/components/ui/badge";
+import { getUnitByCategory } from '@/utils/report-helpers';
 
 const categories: ReportCategory[] = [
   "Taman Kota", 
@@ -165,6 +166,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       description: mainDescription,
       location: mainLocation,
       category: values.category as ReportCategory,
+      unit: getUnitByCategory(values.category),
       syncStatus: 'pending' as const,
     };
 
@@ -351,7 +353,11 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
             <CardHeader><CardTitle className="text-lg">Bahan Bakar</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField control={form.control} name="fuel.pertamax" render={({ field }) => (
-                <FormItem><FormLabel>Pertamax (Rp)</FormLabel><FormControl><Input type="number" placeholder="Min Rp. 10.000" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Pertamax (Rp)</FormLabel>
+                  <FormControl><Input type="number" placeholder="Min Rp. 10.000" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="fuel.dexlite" render={({ field }) => (<FormItem><FormLabel>Dexlite (Liter)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
               <FormField control={form.control} name="fuel.solar" render={({ field }) => (<FormItem><FormLabel>Solar (Liter)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />

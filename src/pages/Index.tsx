@@ -15,6 +15,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from '@/utils/toast';
 import { useSync } from '@/hooks/use-sync';
 import * as XLSX from 'xlsx';
+import { getUnitByCategory } from '@/utils/report-helpers';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ const Index = () => {
       Jalan: r.location.street,
       Kelurahan: r.location.village,
       Kecamatan: r.location.subDistrict,
-      Volume: r.volume,
+      Volume: `${r.volume} ${getUnitByCategory(r.category)}`,
       Koordinator: r.personnel.coordinator,
       Anggota: r.personnel.members,
       Pertamax: r.fuel.pertamax,
@@ -227,7 +228,7 @@ const Index = () => {
                     </span>
                   </div>
                   <div className="pt-3 flex justify-between items-center border-t text-xs">
-                    <span className="text-slate-400">Vol: {report.volume}</span>
+                    <span className="text-slate-400">Vol: {report.volume} {getUnitByCategory(report.category)}</span>
                     <div className="flex items-center text-blue-600 font-medium">Lihat Detail <Eye className="ml-1 h-3 w-3" /></div>
                   </div>
                 </CardContent>
