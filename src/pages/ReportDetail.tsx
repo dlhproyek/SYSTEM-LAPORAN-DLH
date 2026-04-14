@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Printer, Trash2, MapPin, Calendar, Users, Fuel, HardHat, FileText, CheckCircle2, FileDown, Table, Edit } from 'lucide-react';
+import { ArrowLeft, Printer, Trash2, MapPin, FileDown, Table, Edit, CheckCircle2, HardHat, Fuel, FileText, Calendar, Users } from 'lucide-react';
 import { Report } from '@/types/report';
 import { showSuccess, showError } from '@/utils/toast';
 import * as XLSX from 'xlsx';
@@ -43,16 +42,32 @@ const ReportDetail = () => {
     if (!element) return;
 
     try {
-      const canvas = await html2canvas(element, { scale: 2 });
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // A3 Landscape: 420mm x 297mm
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a3'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Menghitung rasio agar gambar pas di A3
+      const imgProps = pdf.getImageProperties(imgData);
+      const ratio = Math.min(pdfWidth / imgProps.width, pdfHeight / imgProps.height);
+      const width = imgProps.width * ratio;
+      const height = imgProps.height * ratio;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
       pdf.save(`Laporan_${report?.category}_${report?.date}.pdf`);
-      showSuccess("PDF berhasil diunduh");
+      showSuccess("PDF A3 berhasil diunduh");
     } catch (error) {
       showError("Gagal membuat PDF");
     }
@@ -63,14 +78,15 @@ const ReportDetail = () => {
 
     const data = [
       ["LAPORAN KEGIATAN HARIAN"],
-      ["ID Laporan", report.id],
-      ["Tanggal", report.date],
-      ["Kategori", report.category],
-      ["Koordinator", report.personnel.coordinator],
-      ["Jumlah Anggota", report.personnel.members],
+      ["DINAS LINGKUNGAN HIDUP KOTA MEDAN"],
       [""],
-      ["DAFTAR KEGIATAN"],
-      ["No", "Uraian", "Jalan", "Kelurahan", "Kecamatan"]
+      ["KATEGORI", report.category.toUpperCase()],
+      ["TANGGAL", report.date],
+      ["KOORDINATOR", report.personnel.coordinator],
+      ["JUMLAH ANGGOTA", report.personnel.members],
+      [""],
+      ["DAFTAR KEGIATAN DAN LOKASI"],
+      ["NO", "URAIAN KEGIATAN", "JALAN", "KELURAHAN", "KECAMATAN"]
     ];
 
     report.tasks?.forEach((task, index) => {
@@ -84,14 +100,19 @@ const ReportDetail = () => {
     });
 
     data.push([""]);
-    data.push(["VOLUME PEKERJAAN", `${report.volume} ${getUnitByCategory(report.category)}`]);
-    data.push(["BBM PERTAMAX", report.fuel.pertamax]);
-    data.push(["BBM DEXLITE", report.fuel.dexlite]);
-    data.push(["BBM SOLAR", report.fuel.solar]);
+    data.push(["VOLUME TOTAL", report.volume, getUnitByCategory(report.category)]);
+    data.push([""]);
+    data.push(["PENGGUNAAN BBM"]);
+    data.push(["PERTAMAX (RP)", report.fuel.pertamax]);
+    data.push(["DEXLITE (L)", report.fuel.dexlite]);
+    data.push(["SOLAR (L)", report.fuel.solar]);
+    data.push(["KETERANGAN BBM", report.fuel.remarks]);
+    data.push([""]);
+    data.push(["KETERANGAN TAMBAHAN", report.remarks]);
 
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan Harian");
     XLSX.writeFile(wb, `Laporan_${report.category}_${report.date}.xlsx`);
     showSuccess("Excel berhasil diunduh");
   };
@@ -107,24 +128,48 @@ const ReportDetail = () => {
   if (!report) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:bg-white print:p-0">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+    <div className="min-h-screen bg-slate-100 p-4 md:p-8 print:p-0 print:bg-white">
+      <style>
+        {`
+          @media print {
+            @page {
+              size: A3 landscape;
+              margin: 1cm 0.3cm 1cm 0.3cm;
+            }
+            body {
+              background: white;
+            }
+            .no-print {
+              display: none !important;
+            }
+            #report-content {
+              width: 100% !important;
+              transform: scale(0.65);
+              transform-origin: top left;
+              border: none !important;
+              box-shadow: none !important;
+            }
+          }
+        `}
+      </style>
+
+      <div className="max-w-[1200px] mx-auto space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 no-print">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
           </Button>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => navigate(`/edit/${report.id}`)} className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+            <Button variant="outline" onClick={() => navigate(`/edit/${report.id}`)} className="bg-blue-50 text-blue-700 border-blue-200">
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
-            <Button variant="outline" onClick={exportToExcel} className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+            <Button variant="outline" onClick={exportToExcel} className="bg-green-50 text-green-700 border-green-200">
               <Table className="mr-2 h-4 w-4" /> Excel
             </Button>
-            <Button variant="outline" onClick={exportToPDF} className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
-              <FileDown className="mr-2 h-4 w-4" /> PDF
+            <Button variant="outline" onClick={exportToPDF} className="bg-red-50 text-red-700 border-red-200">
+              <FileDown className="mr-2 h-4 w-4" /> PDF A3
             </Button>
             <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="mr-2 h-4 w-4" /> Cetak
+              <Printer className="mr-2 h-4 w-4" /> Cetak A3
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="mr-2 h-4 w-4" /> Hapus
@@ -132,171 +177,189 @@ const ReportDetail = () => {
           </div>
         </div>
 
-        <div id="report-content" className="bg-white rounded-xl shadow-sm border overflow-hidden print:shadow-none print:border-none">
-          <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold">LAPORAN KEGIATAN HARIAN</h1>
-              <p className="opacity-90">{report.category} | ID: {report.id.slice(0, 8)}</p>
+        <div id="report-content" className="bg-white border shadow-lg overflow-hidden print:border-none print:shadow-none">
+          {/* Header Dokumen Resmi */}
+          <div className="p-8 border-b-2 border-black flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 bg-slate-200 rounded flex items-center justify-center border-2 border-slate-300">
+                <span className="text-[10px] text-slate-400 font-bold text-center">LOGO<br/>PEMKO</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tighter">PEMERINTAH KOTA MEDAN</h1>
+                <h2 className="text-3xl font-black tracking-tight">DINAS LINGKUNGAN HIDUP</h2>
+                <p className="text-sm font-medium">Jl. S. Parman No. 16 Medan, Sumatera Utara</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="font-medium">{new Date(report.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <div className="text-right border-l-2 border-black pl-8">
+              <h3 className="text-xl font-bold uppercase underline decoration-2 underline-offset-4">LAPORAN KEGIATAN HARIAN</h3>
+              <p className="text-lg font-bold mt-2">{report.category.toUpperCase()}</p>
+              <p className="text-sm font-medium">ID: {report.id.toUpperCase()}</p>
             </div>
           </div>
 
-          <div className="p-6 space-y-8">
-            {report.tasks && report.tasks.length > 0 ? (
-              <section>
-                <h2 className="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600" /> Daftar Kegiatan & Lokasi
-                </h2>
-                <div className="space-y-4">
-                  {report.tasks.map((task, i) => (
-                    <div key={i} className="bg-slate-50 p-4 rounded-lg border flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">Kegiatan #{i+1}</p>
-                        <p className="font-medium text-slate-900">{task.description}</p>
-                      </div>
-                      <div className="flex items-start gap-2 md:w-1/2">
-                        <MapPin className="h-4 w-4 text-red-500 shrink-0 mt-1" />
-                        <div className="text-sm">
-                          <p className="font-medium">{task.location.street}</p>
-                          <p className="text-slate-500">Kel. {task.location.village}, Kec. {task.location.subDistrict}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          <div className="p-8 space-y-8">
+            {/* Info Dasar & Personil */}
+            <div className="grid grid-cols-3 gap-8">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Waktu Pelaksanaan</p>
+                <div className="flex items-center gap-2 text-lg font-bold">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  {new Date(report.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
-              </section>
-            ) : (
-              <section>
-                <h2 className="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" /> Uraian & Lokasi
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Kegiatan</p>
-                    <p className="text-lg mt-1">{report.description}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Lokasi</p>
-                    <div className="flex items-start gap-2 mt-1">
-                      <MapPin className="h-5 w-5 text-red-500 shrink-0" />
-                      <div>
-                        <p className="font-medium">{report.location?.street}</p>
-                        <p className="text-slate-600">Kel. {report.location?.village}, Kec. {report.location?.subDistrict}</p>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Koordinator Lapangan</p>
+                <div className="flex items-center gap-2 text-lg font-bold">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  {report.personnel.coordinator}
                 </div>
-              </section>
-            )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Jumlah Personil</p>
+                <div className="flex items-center gap-2 text-lg font-bold">
+                  <HardHat className="h-5 w-5 text-blue-600" />
+                  {report.personnel.members} Orang
+                </div>
+              </div>
+            </div>
 
+            {/* Tabel Kegiatan */}
+            <section>
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 bg-slate-100 p-2 border-l-4 border-blue-600">
+                <CheckCircle2 className="h-5 w-5 text-blue-600" /> DAFTAR KEGIATAN DAN LOKASI
+              </h3>
+              <table className="w-full border-collapse border-2 border-black">
+                <thead>
+                  <tr className="bg-slate-200">
+                    <th className="border-2 border-black p-2 text-center w-12">NO</th>
+                    <th className="border-2 border-black p-2 text-left">URAIAN KEGIATAN</th>
+                    <th className="border-2 border-black p-2 text-left">LOKASI (JALAN)</th>
+                    <th className="border-2 border-black p-2 text-left">KELURAHAN</th>
+                    <th className="border-2 border-black p-2 text-left">KECAMATAN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.tasks?.map((task, i) => (
+                    <tr key={i}>
+                      <td className="border-2 border-black p-2 text-center font-bold">{i + 1}</td>
+                      <td className="border-2 border-black p-2 font-medium">{task.description}</td>
+                      <td className="border-2 border-black p-2">{task.location.street}</td>
+                      <td className="border-2 border-black p-2">{task.location.village}</td>
+                      <td className="border-2 border-black p-2">{task.location.subDistrict}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            {/* Dokumentasi Foto */}
             <section className="print:break-inside-avoid">
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">Dokumentasi Foto</h2>
-              <div className="grid grid-cols-3 gap-4">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 bg-slate-100 p-2 border-l-4 border-blue-600">
+                <FileText className="h-5 w-5 text-blue-600" /> DOKUMENTASI FOTO PEKERJAAN
+              </h3>
+              <div className="grid grid-cols-3 gap-6">
                 {[
-                  { label: '0%', img: report.photos.zero },
-                  { label: '50%', img: report.photos.fifty },
-                  { label: '100%', img: report.photos.hundred }
+                  { label: 'KONDISI 0%', img: report.photos.zero },
+                  { label: 'KONDISI 50%', img: report.photos.fifty },
+                  { label: 'KONDISI 100%', img: report.photos.hundred }
                 ].map((p, i) => (
-                  <div key={i} className="space-y-2">
-                    <p className="text-center text-xs font-bold text-slate-500">{p.label}</p>
-                    <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border flex items-center justify-center">
-                      {p.img ? <img src={p.img} alt={p.label} className="w-full h-full object-cover" /> : <span className="text-slate-400 text-xs">Tidak ada foto</span>}
+                  <div key={i} className="space-y-3">
+                    <div className="aspect-[4/3] bg-slate-50 border-2 border-black overflow-hidden flex items-center justify-center">
+                      {p.img ? (
+                        <img src={p.img} alt={p.label} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-slate-300 font-bold italic">TIDAK ADA FOTO</span>
+                      )}
                     </div>
+                    <p className="text-center font-black text-sm border-2 border-black bg-slate-100 py-1">{p.label}</p>
                   </div>
                 ))}
               </div>
             </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Peralatan & BBM */}
+            <div className="grid grid-cols-2 gap-8 print:break-inside-avoid">
               <section>
-                <h2 className="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
-                  <HardHat className="h-5 w-5 text-purple-600" /> Peralatan & Personil
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Peralatan</p>
-                    <ul className="divide-y border rounded-lg">
+                <h3 className="text-md font-bold mb-3 uppercase border-b-2 border-black pb-1">Peralatan & Alat Berat</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-slate-500">PERALATAN KERJA</p>
+                    <ul className="text-sm space-y-1">
                       {report.equipment.map((item, i) => (
-                        <li key={i} className="p-2 flex justify-between text-sm">
+                        <li key={i} className="flex justify-between border-b border-slate-200 pb-1">
                           <span>{item.type}</span>
-                          <span className="font-bold">{item.quantity}</span>
+                          <span className="font-bold">{item.quantity} Unit</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Personil</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-50 p-2 rounded border text-center">
-                        <p className="text-xs text-slate-500">Koordinator</p>
-                        <p className="text-sm font-bold">{report.personnel.coordinator}</p>
-                      </div>
-                      <div className="bg-slate-50 p-2 rounded border text-center">
-                        <p className="text-xs text-slate-500">Anggota</p>
-                        <p className="text-lg font-bold">{report.personnel.members}</p>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-slate-500">ALAT BERAT</p>
+                    <ul className="text-sm space-y-1">
+                      {report.heavyEquipment.length > 0 ? report.heavyEquipment.map((item, i) => (
+                        <li key={i} className="flex justify-between border-b border-slate-200 pb-1">
+                          <span>{item.type}</span>
+                          <span className="font-bold">{item.quantity} Unit</span>
+                        </li>
+                      )) : <li className="text-slate-400 italic">Nihil</li>}
+                    </ul>
                   </div>
                 </div>
               </section>
 
               <section>
-                <h2 className="text-lg font-semibold border-b pb-2 mb-4 flex items-center gap-2">
-                  <Fuel className="h-5 w-5 text-yellow-600" /> Alat Berat & BBM
-                </h2>
+                <h3 className="text-md font-bold mb-3 uppercase border-b-2 border-black pb-1">Volume & Operasional BBM</h3>
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Alat Berat</p>
-                    {report.heavyEquipment.length > 0 ? (
-                      <ul className="divide-y border rounded-lg">
-                        {report.heavyEquipment.map((item, i) => (
-                          <li key={i} className="p-2 flex justify-between text-sm">
-                            <span>{item.type}</span>
-                            <span className="font-bold">{item.quantity}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : <p className="text-sm text-slate-400 italic">Tidak ada penggunaan alat berat</p>}
+                  <div className="flex justify-between items-center bg-blue-50 p-3 border-2 border-blue-200 rounded">
+                    <span className="font-bold text-blue-900">VOLUME PEKERJAAN</span>
+                    <span className="text-2xl font-black text-blue-700">{report.volume} {getUnitByCategory(report.category)}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Bahan Bakar</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-50 p-2 rounded border text-center">
-                        <p className="text-[10px] text-slate-500">Pertamax</p>
-                        <p className="font-bold text-[10px]">{formatCurrency(report.fuel.pertamax)}</p>
-                      </div>
-                      <div className="bg-slate-50 p-2 rounded border text-center">
-                        <p className="text-[10px] text-slate-500">Dexlite</p>
-                        <p className="font-bold">{report.fuel.dexlite} L</p>
-                      </div>
-                      <div className="bg-slate-50 p-2 rounded border text-center">
-                        <p className="text-[10px] text-slate-500">Solar</p>
-                        <p className="font-bold">{report.fuel.solar} L</p>
-                      </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="border-2 border-black p-2 text-center">
+                      <p className="text-[10px] font-bold">PERTAMAX</p>
+                      <p className="font-black">{formatCurrency(report.fuel.pertamax)}</p>
+                    </div>
+                    <div className="border-2 border-black p-2 text-center">
+                      <p className="text-[10px] font-bold">DEXLITE</p>
+                      <p className="font-black">{report.fuel.dexlite} L</p>
+                    </div>
+                    <div className="border-2 border-black p-2 text-center">
+                      <p className="text-[10px] font-bold">SOLAR</p>
+                      <p className="font-black">{report.fuel.solar} L</p>
                     </div>
                   </div>
                 </div>
               </section>
             </div>
 
-            <section className="bg-slate-50 p-4 rounded-lg border border-dashed">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Volume Pekerjaan</p>
-                  <p className="text-xl font-bold text-blue-700">{report.volume} {getUnitByCategory(report.category)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Keterangan Tambahan</p>
-                  <p className="text-sm mt-1">{report.remarks || "-"}</p>
+            {/* Tanda Tangan */}
+            <div className="pt-12 grid grid-cols-3 gap-8 print:break-inside-avoid">
+              <div className="text-center space-y-20">
+                <p className="font-bold">Mengetahui,<br/>Kepala Bidang</p>
+                <div className="space-y-1">
+                  <p className="font-bold underline decoration-1 underline-offset-2">( ............................................ )</p>
+                  <p className="text-xs">NIP. ............................................</p>
                 </div>
               </div>
-            </section>
+              <div className="text-center space-y-20">
+                <p className="font-bold">Diperiksa Oleh,<br/>Pengawas Lapangan</p>
+                <div className="space-y-1">
+                  <p className="font-bold underline decoration-1 underline-offset-2">( ............................................ )</p>
+                  <p className="text-xs">NIP. ............................................</p>
+                </div>
+              </div>
+              <div className="text-center space-y-20">
+                <p className="font-bold">Medan, {new Date(report.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>Koordinator Lapangan</p>
+                <div className="space-y-1">
+                  <p className="font-bold underline decoration-1 underline-offset-2">{report.personnel.coordinator}</p>
+                  <p className="text-xs">ID Personil: {report.id.slice(0, 6)}</p>
+                </div>
+              </div>
+            </div>
           </div>
           
-          <div className="bg-slate-100 p-4 text-center text-[10px] text-slate-400 uppercase tracking-widest">
-            Dicetak pada: {new Date().toLocaleString('id-ID')}
+          <div className="bg-slate-800 p-2 text-center text-[8px] text-white uppercase tracking-[0.5em] no-print">
+            Sistem Informasi Laporan Harian Dinas Lingkungan Hidup Kota Medan
           </div>
         </div>
       </div>
