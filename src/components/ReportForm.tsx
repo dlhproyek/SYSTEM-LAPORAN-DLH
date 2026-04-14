@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -88,6 +88,11 @@ interface ReportFormProps {
 
 const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const navigate = useNavigate();
+  const [suggestions, setSuggestions] = useState<{
+    equipment: string[];
+    heavyEquipment: string[];
+  }>({ equipment: [], heavyEquipment: [] });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
@@ -118,6 +123,21 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   });
 
   useEffect(() => {
+    // Load suggestions from history
+    const reports: Report[] = JSON.parse(localStorage.getItem('reports') || '[]');
+    const equipTypes = new Set<string>();
+    const heavyEquipTypes = new Set<string>();
+
+    reports.forEach(r => {
+      r.equipment?.forEach(e => e.type && equipTypes.add(e.type));
+      r.heavyEquipment?.forEach(h => h.type && heavyEquipTypes.add(h.type));
+    });
+
+    setSuggestions({
+      equipment: Array.from(equipTypes),
+      heavyEquipment: Array.from(heavyEquipTypes)
+    });
+
     if (!isEditing && selectedCategory) {
       if (selectedCategory === "Tim Pohon") {
         form.setValue("unit", "Pohon");
@@ -182,6 +202,14 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto pb-20">
+        {/* Datalists for suggestions */}
+        <datalist id="equipment-suggestions">
+          {suggestions.equipment.map(s => <option key={s} value={s} />)}
+        </datalist>
+        <datalist id="heavy-equipment-suggestions">
+          {suggestions.heavyEquipment.map(s => <option key={s} value={s} />)}
+        </datalist>
+
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
@@ -277,8 +305,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           <CardContent className="space-y-4">
             {equipFields.map((field, index) => (
               <div key={field.id} className="flex gap-4 items-end">
-                <div className="flex-1"><FormField control={form.control} name={`equipment.${index}.type`} render={({ field }) => (<FormItem><FormLabel>Jenis Alat</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div>
-                <div className="w-24"><FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (<FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div>
+                <div className="flex-1">
+                  <FormField control={form.control} name={`equipment.${index}.type`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Jenis Alat</FormLabel>
+                      <FormControl>
+                        <Input {...field} list="equipment-suggestions" placeholder="Ketik atau pilih..." />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                </div>
+                <div className="w-24"><FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (
+                  <FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                )} /></div>
                 <Button type="button" variant="destructive" size="icon" onClick={() => removeEquip(index)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             ))}
@@ -291,8 +330,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           <CardContent className="space-y-4">
             {heavyFields.map((field, index) => (
               <div key={field.id} className="flex gap-4 items-end">
-                <div className="flex-1"><FormField control={form.control} name={`heavyEquipment.${index}.type`} render={({ field }) => (<FormItem><FormLabel>Jenis Alat Berat</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div>
-                <div className="w-24"><FormField control={form.control} name={`heavyEquipment.${index}.quantity`} render={({ field }) => (<FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div>
+                <div className="flex-1">
+                  <FormField control={form.control} name={`heavyEquipment.${index}.type`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Jenis Alat Berat</FormLabel>
+                      <FormControl>
+                        <Input {...field} list="heavy-equipment-suggestions" placeholder="Ketik atau pilih..." />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                </div>
+                <div className="w-24"><FormField control={form.control} name={`heavyEquipment.${index}.quantity`} render={({ field }) => (
+                  <FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                )} /></div>
                 <Button type="button" variant="destructive" size="icon" onClick={() => removeHeavy(index)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             ))}
