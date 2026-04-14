@@ -57,7 +57,7 @@ const formSchema = z.object({
     hundred: z.string().optional().default(""),
   }),
   volume: z.coerce.number().min(0),
-  unit: z.string().min(1, "Satuan wajib diisi"),
+  unit: z.string().optional().default(""),
   equipment: z.array(z.object({
     type: z.string().min(1, "Jenis alat wajib diisi"),
     quantity: z.coerce.number().min(1),
@@ -123,7 +123,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   });
 
   useEffect(() => {
-    // Load suggestions from history
     const reports: Report[] = JSON.parse(localStorage.getItem('reports') || '[]');
     const equipTypes = new Set<string>();
     const heavyEquipTypes = new Set<string>();
@@ -139,12 +138,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     });
 
     if (!isEditing && selectedCategory) {
-      if (selectedCategory === "Tim Pohon") {
-        form.setValue("unit", "Pohon");
-      } else {
-        form.setValue("unit", "M2");
-      }
-
       const coordinatorName = coordinatorMapping[selectedCategory];
       if (coordinatorName) {
         form.setValue("personnel.coordinator", coordinatorName);
@@ -202,7 +195,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto pb-20">
-        {/* Datalists for suggestions */}
         <datalist id="equipment-suggestions">
           {suggestions.equipment.map(s => <option key={s} value={s} />)}
         </datalist>
@@ -285,9 +277,13 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
         <Card className="border-t-4 border-t-green-500">
           <CardHeader><CardTitle className="text-lg">Volume Pekerjaan</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="volume" render={({ field }) => (<FormItem><FormLabel>Volume / Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-            <FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Satuan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+          <CardContent>
+            <FormField control={form.control} name="volume" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Volume / Jumlah</FormLabel>
+                <FormControl><Input type="number" {...field} /></FormControl>
+              </FormItem>
+            )} />
           </CardContent>
         </Card>
 

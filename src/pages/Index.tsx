@@ -63,7 +63,7 @@ const Index = () => {
       Jalan: r.location.street,
       Kelurahan: r.location.village,
       Kecamatan: r.location.subDistrict,
-      Volume: `${r.volume} ${r.unit}`,
+      Volume: r.volume,
       Koordinator: r.personnel.coordinator,
       Anggota: r.personnel.members,
       Pertamax: r.fuel.pertamax,
@@ -227,7 +227,7 @@ const Index = () => {
                     </span>
                   </div>
                   <div className="pt-3 flex justify-between items-center border-t text-xs">
-                    <span className="text-slate-400">Vol: {report.volume} {report.unit}</span>
+                    <span className="text-slate-400">Vol: {report.volume}</span>
                     <div className="flex items-center text-blue-600 font-medium">Lihat Detail <Eye className="ml-1 h-3 w-3" /></div>
                   </div>
                 </CardContent>
