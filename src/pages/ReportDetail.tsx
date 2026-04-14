@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Edit, CheckCircle2, HardHat, FileText, Calendar, Users } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, CheckCircle2, HardHat, FileText, Calendar, Users, FileSpreadsheet } from 'lucide-react';
 import { Report } from '@/types/report';
 import { showSuccess, showError } from '@/utils/toast';
 import { getUnitByCategory } from '@/utils/report-helpers';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const ReportDetail = () => {
   const { id } = useParams();
@@ -32,6 +34,185 @@ const ReportDetail = () => {
       showSuccess("Laporan berhasil dihapus");
       navigate('/');
     }
+  };
+
+  const exportToExcel = async () => {
+    if (!report) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Rekap Laporan', {
+      pageSetup: { 
+        paperSize: 8, // A3
+        orientation: 'landscape',
+        scale: 65,
+        margins: { left: 0.3, right: 0.3, top: 1.0, bottom: 1.0 }
+      }
+    });
+
+    // 1. Set Column Widths (A-R)
+    worksheet.columns = [
+      { key: 'no', width: 3.73 },
+      { key: 'tgl', width: 11.18 },
+      { key: 'uraian', width: 17.82 },
+      { key: 'lokasi', width: 27.91 },
+      { key: 'foto0', width: 29.55 },
+      { key: 'foto50', width: 29.55 },
+      { key: 'foto100', width: 29.55 },
+      { key: 'vol', width: 10.09 },
+      { key: 'alat_jns', width: 13.82 },
+      { key: 'alat_jlh', width: 9.91 },
+      { key: 'berat_jns', width: 12.36 },
+      { key: 'berat_jlh', width: 6 },
+      { key: 'bbm_p', width: 12.73 },
+      { key: 'bbm_d', width: 9.73 },
+      { key: 'bbm_s', width: 7.64 },
+      { key: 'pers_k', width: 17.18 },
+      { key: 'pers_p', width: 7.73 },
+      { key: 'ket', width: 24.64 },
+    ];
+
+    // 2. Judul (Baris 1-5)
+    const titles = [
+      "PEMERINTAH KOTA MEDAN",
+      "DINAS LINGKUNGAN HIDUP",
+      "Jl. S. Parman No. 16 Medan, Sumatera Utara",
+      "LAPORAN KEGIATAN HARIAN",
+      report.category.toUpperCase()
+    ];
+
+    titles.forEach((text, i) => {
+      const row = worksheet.getRow(i + 1);
+      row.getCell(1).value = text;
+      worksheet.mergeCells(i + 1, 1, i + 1, 18); // Merge A-R
+      row.getCell(1).font = { name: 'Times New Roman', size: 12, bold: true };
+      row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // 3. Header Tabel (Baris 6 & 7)
+    const headerRow6 = worksheet.getRow(6);
+    const headerRow7 = worksheet.getRow(7);
+
+    const headers = [
+      { col: 1, label: 'NO', merge: [6, 1, 7, 1] },
+      { col: 2, label: 'HARI/TANGGAL', merge: [6, 2, 7, 2] },
+      { col: 3, label: 'URAIAN', merge: [6, 3, 7, 3] },
+      { col: 4, label: 'LOKASI', merge: [6, 4, 7, 4] },
+      { col: 5, label: 'FOTO DOKUMENTASI', merge: [6, 5, 6, 7] },
+      { col: 8, label: 'VOLUME', merge: [6, 8, 7, 8] },
+      { col: 9, label: 'PERALATAN', merge: [6, 9, 6, 10] },
+      { col: 11, label: 'OPERASIONAL ALAT BERAT', merge: [6, 11, 6, 12] },
+      { col: 13, label: 'BAHAN BAKAR YANG DIGUNAKAN', merge: [6, 13, 6, 15] },
+      { col: 16, label: 'JUMLAH PERSONIL', merge: [6, 16, 6, 17] },
+      { col: 18, label: 'KETERANGAN', merge: [6, 18, 7, 18] },
+    ];
+
+    headers.forEach(h => {
+      const cell = headerRow6.getCell(h.col);
+      cell.value = h.label;
+      worksheet.mergeCells(h.merge[0], h.merge[1], h.merge[2], h.merge[3]);
+    });
+
+    // Sub-headers baris 7
+    headerRow7.getCell(5).value = "0%";
+    headerRow7.getCell(6).value = "50%";
+    headerRow7.getCell(7).value = "100%";
+    headerRow7.getCell(9).value = "JENIS";
+    headerRow7.getCell(10).value = "JUMLAH";
+    headerRow7.getCell(11).value = "JENIS";
+    headerRow7.getCell(12).value = "JLH";
+    headerRow7.getCell(13).value = "PERTAMAX";
+    headerRow7.getCell(14).value = "DEXLITE";
+    headerRow7.getCell(15).value = "SOLAR";
+    headerRow7.getCell(16).value = "KOORDINATOR";
+    headerRow7.getCell(17).value = "PERSONIL";
+
+    // Styling Header
+    [6, 7].forEach(rowNum => {
+      const row = worksheet.getRow(rowNum);
+      row.eachCell((cell, colNum) => {
+        cell.font = { name: 'Times New Roman', size: 12, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        
+        // Warna Kuning (#FFFF00)
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+        
+        // Warna Kuning Tua untuk Peralatan (I-J)
+        if (colNum === 9 || colNum === 10) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC000' } };
+        }
+      });
+    });
+
+    // 4. Isi Data
+    const startRow = 8;
+    const dataRow = worksheet.getRow(startRow);
+    dataRow.height = 120; // Tinggi baris untuk foto
+
+    dataRow.getCell(1).value = 1;
+    dataRow.getCell(2).value = new Date(report.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    dataRow.getCell(3).value = report.description;
+    dataRow.getCell(4).value = `${report.location.street}, ${report.location.village}, ${report.location.subDistrict}`;
+    dataRow.getCell(8).value = `${report.volume} ${getUnitByCategory(report.category)}`;
+    
+    // Peralatan (Gabungkan list jadi string)
+    dataRow.getCell(9).value = report.equipment.map(e => e.type).join('\n');
+    dataRow.getCell(10).value = report.equipment.map(e => e.quantity).join('\n');
+    
+    // Alat Berat
+    dataRow.getCell(11).value = report.heavyEquipment.map(e => e.type).join('\n');
+    dataRow.getCell(12).value = report.heavyEquipment.map(e => e.quantity).join('\n');
+    
+    // BBM
+    dataRow.getCell(13).value = report.fuel.pertamax || 0;
+    dataRow.getCell(14).value = report.fuel.dexlite || 0;
+    dataRow.getCell(15).value = report.fuel.solar || 0;
+    
+    // Personil
+    dataRow.getCell(16).value = report.personnel.coordinator;
+    dataRow.getCell(17).value = report.personnel.members;
+    
+    dataRow.getCell(18).value = report.remarks;
+
+    // Styling Isi Data
+    dataRow.eachCell((cell, colNum) => {
+      cell.font = { name: 'Times New Roman', size: 12 };
+      cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      
+      // Alignment: Teks Left, Angka Center
+      if ([1, 2, 8, 10, 12, 13, 14, 15, 17].includes(colNum)) {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else {
+        cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      }
+    });
+
+    // 5. Tambahkan Foto
+    const addImage = async (base64: string, col: number) => {
+      if (!base64) return;
+      try {
+        const imageId = workbook.addImage({
+          base64: base64,
+          extension: 'png',
+        });
+        worksheet.addImage(imageId, {
+          tl: { col: col - 1, row: startRow - 1 },
+          ext: { width: 200, height: 150 },
+          editAs: 'oneCell'
+        });
+      } catch (e) {
+        console.error("Gagal memuat gambar", e);
+      }
+    };
+
+    await addImage(report.photos.zero, 5);
+    await addImage(report.photos.fifty, 6);
+    await addImage(report.photos.hundred, 7);
+
+    // Simpan File
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Rekap_Laporan_${report.category}_${report.date}.xlsx`);
+    showSuccess("Excel berhasil diunduh!");
   };
 
   const formatCurrency = (value: number) => {
@@ -76,6 +257,9 @@ const ReportDetail = () => {
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
           </Button>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white">
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Rekap Excel
+            </Button>
             <Button variant="outline" onClick={() => navigate(`/edit/${report.id}`)} className="bg-blue-50 text-blue-700 border-blue-200">
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
