@@ -217,7 +217,7 @@ const ReportDetail = () => {
                       {report.equipment.map((item, i) => (
                         <li key={i} className="p-2 flex justify-between text-sm">
                           <span>{item.type}</span>
-                          <span className="font-bold">{item.quantity} Unit</span>
+                          <span className="font-bold">{item.quantity}</span>
                         </li>
                       ))}
                     </ul>
@@ -250,7 +250,7 @@ const ReportDetail = () => {
                         {report.heavyEquipment.map((item, i) => (
                           <li key={i} className="p-2 flex justify-between text-sm">
                             <span>{item.type}</span>
-                            <span className="font-bold">{item.quantity} Unit</span>
+                            <span className="font-bold">{item.quantity}</span>
                           </li>
                         ))}
                       </ul>
