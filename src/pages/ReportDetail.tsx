@@ -38,6 +38,14 @@ const ReportDetail = () => {
     window.print();
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   if (!report) return null;
 
   return (
@@ -186,14 +194,20 @@ const ReportDetail = () => {
                     ) : <p className="text-sm text-slate-400 italic">Tidak ada penggunaan alat berat</p>}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Bahan Bakar (Liter)</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Bahan Bakar</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {['Pertamax', 'Dexlite', 'Solar'].map(f => (
-                        <div key={f} className="bg-slate-50 p-2 rounded border text-center">
-                          <p className="text-[10px] text-slate-500">{f}</p>
-                          <p className="font-bold">{report.fuel[f.toLowerCase() as keyof typeof report.fuel]}</p>
-                        </div>
-                      ))}
+                      <div className="bg-slate-50 p-2 rounded border text-center">
+                        <p className="text-[10px] text-slate-500">Pertamax</p>
+                        <p className="font-bold text-[10px]">{formatCurrency(report.fuel.pertamax)}</p>
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded border text-center">
+                        <p className="text-[10px] text-slate-500">Dexlite</p>
+                        <p className="font-bold">{report.fuel.dexlite} L</p>
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded border text-center">
+                        <p className="text-[10px] text-slate-500">Solar</p>
+                        <p className="font-bold">{report.fuel.solar} L</p>
+                      </div>
                     </div>
                   </div>
                 </div>
