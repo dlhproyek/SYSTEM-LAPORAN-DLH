@@ -65,7 +65,7 @@ const ReportDetail = () => {
 
       pdf.addImage(imgData, 'PNG', 0, 0, width, height);
       pdf.save(`Laporan_${report?.category}_${report?.date}.pdf`);
-      showSuccess("PDF A3 berhasil diunduh");
+      showSuccess("PDF berhasil diunduh");
     } catch (error) {
       showError("Gagal membuat PDF");
     }
@@ -201,10 +201,10 @@ const ReportDetail = () => {
               <Table className="mr-2 h-4 w-4" /> Excel
             </Button>
             <Button variant="outline" onClick={exportToPDF} className="bg-red-50 text-red-700 border-red-200">
-              <FileDown className="mr-2 h-4 w-4" /> PDF A3
+              <FileDown className="mr-2 h-4 w-4" /> PDF
             </Button>
             <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="mr-2 h-4 w-4" /> Cetak A3
+              <Printer className="mr-2 h-4 w-4" /> Cetak
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="mr-2 h-4 w-4" /> Hapus
