@@ -56,7 +56,7 @@ const MonthlyRecap = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
-      <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
+      <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
@@ -93,31 +93,31 @@ const MonthlyRecap = () => {
         </div>
       </div>
 
-      <div className="print-area bg-white p-8 mx-auto shadow-lg border min-h-[297mm] overflow-x-auto">
-        <div className="min-w-[1500px]">
-          <div className="text-center border-b-4 border-double border-black pb-4 mb-6">
-            <h1 className="text-xl font-bold uppercase">Pemerintah Kota Medan</h1>
-            <h2 className="text-2xl font-black uppercase">Dinas Lingkungan Hidup</h2>
-            <p className="text-sm italic">Jl. Sidorame No.12, Kec. Medan Perjuangan, Kota Medan, Sumatera Utara</p>
-          </div>
+      <div className="print-area bg-white p-8 mx-auto shadow-lg border min-h-[297mm]">
+        <div className="text-center border-b-4 border-double border-black pb-4 mb-6">
+          <h1 className="text-xl font-bold uppercase">Pemerintah Kota Medan</h1>
+          <h2 className="text-2xl font-black uppercase">Dinas Lingkungan Hidup</h2>
+          <p className="text-sm italic">Jl. Sidorame No.12, Kec. Medan Perjuangan, Kota Medan, Sumatera Utara</p>
+        </div>
 
-          <div className="text-center mb-8">
-            <h3 className="text-lg font-bold underline uppercase">REKAPITULASI LAPORAN KEGIATAN HARIAN</h3>
-            <p className="font-medium">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
-            {selectedCategory !== "semua" && <p className="font-bold">Kategori: {selectedCategory.toUpperCase()}</p>}
-          </div>
+        <div className="text-center mb-8">
+          <h3 className="text-lg font-bold underline uppercase">REKAPITULASI LAPORAN KEGIATAN HARIAN</h3>
+          <p className="font-medium">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
+          {selectedCategory !== "semua" && <p className="font-bold">Kategori: {selectedCategory.toUpperCase()}</p>}
+        </div>
 
+        <div className="overflow-x-auto">
           <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
             <thead>
               <tr className="bg-slate-100">
-                <th className="border-2 border-black p-2 w-[40px]" rowSpan={2}>No</th>
-                <th className="border-2 border-black p-2 w-[110px]" rowSpan={2}>Hari / Tgl</th>
-                <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Uraian Kegiatan</th>
-                <th className="border-2 border-black p-2 w-[220px]" rowSpan={2}>Lokasi</th>
+                <th className="border-2 border-black p-2 w-[30px]" rowSpan={2}>No</th>
+                <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Hari / Tgl</th>
+                <th className="border-2 border-black p-2 w-[160px]" rowSpan={2}>Uraian Kegiatan</th>
+                <th className="border-2 border-black p-2 w-[200px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th className="border-2 border-black p-2 w-[60px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[60px]" rowSpan={2}>Satuan</th>
-                <th className="border-2 border-black p-2 w-[110px]" rowSpan={2}>Koordinator</th>
+                <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Koordinator</th>
                 <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
               </tr>
               <tr className="bg-slate-50">
@@ -134,7 +134,7 @@ const MonthlyRecap = () => {
                 const firstTask = r.tasks?.[0];
                 return (
                   <tr key={r.id}>
-                    <td className="border-2 border-black p-2 text-center align-top font-bold">{idx + 1}</td>
+                    <td className="border-2 border-black p-2 text-center align-top">{idx + 1}</td>
                     <td className="border-2 border-black p-2 text-center align-top whitespace-normal break-words">
                       {new Date(r.date).toLocaleDateString('id-ID', { 
                         weekday: 'long', 
@@ -148,17 +148,17 @@ const MonthlyRecap = () => {
                       {`${r.location.street}, ${r.location.village}, ${r.location.subDistrict}`}
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-[230px] h-[295px] mx-auto bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.zero ? <img src={firstTask.photos.zero} className="w-full h-full object-cover" alt="0%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-[230px] h-[295px] mx-auto bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.fifty ? <img src={firstTask.photos.fifty} className="w-full h-full object-cover" alt="50%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-[230px] h-[295px] mx-auto bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.hundred ? <img src={firstTask.photos.hundred} className="w-full h-full object-cover" alt="100%" /> : null}
                       </div>
                     </td>
@@ -187,22 +187,22 @@ const MonthlyRecap = () => {
               </tfoot>
             )}
           </table>
+        </div>
 
-          <div className="mt-12 grid grid-cols-2 gap-8 text-sm">
-            <div className="text-center">
-              <p>Mengetahui,</p>
-              <p className="font-bold">Kepala Bidang / Kasi</p>
-              <div className="h-24"></div>
-              <p className="font-bold underline">( ............................................ )</p>
-              <p>NIP. ............................................</p>
-            </div>
-            <div className="text-center">
-              <p>Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              <p className="font-bold">Dibuat Oleh,</p>
-              <div className="h-24"></div>
-              <p className="font-bold underline">( ............................................ )</p>
-              <p>Koordinator Lapangan</p>
-            </div>
+        <div className="mt-12 grid grid-cols-2 gap-8 text-sm">
+          <div className="text-center">
+            <p>Mengetahui,</p>
+            <p className="font-bold">Kepala Bidang / Kasi</p>
+            <div className="h-24"></div>
+            <p className="font-bold underline">( ............................................ )</p>
+            <p>NIP. ............................................</p>
+          </div>
+          <div className="text-center">
+            <p>Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="font-bold">Dibuat Oleh,</p>
+            <div className="h-24"></div>
+            <p className="font-bold underline">( ............................................ )</p>
+            <p>Koordinator Lapangan</p>
           </div>
         </div>
       </div>
@@ -218,7 +218,7 @@ const MonthlyRecap = () => {
             margin: 0 !important;
             width: 100% !important;
             max-width: none !important;
-            zoom: 0.58;
+            zoom: 0.55;
           }
           @page { 
             size: A3 landscape; 
