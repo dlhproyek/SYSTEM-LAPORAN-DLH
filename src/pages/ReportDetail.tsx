@@ -3,15 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Edit, FileDown, FileSpreadsheet, Fuel } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, Fuel } from 'lucide-react';
 import { Report } from '@/types/report';
-import { showSuccess, showError } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { getUnitByCategory } from '@/utils/report-helpers';
 import { reportService } from '@/services/reportService';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const ReportDetail = () => {
   const { id } = useParams();
@@ -66,40 +62,37 @@ const ReportDetail = () => {
             <div><p className="text-slate-500">Personil</p><p className="font-bold">{report.personnel.members} Orang</p></div>
           </div>
 
-          <table className="w-full border-collapse border-2 border-black">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="border-2 border-black p-2 w-12">NO</th>
-                <th className="border-2 border-black p-2 text-left">URAIAN KEGIATAN</th>
-                <th className="border-2 border-black p-2 text-left">LOKASI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.tasks?.map((task, i) => (
-                <tr key={i}>
-                  <td className="border-2 border-black p-2 text-center">{i + 1}</td>
-                  <td className="border-2 border-black p-2">{task.description}</td>
-                  <td className="border-2 border-black p-2">{task.location.street}, {task.location.village}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="grid grid-cols-3 gap-4">
-            {['0%', '50%', '100%'].map((label, i) => {
-              const img = i === 0 ? report.photos.zero : i === 1 ? report.photos.fifty : report.photos.hundred;
-              return (
-                <div key={i} className="space-y-1">
-                  <div className="aspect-video border-2 border-black bg-slate-50 overflow-hidden">
-                    {img ? <img src={img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">No Photo</div>}
-                  </div>
-                  <p className="text-center font-bold text-xs border-2 border-black py-1">{label}</p>
+          <div className="space-y-10">
+            {report.tasks?.map((task, i) => (
+              <div key={i} className="space-y-4 border-b-2 border-slate-100 pb-10 last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold rounded-full">{i + 1}</div>
+                  <h3 className="text-lg font-bold">Kegiatan: {task.description}</h3>
                 </div>
-              );
-            })}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded border">
+                  <div><p className="text-slate-500">Lokasi</p><p className="font-bold">{task.location.street}, {task.location.village}, {task.location.subDistrict}</p></div>
+                  <div><p className="text-slate-500">Volume</p><p className="font-bold">{task.volume} {getUnitByCategory(report.category)}</p></div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  {['0%', '50%', '100%'].map((label, idx) => {
+                    const img = idx === 0 ? task.photos.zero : idx === 1 ? task.photos.fifty : task.photos.hundred;
+                    return (
+                      <div key={idx} className="space-y-1">
+                        <div className="aspect-video border-2 border-black bg-slate-50 overflow-hidden">
+                          {img ? <img src={img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">No Photo</div>}
+                        </div>
+                        <p className="text-center font-bold text-xs border-2 border-black py-1">{label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t-2 border-black">
             <div className="border-2 border-black p-4 space-y-4">
               <h4 className="font-bold border-b-2 border-black pb-1">OPERASIONAL ALAT BERAT & BBM</h4>
               {report.heavyEquipment?.length > 0 ? (
@@ -119,11 +112,11 @@ const ReportDetail = () => {
             </div>
 
             <div className="border-2 border-black p-4 space-y-4">
-              <h4 className="font-bold border-b-2 border-black pb-1">PERALATAN LAIN & VOLUME</h4>
+              <h4 className="font-bold border-b-2 border-black pb-1">PERALATAN LAIN & TOTAL VOLUME</h4>
               <div className="text-sm space-y-1">
                 {report.equipment.map((e, i) => <p key={i}>{e.type}: <strong>{e.quantity}</strong></p>)}
                 <div className="mt-4 pt-2 border-t border-black">
-                  <p>Total Volume: <strong>{report.volume} {getUnitByCategory(report.category)}</strong></p>
+                  <p>Total Volume Keseluruhan: <strong>{report.volume} {getUnitByCategory(report.category)}</strong></p>
                 </div>
               </div>
             </div>

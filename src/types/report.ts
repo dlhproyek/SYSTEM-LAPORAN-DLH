@@ -25,15 +25,17 @@ export interface Location {
   subDistrict: string;
 }
 
-export interface Task {
-  description: string;
-  location: Location;
-}
-
 export interface Photos {
   zero: string;
   fifty: string;
   hundred: string;
+}
+
+export interface Task {
+  description: string;
+  location: Location;
+  photos: Photos;
+  volume: number;
 }
 
 export type ReportCategory = 
@@ -50,15 +52,14 @@ export interface Report {
   category: ReportCategory;
   description: string;
   location: Location;
-  tasks?: Task[];
-  photos: Photos;
-  volume: number;
-  unit: string;
+  tasks: Task[];
   equipment: Equipment[];
   heavyEquipment: HeavyEquipment[];
-  fuel: FuelUsage; // Tetap ada untuk kompatibilitas/total
+  fuel: FuelUsage;
   personnel: Personnel;
   remarks: string;
   createdAt: string;
   syncStatus: 'synced' | 'pending';
+  unit: string;
+  volume: number; // Total volume dari semua task
 }
