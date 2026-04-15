@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
-import { Report, ReportCategory, Task, FuelUsage } from '@/types/report';
+import { Report, ReportCategory, Task, FuelUsage, Location } from '@/types/report';
 import { medanDistricts } from '@/data/medan-districts';
 import ImageUpload from './ImageUpload';
 import { Badge } from "@/components/ui/badge";
@@ -89,8 +89,13 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-      ...initialData,
-      tasks: initialData.tasks || [],
+      date: initialData.date,
+      category: initialData.category,
+      tasks: initialData.tasks,
+      equipment: initialData.equipment,
+      heavyEquipment: initialData.heavyEquipment,
+      personnel: initialData.personnel,
+      remarks: initialData.remarks,
     } : {
       date: new Date().toISOString().split('T')[0],
       category: "",
@@ -135,7 +140,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         date: values.date,
         category: values.category as ReportCategory,
         description: values.tasks[0].description,
-        location: values.tasks[0].location,
+        location: values.tasks[0].location as Location,
         tasks: values.tasks as Task[],
         volume: totalVolume,
         unit: getUnitByCategory(values.category),
