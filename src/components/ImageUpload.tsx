@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useCallback, useState } from 'react';
-import { Upload, X, Image as ImageIcon, Clipboard } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/utils/image-processor';
 
 interface ImageUploadProps {
   value?: string;
@@ -12,15 +13,22 @@ interface ImageUploadProps {
 
 const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
     
+    setIsProcessing(true);
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      onChange(result);
+    
+    reader.onload = async (e) => {
+      const originalBase64 = e.target?.result as string;
+      // Proses Resize & Compress: Max 800px, JPG, Quality 70%
+      const processedBase64 = await compressImage(originalBase64, 800, 0.7);
+      onChange(processedBase64);
+      setIsProcessing(false);
     };
+    
     reader.readAsDataURL(file);
   };
 
@@ -53,13 +61,18 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
         onDrop={onDrop}
         onPaste={onPaste}
         className={cn(
-          "relative group aspect-video rounded-xl border-2 border-dashed transition-all flex flex-center items-center justify-center overflow-hidden cursor-pointer",
+          "relative group aspect-video rounded-xl border-2 border-dashed transition-all flex items-center justify-center overflow-hidden cursor-pointer",
           isDragging ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-blue-400 hover:bg-slate-50",
           value ? "border-none" : ""
         )}
-        onClick={() => !value && document.getElementById(`file-${label}`)?.click()}
+        onClick={() => !value && !isProcessing && document.getElementById(`file-${label}`)?.click()}
       >
-        {value ? (
+        {isProcessing ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+            <p className="text-[10px] font-medium text-slate-500">Mengompres...</p>
+          </div>
+        ) : value ? (
           <>
             <img src={value} alt={label} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -78,7 +91,7 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
               <Upload size={20} className="text-slate-500 group-hover:text-blue-600" />
             </div>
             <p className="text-xs font-medium text-slate-600">Klik, Seret, atau Paste</p>
-            <p className="text-[10px] text-slate-400 mt-1">PNG, JPG up to 5MB</p>
+            <p className="text-[10px] text-slate-400 mt-1">Otomatis Kompres ke JPG</p>
           </div>
         )}
         <input
