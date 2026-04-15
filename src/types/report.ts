@@ -7,7 +7,11 @@ export interface FuelUsage {
   pertamax: number;
   dexlite: number;
   solar: number;
-  remarks: string;
+  remarks?: string;
+}
+
+export interface HeavyEquipment extends Equipment {
+  fuel: FuelUsage;
 }
 
 export interface Personnel {
@@ -44,15 +48,15 @@ export interface Report {
   id: string;
   date: string;
   category: ReportCategory;
-  description: string; // Deskripsi utama/ringkasan
-  location: Location;    // Lokasi utama (untuk kompatibilitas)
-  tasks?: Task[];       // Daftar kegiatan & lokasi (khusus Tim Siram)
+  description: string;
+  location: Location;
+  tasks?: Task[];
   photos: Photos;
   volume: number;
   unit: string;
   equipment: Equipment[];
-  heavyEquipment: Equipment[];
-  fuel: FuelUsage;
+  heavyEquipment: HeavyEquipment[];
+  fuel: FuelUsage; // Tetap ada untuk kompatibilitas/total
   personnel: Personnel;
   remarks: string;
   createdAt: string;
