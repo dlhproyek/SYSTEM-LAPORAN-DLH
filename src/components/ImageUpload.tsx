@@ -23,8 +23,8 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
     
     reader.onload = async (e) => {
       const originalBase64 = e.target?.result as string;
-      // Proses Resize & Compress: Max 800px, JPG, Quality 70%
-      const processedBase64 = await compressImage(originalBase64, 800, 0.7);
+      // Proses Resize & Compress: Width 2.26", Height 2.95", JPG, Quality 70%
+      const processedBase64 = await compressImage(originalBase64, 2.26, 2.95, 0.7);
       onChange(processedBase64);
       setIsProcessing(false);
     };
@@ -61,7 +61,7 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
         onDrop={onDrop}
         onPaste={onPaste}
         className={cn(
-          "relative group aspect-video rounded-xl border-2 border-dashed transition-all flex items-center justify-center overflow-hidden cursor-pointer",
+          "relative group aspect-[2.26/2.95] rounded-xl border-2 border-dashed transition-all flex items-center justify-center overflow-hidden cursor-pointer",
           isDragging ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-blue-400 hover:bg-slate-50",
           value ? "border-none" : ""
         )}
@@ -70,7 +70,7 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
         {isProcessing ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-            <p className="text-[10px] font-medium text-slate-500">Mengompres...</p>
+            <p className="text-[10px] font-medium text-slate-500">Memproses...</p>
           </div>
         ) : value ? (
           <>
@@ -90,8 +90,8 @@ const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
             <div className="mx-auto w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
               <Upload size={20} className="text-slate-500 group-hover:text-blue-600" />
             </div>
-            <p className="text-xs font-medium text-slate-600">Klik, Seret, atau Paste</p>
-            <p className="text-[10px] text-slate-400 mt-1">Otomatis Kompres ke JPG</p>
+            <p className="text-xs font-medium text-slate-600">Klik atau Paste</p>
+            <p className="text-[10px] text-slate-400 mt-1">Ukuran: 2.26" x 2.95"</p>
           </div>
         )}
         <input
