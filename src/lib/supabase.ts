@@ -1,20 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Mengambil variabel dari environment
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Menggunakan kredensial resmi dari sistem
+const supabaseUrl = "https://ffgksqjznamthsdbkstu.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZ2tzcWp6bmFtdGhzZGJrc3R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTc0NjEsImV4cCI6MjA5MTc3MzQ2MX0.4Go520hgy0N_GB9pppoGloj6JQtOpTtdjxfLqiLIFpg";
 
-// Validasi sederhana untuk mencegah error 'supabaseUrl is required'
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "PERINGATAN: Supabase URL atau Anon Key belum terkonfigurasi. " +
-    "Pastikan integrasi Supabase sudah aktif dan coba klik tombol 'Restart' di atas chat."
-  );
-}
-
-// Inisialisasi hanya jika variabel tersedia, jika tidak gunakan string kosong 
-// (Supabase akan memberikan error yang lebih bersahabat saat dipanggil nanti)
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co', 
-  supabaseAnonKey || 'placeholder-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
