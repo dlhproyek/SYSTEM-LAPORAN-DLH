@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, Users, Fuel, 
-  Trash2, Eye, Search, Edit, Cloud, CloudOff, Tag, Table 
+  Trash2, Eye, Search, Edit, Cloud, Tag, Table 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -54,27 +54,53 @@ const Index = () => {
   };
 
   const handleExportExcel = () => {
-    if (reports.length === 0) return;
+    if (reports.length === 0) {
+      showError("Tidak ada data untuk diekspor");
+      return;
+    }
 
-    const data = reports.map(r => ({
-      Tanggal: r.date,
-      Kategori: r.category,
-      Uraian: r.description,
-      Jalan: r.location.street,
-      Kelurahan: r.location.village,
-      Kecamatan: r.location.subDistrict,
-      Volume: `${r.volume} ${getUnitByCategory(r.category)}`,
-      Koordinator: r.personnel.coordinator,
-      Anggota: r.personnel.members,
-      Pertamax: r.fuel.pertamax,
-      Dexlite: r.fuel.dexlite,
-      Solar: r.fuel.solar
-    }));
+    // Menyiapkan data untuk Excel
+    const data = reports.map((r, index) => {
+      // Jika Tim Siram, gabungkan semua lokasi jalan
+      const lokasiJalan = r.category === "Tim Siram" && r.tasks 
+        ? r.tasks.map(t => t.location.street).join(", ")
+        : r.location.street;
+
+      return {
+        "No": index + 1,
+        "Tanggal": r.date,
+        "Kategori / Tim": r.category,
+        "Uraian Kegiatan": r.description,
+        "Lokasi (Jalan)": lokasiJalan,
+        "Kelurahan": r.location.village,
+        "Kecamatan": r.location.subDistrict,
+        "Volume": r.volume,
+        "Satuan": getUnitByCategory(r.category),
+        "Koordinator": r.personnel.coordinator,
+        "Jumlah Anggota": r.personnel.members,
+        "BBM Pertamax (L)": r.fuel?.pertamax || 0,
+        "BBM Dexlite (L)": r.fuel?.dexlite || 0,
+        "BBM Solar (L)": r.fuel?.solar || 0,
+        "Keterangan": r.remarks || "-"
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Mengatur lebar kolom otomatis (sederhana)
+    const wscols = [
+      {wch: 5}, {wch: 12}, {wch: 15}, {wch: 30}, {wch: 30}, 
+      {wch: 15}, {wch: 15}, {wch: 10}, {wch: 10}, {wch: 20}, 
+      {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 30}
+    ];
+    ws['!cols'] = wscols;
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Semua Laporan");
-    XLSX.writeFile(wb, `Rekap_Laporan_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Laporan");
+    
+    // Download file
+    const fileName = `Rekap_Laporan_DLH_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
     showSuccess("Rekap Excel berhasil diunduh");
   };
 
