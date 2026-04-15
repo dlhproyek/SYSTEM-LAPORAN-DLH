@@ -117,8 +117,8 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-1" colSpan={3}>Dokumentasi</th>
                 <th className="border-2 border-black p-1 w-[45px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-1 w-[45px]" rowSpan={2}>Sat</th>
-                <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Alat Berat</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Peralatan</th>
+                <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Alat Berat</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Koordinator</th>
                 <th className="border-2 border-black p-1 w-[105px]" colSpan={3}>BBM (Liter)</th>
               </tr>
@@ -167,16 +167,16 @@ const MonthlyRecap = () => {
                     <td className="border-2 border-black p-1 text-center font-bold align-top">{r.volume}</td>
                     <td className="border-2 border-black p-1 text-center align-top">{getUnitByCategory(r.category)}</td>
                     <td className="border-2 border-black p-1 align-top text-[9px]">
-                      {r.heavyEquipment?.map((he, i) => (
+                      {r.equipment?.map((e, i) => (
                         <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {he.type} ({he.quantity})
+                          {e.type} ({e.quantity})
                         </div>
                       ))}
                     </td>
                     <td className="border-2 border-black p-1 align-top text-[9px]">
-                      {r.equipment?.map((e, i) => (
+                      {r.heavyEquipment?.map((he, i) => (
                         <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {e.type} ({e.quantity})
+                          {he.type} ({he.quantity})
                         </div>
                       ))}
                     </td>
