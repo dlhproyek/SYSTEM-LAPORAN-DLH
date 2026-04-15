@@ -107,40 +107,47 @@ const MonthlyRecap = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border-2 border-black text-[11px]">
+          <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
             <thead>
               <tr className="bg-slate-100">
-                <th className="border-2 border-black p-2 w-8">No</th>
-                <th className="border-2 border-black p-2 w-24">Hari / Tanggal</th>
-                <th className="border-2 border-black p-2">Uraian Kegiatan</th>
+                <th className="border-2 border-black p-2 w-[30px]">No</th>
+                <th className="border-2 border-black p-2 w-[100px]">Hari / Tgl</th>
+                <th className="border-2 border-black p-2 w-[160px]">Uraian Kegiatan</th>
                 <th className="border-2 border-black p-2">Lokasi</th>
-                <th className="border-2 border-black p-2 w-16">Volume</th>
-                <th className="border-2 border-black p-2 w-16">Satuan</th>
-                <th className="border-2 border-black p-2 w-24">Koordinator</th>
-                <th className="border-2 border-black p-2 w-32" colSpan={3}>BBM (Liter)</th>
+                <th className="border-2 border-black p-2 w-[60px]">Volume</th>
+                <th className="border-2 border-black p-2 w-[60px]">Satuan</th>
+                <th className="border-2 border-black p-2 w-[100px]">Koordinator</th>
+                <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
               </tr>
               <tr className="bg-slate-50">
                 <th colSpan={7} className="border-2 border-black"></th>
-                <th className="border-2 border-black p-1 text-[9px]">P</th>
-                <th className="border-2 border-black p-1 text-[9px]">D</th>
-                <th className="border-2 border-black p-1 text-[9px]">S</th>
+                <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
+                <th className="border-2 border-black p-1 text-[9px] w-[40px]">D</th>
+                <th className="border-2 border-black p-1 text-[9px] w-[40px]">S</th>
               </tr>
             </thead>
             <tbody>
               {reports.length > 0 ? reports.map((r, idx) => (
                 <tr key={r.id}>
-                  <td className="border-2 border-black p-2 text-center">{idx + 1}</td>
-                  <td className="border-2 border-black p-2 text-center">{new Date(r.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}</td>
-                  <td className="border-2 border-black p-2">{r.description}</td>
-                  <td className="border-2 border-black p-2">
+                  <td className="border-2 border-black p-2 text-center align-top">{idx + 1}</td>
+                  <td className="border-2 border-black p-2 text-center align-top whitespace-normal break-words">
+                    {new Date(r.date).toLocaleDateString('id-ID', { 
+                      weekday: 'long', 
+                      day: '2-digit', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                  </td>
+                  <td className="border-2 border-black p-2 align-top whitespace-normal break-words">{r.description}</td>
+                  <td className="border-2 border-black p-2 align-top whitespace-normal break-words">
                     {r.category === "Tim Siram" && r.tasks ? r.tasks.map(t => t.location.street).join(", ") : r.location.street}
                   </td>
-                  <td className="border-2 border-black p-2 text-center font-bold">{r.volume}</td>
-                  <td className="border-2 border-black p-2 text-center">{getUnitByCategory(r.category)}</td>
-                  <td className="border-2 border-black p-2 text-center">{r.personnel.coordinator}</td>
-                  <td className="border-2 border-black p-2 text-center">{r.fuel?.pertamax || 0}</td>
-                  <td className="border-2 border-black p-2 text-center">{r.fuel?.dexlite || 0}</td>
-                  <td className="border-2 border-black p-2 text-center">{r.fuel?.solar || 0}</td>
+                  <td className="border-2 border-black p-2 text-center font-bold align-top">{r.volume}</td>
+                  <td className="border-2 border-black p-2 text-center align-top">{getUnitByCategory(r.category)}</td>
+                  <td className="border-2 border-black p-2 text-center align-top whitespace-normal break-words">{r.personnel.coordinator}</td>
+                  <td className="border-2 border-black p-2 text-center align-top">{r.fuel?.pertamax || 0}</td>
+                  <td className="border-2 border-black p-2 text-center align-top">{r.fuel?.dexlite || 0}</td>
+                  <td className="border-2 border-black p-2 text-center align-top">{r.fuel?.solar || 0}</td>
                 </tr>
               )) : (
                 <tr>
@@ -190,11 +197,11 @@ const MonthlyRecap = () => {
             margin: 0 !important;
             width: 100% !important;
             max-width: none !important;
-            zoom: 0.65; /* Skala 65% */
+            zoom: 0.65;
           }
           @page { 
             size: A3 landscape; 
-            margin: 1.0cm 0.3cm 1.0cm 0.3cm; /* Top, Right, Bottom, Left */
+            margin: 1.0cm 0.3cm 1.0cm 0.3cm;
           }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
