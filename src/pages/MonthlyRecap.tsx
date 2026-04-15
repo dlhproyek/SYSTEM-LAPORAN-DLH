@@ -113,7 +113,7 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[30px]" rowSpan={2}>No</th>
                 <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Hari / Tgl</th>
                 <th className="border-2 border-black p-2 w-[160px]" rowSpan={2}>Uraian Kegiatan</th>
-                <th className="border-2 border-black p-2 w-[250px]" rowSpan={2}>Lokasi</th>
+                <th className="border-2 border-black p-2 w-[200px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th className="border-2 border-black p-2 w-[60px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[60px]" rowSpan={2}>Satuan</th>
@@ -121,9 +121,9 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
               </tr>
               <tr className="bg-slate-50">
-                <th className="border-2 border-black p-1 w-[80px]">0%</th>
-                <th className="border-2 border-black p-1 w-[80px]">50%</th>
-                <th className="border-2 border-black p-1 w-[80px]">100%</th>
+                <th className="border-2 border-black p-1 w-[240px]">0%</th>
+                <th className="border-2 border-black p-1 w-[240px]">50%</th>
+                <th className="border-2 border-black p-1 w-[240px]">100%</th>
                 <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
                 <th className="border-2 border-black p-1 text-[9px] w-[40px]">D</th>
                 <th className="border-2 border-black p-1 text-[9px] w-[40px]">S</th>
@@ -148,17 +148,17 @@ const MonthlyRecap = () => {
                       {`${r.location.street}, ${r.location.village}, ${r.location.subDistrict}`}
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="aspect-video bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.zero ? <img src={firstTask.photos.zero} className="w-full h-full object-cover" alt="0%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="aspect-video bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.fifty ? <img src={firstTask.photos.fifty} className="w-full h-full object-cover" alt="50%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="aspect-video bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[295px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {firstTask?.photos?.hundred ? <img src={firstTask.photos.hundred} className="w-full h-full object-cover" alt="100%" /> : null}
                       </div>
                     </td>
@@ -218,11 +218,11 @@ const MonthlyRecap = () => {
             margin: 0 !important;
             width: 100% !important;
             max-width: none !important;
-            zoom: 0.65;
+            zoom: 0.55;
           }
           @page { 
             size: A3 landscape; 
-            margin: 1.0cm 0.3cm 1.0cm 0.3cm;
+            margin: 0.5cm;
           }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
