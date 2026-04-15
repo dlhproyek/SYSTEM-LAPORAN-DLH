@@ -115,8 +115,7 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-1 w-[130px]" rowSpan={2}>Uraian Kegiatan</th>
                 <th className="border-2 border-black p-1 w-[150px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-1" colSpan={3}>Dokumentasi</th>
-                <th className="border-2 border-black p-1 w-[45px]" rowSpan={2}>Vol</th>
-                <th className="border-2 border-black p-1 w-[45px]" rowSpan={2}>Sat</th>
+                <th className="border-2 border-black p-1 w-[60px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Peralatan</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Alat Berat</th>
                 <th className="border-2 border-black p-1 w-[105px]" colSpan={3}>BBM (Liter)</th>
@@ -165,8 +164,9 @@ const MonthlyRecap = () => {
                         {firstTask?.photos?.hundred ? <img src={firstTask.photos.hundred} className="w-full h-full object-cover" alt="100%" /> : null}
                       </div>
                     </td>
-                    <td className="border-2 border-black p-1 text-center font-bold align-top">{r.volume}</td>
-                    <td className="border-2 border-black p-1 text-center align-top">{getUnitByCategory(r.category)}</td>
+                    <td className="border-2 border-black p-1 text-center font-bold align-top">
+                      {r.volume} {getUnitByCategory(r.category)}
+                    </td>
                     <td className="border-2 border-black p-1 align-top text-[9px]">
                       {r.equipment?.map((e, i) => (
                         <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
@@ -190,14 +190,14 @@ const MonthlyRecap = () => {
                 );
               }) : (
                 <tr>
-                  <td colSpan={16} className="border-2 border-black p-8 text-center text-slate-400 italic">Tidak ada data laporan untuk periode ini</td>
+                  <td colSpan={15} className="border-2 border-black p-8 text-center text-slate-400 italic">Tidak ada data laporan untuk periode ini</td>
                 </tr>
               )}
             </tbody>
             {reports.length > 0 && (
               <tfoot className="font-bold bg-slate-50">
                 <tr>
-                  <td colSpan={11} className="border-2 border-black p-1 text-right">TOTAL PENGGUNAAN BBM</td>
+                  <td colSpan={10} className="border-2 border-black p-1 text-right">TOTAL PENGGUNAAN BBM</td>
                   <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.pertamax || 0), 0)}</td>
                   <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.dexlite || 0), 0)}</td>
                   <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.solar || 0), 0)}</td>
