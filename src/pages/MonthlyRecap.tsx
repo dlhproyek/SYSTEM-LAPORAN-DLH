@@ -181,9 +181,27 @@ const MonthlyRecap = () => {
                         </div>
                       ))}
                     </td>
-                    <td className="border-2 border-black p-1 text-center align-top">{r.fuel?.pertamax || 0}</td>
-                    <td className="border-2 border-black p-1 text-center align-top">{r.fuel?.dexlite || 0}</td>
-                    <td className="border-2 border-black p-1 text-center align-top">{r.fuel?.solar || 0}</td>
+                    <td className="border-2 border-black p-1 align-top text-[9px]">
+                      {r.heavyEquipment?.map((he, i) => (
+                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1 text-center">
+                          {he.fuel?.pertamax || 0}
+                        </div>
+                      ))}
+                    </td>
+                    <td className="border-2 border-black p-1 align-top text-[9px]">
+                      {r.heavyEquipment?.map((he, i) => (
+                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1 text-center">
+                          {he.fuel?.dexlite || 0}
+                        </div>
+                      ))}
+                    </td>
+                    <td className="border-2 border-black p-1 align-top text-[9px]">
+                      {r.heavyEquipment?.map((he, i) => (
+                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1 text-center">
+                          {he.fuel?.solar || 0}
+                        </div>
+                      ))}
+                    </td>
                     <td className="border-2 border-black p-1 text-center align-top whitespace-normal break-words">{r.personnel.coordinator}</td>
                     <td className="border-2 border-black p-1 align-top whitespace-normal break-words">{r.remarks || "-"}</td>
                   </tr>
@@ -194,17 +212,6 @@ const MonthlyRecap = () => {
                 </tr>
               )}
             </tbody>
-            {reports.length > 0 && (
-              <tfoot className="font-bold bg-slate-50">
-                <tr>
-                  <td colSpan={10} className="border-2 border-black p-1 text-right">TOTAL PENGGUNAAN BBM</td>
-                  <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.pertamax || 0), 0)}</td>
-                  <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.dexlite || 0), 0)}</td>
-                  <td className="border-2 border-black p-1 text-center">{reports.reduce((acc, r) => acc + (r.fuel?.solar || 0), 0)}</td>
-                  <td colSpan={2} className="border-2 border-black p-1"></td>
-                </tr>
-              </tfoot>
-            )}
           </table>
         </div>
 
