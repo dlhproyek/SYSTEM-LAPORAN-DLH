@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
-import { Report, ReportCategory } from '@/types/report';
+import { Report, ReportCategory, Location, Task, Photos, Equipment, FuelUsage, Personnel } from '@/types/report';
 import { medanDistricts } from '@/data/medan-districts';
 import ImageUpload from './ImageUpload';
 import { Badge } from "@/components/ui/badge";
@@ -138,15 +138,23 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const mainLocation = values.tasks[0].location;
+      const mainLocation = values.tasks[0].location as Location;
       const mainDescription = values.tasks[0].description;
 
-      const reportData = {
-        ...values,
+      const reportData: Omit<Report, 'id' | 'createdAt' | 'syncStatus'> = {
+        date: values.date,
+        category: values.category as ReportCategory,
         description: mainDescription,
         location: mainLocation,
-        category: values.category as ReportCategory,
+        tasks: values.tasks as Task[],
+        photos: values.photos as Photos,
+        volume: values.volume,
         unit: getUnitByCategory(values.category),
+        equipment: values.equipment as Equipment[],
+        heavyEquipment: values.heavyEquipment as Equipment[],
+        fuel: values.fuel as FuelUsage,
+        personnel: values.personnel as Personnel,
+        remarks: values.remarks || "",
       };
 
       if (isEditing && initialData) {
@@ -238,7 +246,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               </CardContent>
             </Card>
           ))}
-          <Button type="button" variant="outline" className="w-full border-dashed py-6" onClick={() => appendTask({ description: "", location: { street: "", village: { street: "", village: "", subDistrict: "" } } } as any)}><Plus className="mr-2 h-4 w-4" /> Tambah Kegiatan & Lokasi Baru</Button>
+          <Button type="button" variant="outline" className="w-full border-dashed py-6" onClick={() => appendTask({ description: "", location: { street: "", village: "", subDistrict: "" } })}><Plus className="mr-2 h-4 w-4" /> Tambah Kegiatan & Lokasi Baru</Button>
         </div>
 
         <Card className="border-t-4 border-t-green-500">
