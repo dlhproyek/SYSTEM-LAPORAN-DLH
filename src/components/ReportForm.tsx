@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { Report, ReportCategory, Task, FuelUsage, Location } from '@/types/report';
@@ -29,7 +29,11 @@ const coordinatorMapping: Record<string, string> = {
   "Taman Area": "Ismail Siregar",
   "Taman Amplas": "Erwinsyah",
   "Tim Babat": "Benget Simanjuntak",
-  "Tim Siram": "Aluddin Siregar / M. Irwan Syahputra, SE" 
+};
+
+const siramCoordinatorMapping: Record<string, string> = {
+  "BK 8128 A": "M. Irwan Syahputra, SE",
+  "BK 9031 J": "Aluddin Gultom"
 };
 
 const locationSchema = z.object({
@@ -60,6 +64,7 @@ const fuelSchema = z.object({
 const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   category: z.string().min(1, "Kategori wajib dipilih"),
+  vehicle: z.string().optional(),
   tasks: z.array(taskSchema).min(1),
   equipment: z.array(z.object({
     type: z.string().min(1, "Jenis alat wajib diisi"),
@@ -91,6 +96,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     defaultValues: initialData ? {
       date: initialData.date,
       category: initialData.category,
+      vehicle: initialData.vehicle || "",
       tasks: initialData.tasks,
       equipment: initialData.equipment,
       heavyEquipment: initialData.heavyEquipment,
@@ -99,6 +105,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     } : {
       date: new Date().toISOString().split('T')[0],
       category: "",
+      vehicle: "",
       tasks: [{ 
         description: "", 
         location: { street: "", village: "", subDistrict: "" },
@@ -113,16 +120,26 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   });
 
   const selectedCategory = form.watch("category");
+  const selectedVehicle = form.watch("vehicle");
+  
   const { fields: taskFields, append: appendTask, remove: removeTask } = useFieldArray({ control: form.control, name: "tasks" });
   const { fields: equipFields, append: appendEquip, remove: removeEquip } = useFieldArray({ control: form.control, name: "equipment" });
   const { fields: heavyFields, append: appendHeavy, remove: removeHeavy } = useFieldArray({ control: form.control, name: "heavyEquipment" });
 
   useEffect(() => {
-    if (!isEditing && selectedCategory) {
-      const coordinatorName = coordinatorMapping[selectedCategory];
-      if (coordinatorName) form.setValue("personnel.coordinator", coordinatorName);
+    if (!isEditing) {
+      if (selectedCategory === "Tim Siram") {
+        if (selectedVehicle && siramCoordinatorMapping[selectedVehicle]) {
+          form.setValue("personnel.coordinator", siramCoordinatorMapping[selectedVehicle]);
+        } else {
+          form.setValue("personnel.coordinator", "");
+        }
+      } else if (selectedCategory) {
+        const coordinatorName = coordinatorMapping[selectedCategory];
+        if (coordinatorName) form.setValue("personnel.coordinator", coordinatorName);
+      }
     }
-  }, [selectedCategory, form, isEditing]);
+  }, [selectedCategory, selectedVehicle, form, isEditing]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -139,6 +156,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const reportData: Omit<Report, 'id' | 'createdAt' | 'syncStatus'> = {
         date: values.date,
         category: values.category as ReportCategory,
+        vehicle: values.vehicle,
         description: values.tasks[0].description,
         location: values.tasks[0].location as Location,
         tasks: values.tasks as Task[],
@@ -203,6 +221,26 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
         <div className="space-y-6">
           <h2 className="text-xl font-bold flex items-center gap-2"><FileText className="text-blue-600" /> Daftar Kegiatan, Lokasi & Dokumentasi</h2>
+          
+          {selectedCategory === "Tim Siram" && (
+            <Card className="border-l-4 border-l-orange-500 bg-orange-50/30">
+              <CardContent className="p-6">
+                <FormField control={form.control} name="vehicle" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Truck size={16} /> Pilih Plat Kendaraan</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Pilih Plat..." /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
+                        <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
+              </CardContent>
+            </Card>
+          )}
+
           {taskFields.map((field, index) => (
             <Card key={field.id} className="border-l-4 border-l-blue-400 overflow-hidden">
               <CardContent className="p-6 space-y-6">

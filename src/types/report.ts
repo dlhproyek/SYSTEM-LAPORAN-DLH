@@ -50,6 +50,7 @@ export interface Report {
   id: string;
   date: string;
   category: ReportCategory;
+  vehicle?: string; // Tambahan untuk Tim Siram
   description: string;
   location: Location;
   tasks: Task[];
@@ -61,5 +62,5 @@ export interface Report {
   createdAt: string;
   syncStatus: 'synced' | 'pending';
   unit: string;
-  volume: number; // Total volume dari semua task
+  volume: number;
 }
