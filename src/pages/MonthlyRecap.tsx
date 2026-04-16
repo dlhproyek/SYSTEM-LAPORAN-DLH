@@ -131,7 +131,7 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Peralatan</th>
-                <th className="border-2 border-black p-2 w-[160px]" rowSpan={2}>Alat Berat</th>
+                <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Alat Berat</th>
                 <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
                 <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Koordinator</th>
                 <th className="border-2 border-black p-2 w-[120px]" rowSpan={2}>Keterangan</th>
@@ -196,15 +196,10 @@ const MonthlyRecap = () => {
                         </div>
                       ))}
                     </td>
-                    <td className="border-2 border-black p-2 align-top text-[10px]">
-                      {task.vehicle && (
-                        <div className="mb-2 p-1 bg-orange-50 border border-orange-200 rounded font-bold text-center">
-                          PLAT: {task.vehicle}
-                        </div>
-                      )}
+                    <td className="border-2 border-black p-2 align-top text-[10px] overflow-hidden">
                       {task.heavyEquipment?.map((he, i) => (
-                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {he.type} ({he.quantity})
+                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1 whitespace-nowrap">
+                          {he.type} {task.vehicle || ""} ({he.quantity})
                         </div>
                       ))}
                     </td>
