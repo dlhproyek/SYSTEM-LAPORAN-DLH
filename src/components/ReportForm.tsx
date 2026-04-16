@@ -25,16 +25,19 @@ const categories: ReportCategory[] = [
 ];
 
 const coordinatorMapping: Record<string, string> = {
-  "Tim Pohon": "Budi",
   "Taman Kota": "Mhd. Said",
   "Taman Area": "Ismail Siregar",
   "Taman Amplas": "Erwinsyah",
   "Tim Babat": "Benget Simanjuntak",
 };
 
-const siramCoordinatorMapping: Record<string, string> = {
+// Pemetaan Koordinator berdasarkan Plat Kendaraan (Berlaku untuk Tim Siram & Tim Pohon)
+const vehicleCoordinatorMapping: Record<string, string> = {
   "BK 8128 A": "M. Irwan Syahputra, SE",
-  "BK 9031 J": "Aluddin Gultom"
+  "BK 9031 J": "Aluddin Gultom",
+  "BK 8265 A": "Budi",
+  "BK 8266 A": "Sutrisno",
+  "BK 8451 J": "Mhd. Said"
 };
 
 const locationSchema = z.object({
@@ -135,8 +138,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const tasks = form.getValues("tasks");
       const updatedTasks = tasks.map(task => {
         let coordinator = task.personnel.coordinator;
-        if (selectedCategory === "Tim Siram") {
-          coordinator = task.vehicle ? siramCoordinatorMapping[task.vehicle] || "" : "";
+        if (selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon") {
+          coordinator = task.vehicle ? vehicleCoordinatorMapping[task.vehicle] || "" : "";
         } else {
           coordinator = coordinatorMapping[selectedCategory] || "";
         }
@@ -347,7 +350,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                 <div className="pt-6 border-t border-slate-100 space-y-4">
                   <div className="flex items-center gap-2 text-sm font-bold text-red-600"><Fuel size={16} /> Operasional Alat Berat & BBM</div>
                   
-                  {selectedCategory === "Tim Siram" && (
+                  {(selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon") && (
                     <div className="p-4 border rounded-lg bg-orange-50/30 border-orange-200 mb-4">
                       <FormField control={form.control} name={`tasks.${taskIndex}.vehicle`} render={({ field }) => (
                         <FormItem>
@@ -355,13 +358,23 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                           <Select onValueChange={(val) => {
                             field.onChange(val);
                             // Auto-update coordinator for this task
-                            const coordinator = siramCoordinatorMapping[val] || "";
+                            const coordinator = vehicleCoordinatorMapping[val] || "";
                             form.setValue(`tasks.${taskIndex}.personnel.coordinator`, coordinator);
                           }} value={field.value}>
                             <FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Pilih Plat..." /></SelectTrigger></FormControl>
                             <SelectContent>
-                              <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
-                              <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
+                              {selectedCategory === "Tim Siram" ? (
+                                <>
+                                  <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
+                                  <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
+                                </>
+                              ) : (
+                                <>
+                                  <SelectItem value="BK 8265 A">BK 8265 A</SelectItem>
+                                  <SelectItem value="BK 8266 A">BK 8266 A</SelectItem>
+                                  <SelectItem value="BK 8451 J">BK 8451 J</SelectItem>
+                                </>
+                              )}
                             </SelectContent>
                           </Select>
                         </FormItem>
