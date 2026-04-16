@@ -5,7 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Fuel, Users, Wrench, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const PrintRekap = () => {
@@ -27,6 +27,8 @@ const PrintRekap = () => {
       if (category && category !== 'semua') {
         data = data.filter(r => r.category === category);
       }
+      // Urutkan berdasarkan tanggal terbaru
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setReports(data);
     } catch (error) {
       console.error(error);
@@ -54,63 +56,99 @@ const PrintRekap = () => {
         </div>
       </div>
 
-      <div className="print-container space-y-8">
+      <div className="print-container space-y-12">
         {reports.map((report) => (
-          <div key={report.id} className="bg-white border-2 border-black p-8 shadow-none break-after-page mb-10 last:mb-0 mx-auto max-w-[900px]">
-            <div className="border-b-2 border-black pb-4 flex justify-between items-center mb-6">
+          <div key={report.id} className="bg-white border shadow-none break-after-page p-8 space-y-8 mx-auto max-w-[900px]">
+            {/* Header - Sama dengan Detail */}
+            <div className="border-b-2 border-black pb-4 flex justify-between items-center">
               <div>
-                <h1 className="text-lg font-bold">PEMERINTAH KOTA MEDAN</h1>
-                <h2 className="text-xl font-black">DINAS LINGKUNGAN HIDUP</h2>
+                <h1 className="text-xl font-bold">PEMERINTAH KOTA MEDAN</h1>
+                <h2 className="text-2xl font-black">DINAS LINGKUNGAN HIDUP</h2>
               </div>
               <div className="text-right">
-                <h3 className="text-md font-bold underline">LAPORAN KEGIATAN HARIAN</h3>
-                <p className="font-bold text-sm">{report.category.toUpperCase()}</p>
-                {report.vehicle && <p className="text-[10px] font-bold">PLAT: {report.vehicle}</p>}
+                <h3 className="text-lg font-bold underline">LAPORAN KEGIATAN HARIAN</h3>
+                <p className="font-bold">{report.category.toUpperCase()}</p>
+                {report.vehicle && <p className="text-sm font-bold">PLAT: {report.vehicle}</p>}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-[11px] mb-6 border-b border-black pb-4">
+            {/* Info Dasar */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-slate-500">Tanggal</p><p className="font-bold">{report.date}</p></div>
               <div><p className="text-slate-500">Total Volume</p><p className="font-bold">{report.volume} {getUnitByCategory(report.category)}</p></div>
             </div>
 
-            <div className="space-y-8">
+            {/* Daftar Kegiatan */}
+            <div className="space-y-12">
               {report.tasks?.map((task, i) => (
-                <div key={i} className="space-y-3 border-b border-dashed border-slate-300 pb-6 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-black text-white w-6 h-6 flex items-center justify-center font-bold rounded-full text-xs">{i + 1}</div>
-                    <h3 className="text-sm font-bold">Kegiatan: {task.description}</h3>
+                <div key={i} className="space-y-6 border-b-2 border-slate-100 pb-12 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold rounded-full text-sm">{i + 1}</div>
+                    <h3 className="text-lg font-bold">Kegiatan: {task.description}</h3>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="bg-slate-50 p-2 border border-black text-[10px]">
-                        <p className="text-slate-500">Lokasi & Volume</p>
-                        <p className="font-bold">{task.location.street}, {task.location.village}, {task.location.subDistrict}</p>
-                        <p className="font-bold mt-1">Vol: {task.volume} {getUnitByCategory(report.category)}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 p-4 rounded border border-slate-200">
+                        <p className="text-slate-500 text-[10px] uppercase font-bold mb-1">Lokasi & Volume</p>
+                        <p className="font-bold text-sm">{task.location.street}, {task.location.village}, {task.location.subDistrict}</p>
+                        <p className="text-blue-600 font-bold mt-2 text-sm">Volume: {task.volume} {getUnitByCategory(report.category)}</p>
                       </div>
-                      <div className="bg-slate-50 p-2 border border-black text-[10px]">
-                        <p className="text-slate-500">Personil & Operasional</p>
-                        <p>Koord: <strong>{task.personnel.coordinator}</strong> | Anggota: <strong>{task.personnel.members}</strong></p>
+
+                      <div className="bg-slate-50 p-4 rounded border border-slate-200 space-y-3">
+                        <p className="text-slate-500 text-[10px] uppercase font-bold mb-1">Sumber Daya & Personil</p>
+                        <div className="grid grid-cols-2 gap-4 text-[11px]">
+                          <div>
+                            <p className="flex items-center gap-1 font-bold"><Users size={12} /> Koordinator:</p>
+                            <p>{task.personnel.coordinator}</p>
+                          </div>
+                          <div>
+                            <p className="flex items-center gap-1 font-bold"><Users size={12} /> Anggota:</p>
+                            <p>{task.personnel.members} Orang</p>
+                          </div>
+                        </div>
+                        
                         {task.heavyEquipment?.length > 0 && (
-                          <div className="mt-1 pt-1 border-t border-slate-300">
+                          <div className="pt-2 border-t border-slate-200">
+                            <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><Fuel size={10} /> ALAT BERAT & BBM:</p>
                             {task.heavyEquipment.map((he, idx) => (
-                              <p key={idx}>{he.type} ({he.quantity}) - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L</p>
+                              <div key={idx} className="mb-1 text-[10px]">
+                                {he.type} ({he.quantity}) - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L
+                              </div>
                             ))}
+                          </div>
+                        )}
+
+                        {task.equipment?.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200">
+                            <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><Wrench size={10} /> PERALATAN:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {task.equipment.map((e, idx) => (
+                                <span key={idx} className="bg-white border px-2 py-0.5 rounded text-[10px]">{e.type} ({e.quantity})</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {task.remarks && (
+                          <div className="pt-2 border-t border-slate-200">
+                            <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><MessageSquare size={10} /> KETERANGAN KEGIATAN:</p>
+                            <p className="text-[10px] italic">{task.remarks}</p>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1">
+                    {/* Grid Foto - Sama dengan Detail */}
+                    <div className="grid grid-cols-3 gap-2">
                       {['0%', '50%', '100%'].map((label, idx) => {
                         const img = idx === 0 ? task.photos.zero : idx === 1 ? task.photos.fifty : task.photos.hundred;
                         return (
                           <div key={idx} className="space-y-1">
-                            <div className="aspect-[2.26/2.95] border border-black bg-slate-50 overflow-hidden">
-                              {img ? <img src={img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[8px] text-slate-300">No Photo</div>}
+                            <div className="aspect-[2.26/2.95] border-2 border-black bg-slate-50 overflow-hidden">
+                              {img ? <img src={img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">No Photo</div>}
                             </div>
-                            <p className="text-center font-bold text-[8px] border border-black py-0.5">{label}</p>
+                            <p className="text-center font-bold text-[10px] border-2 border-black py-1">{label}</p>
                           </div>
                         );
                       })}
@@ -120,9 +158,11 @@ const PrintRekap = () => {
               ))}
             </div>
 
+            {/* Keterangan Umum */}
             {report.remarks && (
-              <div className="mt-4 text-[10px] italic border-t border-black pt-2">
-                <strong>Keterangan:</strong> {report.remarks}
+              <div className="pt-6 border-t-2 border-black">
+                <p className="text-slate-500 text-[10px] uppercase font-bold mb-1">Keterangan Tambahan (Umum)</p>
+                <p className="text-sm italic">{report.remarks}</p>
               </div>
             )}
           </div>
@@ -135,7 +175,11 @@ const PrintRekap = () => {
           .no-print { display: none !important; }
           .print-container { padding: 0 !important; margin: 0 !important; }
           .break-after-page { page-break-after: always; }
-          @page { margin: 1cm; }
+          @page { margin: 1cm; size: portrait; }
+          .bg-slate-50 { background-color: transparent !important; }
+          .bg-slate-100 { background-color: #f1f5f9 !important; }
+          .border { border-color: #e2e8f0 !important; }
+          .border-black { border-color: #000000 !important; }
         }
       `}} />
     </div>
