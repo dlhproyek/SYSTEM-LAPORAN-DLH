@@ -9,15 +9,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
-import { Report, ReportCategory, Task, FuelUsage, Location, Equipment, HeavyEquipment, Personnel } from '@/types/report';
+import { Report, ReportCategory, Task, FuelUsage, Location, Equipment, HeavyEquipment } from '@/types/report';
 import { medanDistricts } from '@/data/medan-districts';
 import ImageUpload from './ImageUpload';
 import { Badge } from "@/components/ui/badge";
 import { getUnitByCategory } from '@/utils/report-helpers';
 import { reportService } from '@/services/reportService';
+import { storageService } from '@/services/storageService';
 
 const categories: ReportCategory[] = [
   "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
@@ -90,6 +91,7 @@ interface ReportFormProps {
 const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -137,24 +139,49 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     }
   }, [selectedCategory, selectedVehicle, form, isEditing]);
 
+  const uploadTaskPhotos = async (tasks: any[]) => {
+    const updatedTasks = [...tasks];
+    for (let i = 0; i < updatedTasks.length; i++) {
+      const task = updatedTasks[i];
+      setUploadProgress(`Mengunggah foto kegiatan #${i + 1}...`);
+      
+      // Upload foto 0% jika berupa base64
+      if (task.photos.zero && task.photos.zero.startsWith('data:image')) {
+        task.photos.zero = await storageService.uploadPhoto(task.photos.zero, `task_${i}_0`);
+      }
+      // Upload foto 50% jika berupa base64
+      if (task.photos.fifty && task.photos.fifty.startsWith('data:image')) {
+        task.photos.fifty = await storageService.uploadPhoto(task.photos.fifty, `task_${i}_50`);
+      }
+      // Upload foto 100% jika berupa base64
+      if (task.photos.hundred && task.photos.hundred.startsWith('data:image')) {
+        task.photos.hundred = await storageService.uploadPhoto(task.photos.hundred, `task_${i}_100`);
+      }
+    }
+    return updatedTasks;
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      // 1. Unggah semua foto ke Supabase Storage terlebih dahulu
+      const processedTasksWithUrls = await uploadTaskPhotos(values.tasks);
+
       let totalVolume = 0;
       let totalFuel: FuelUsage = { pertamax: 0, dexlite: 0, solar: 0 };
       let allEquipment: Equipment[] = [];
       let allHeavyEquipment: HeavyEquipment[] = [];
       let totalMembers = 0;
 
-      const processedTasks = values.tasks.map(task => {
+      const finalTasks = processedTasksWithUrls.map(task => {
         totalVolume += task.volume;
-        task.heavyEquipment.forEach(he => {
+        task.heavyEquipment.forEach((he: any) => {
           totalFuel.pertamax += he.fuel.pertamax;
           totalFuel.dexlite += he.fuel.dexlite;
           totalFuel.solar += he.fuel.solar;
           allHeavyEquipment.push(he as HeavyEquipment);
         });
-        task.equipment.forEach(e => allEquipment.push(e as Equipment));
+        task.equipment.forEach((e: any) => allEquipment.push(e as Equipment));
         totalMembers += task.personnel.members;
 
         if (values.category === "Tim Siram" && values.vehicle) {
@@ -172,16 +199,16 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         date: values.date,
         category: values.category as ReportCategory,
         vehicle: values.vehicle,
-        description: processedTasks[0].description,
-        location: processedTasks[0].location as Location,
-        tasks: processedTasks as Task[],
+        description: finalTasks[0].description,
+        location: finalTasks[0].location as Location,
+        tasks: finalTasks as Task[],
         volume: totalVolume,
         unit: getUnitByCategory(values.category),
         equipment: allEquipment,
         heavyEquipment: allHeavyEquipment,
         fuel: totalFuel,
         personnel: {
-          coordinator: processedTasks[0].personnel.coordinator,
+          coordinator: finalTasks[0].personnel.coordinator,
           members: totalMembers
         },
         remarks: values.remarks || "",
@@ -196,9 +223,11 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       }
       navigate('/');
     } catch (error) {
-      showError("Gagal menyimpan data");
+      console.error(error);
+      showError("Gagal menyimpan data atau mengunggah foto");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress("");
     }
   }
 
@@ -208,7 +237,9 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <h1 className="text-2xl font-bold text-primary">{isEditing ? "Edit Laporan" : "Input Laporan Baru"}</h1>
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700"><Save className="mr-2 h-4 w-4" /> Simpan</Button>
+          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || "Menyimpan..."}</> : <><Save className="mr-2 h-4 w-4" /> Simpan</>}
+          </Button>
         </div>
 
         <Card className="border-t-4 border-t-blue-500">
@@ -377,7 +408,9 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 px-8">{isSubmitting ? "Menyimpan..." : "Simpan Laporan"}</Button>
+          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 px-8">
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || "Menyimpan..."}</> : "Simpan Laporan"}
+          </Button>
         </div>
       </form>
     </Form>
