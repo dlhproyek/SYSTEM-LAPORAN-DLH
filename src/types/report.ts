@@ -36,6 +36,9 @@ export interface Task {
   location: Location;
   photos: Photos;
   volume: number;
+  equipment: Equipment[];
+  heavyEquipment: HeavyEquipment[];
+  personnel: Personnel;
 }
 
 export type ReportCategory = 
@@ -50,7 +53,7 @@ export interface Report {
   id: string;
   date: string;
   category: ReportCategory;
-  vehicle?: string; // Tambahan untuk Tim Siram
+  vehicle?: string;
   description: string;
   location: Location;
   tasks: Task[];
