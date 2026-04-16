@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Report } from '@/types/report';
 import { showSuccess, showError } from '@/utils/toast';
+import { localService } from '@/services/localService';
+import { reportService } from '@/services/reportService';
 
 export function useSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -25,26 +27,26 @@ export function useSync() {
   }, []);
 
   const syncData = async () => {
-    const reports: Report[] = JSON.parse(localStorage.getItem('reports') || '[]');
+    const reports = await localService.getAllReports();
     const pendingReports = reports.filter(r => r.syncStatus === 'pending');
 
     if (pendingReports.length === 0) return;
 
     setIsSyncing(true);
     try {
-      // Logika pengiriman ke Cloud (Supabase) akan diletakkan di sini
-      console.log("Mensinkronisasi data ke cloud...", pendingReports);
+      for (const report of pendingReports) {
+        // Kirim ke Supabase
+        const { id, createdAt, syncStatus, ...dataToSave } = report;
+        await reportService.createReport(dataToSave);
+        
+        // Tandai sebagai tersinkron di lokal atau hapus jika sudah di cloud
+        await localService.deleteReport(report.id);
+      }
       
-      // Simulasi berhasil sinkron (nanti diganti dengan real API call)
-      const updatedReports = reports.map(r => ({
-        ...r,
-        syncStatus: 'synced' as const
-      }));
-      
-      localStorage.setItem('reports', JSON.stringify(updatedReports));
-      showSuccess(`${pendingReports.length} laporan berhasil disinkronkan ke cloud!`);
+      showSuccess(`${pendingReports.length} laporan offline berhasil diunggah ke cloud!`);
     } catch (error) {
       console.error("Gagal sinkronisasi:", error);
+      showError("Gagal mengunggah beberapa laporan offline");
     } finally {
       setIsSyncing(false);
     }
