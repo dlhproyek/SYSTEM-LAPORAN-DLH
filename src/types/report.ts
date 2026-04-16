@@ -39,6 +39,7 @@ export interface Task {
   equipment: Equipment[];
   heavyEquipment: HeavyEquipment[];
   personnel: Personnel;
+  remarks?: string;
 }
 
 export type ReportCategory = 

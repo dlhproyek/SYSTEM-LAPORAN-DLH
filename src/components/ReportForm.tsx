@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench, Loader2, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { Report, ReportCategory, Task, FuelUsage, Location, Equipment, HeavyEquipment } from '@/types/report';
@@ -73,6 +73,7 @@ const taskSchema = z.object({
     coordinator: z.string().min(1, "Nama koordinator wajib diisi"),
     members: z.coerce.number().int().min(0),
   }),
+  remarks: z.string().optional().default(""),
 });
 
 const formSchema = z.object({
@@ -112,7 +113,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         volume: 0,
         equipment: [{ type: "", quantity: 1 }],
         heavyEquipment: [],
-        personnel: { coordinator: "", members: 0 }
+        personnel: { coordinator: "", members: 0 },
+        remarks: ""
       }],
       remarks: "",
     },
@@ -381,6 +383,15 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                     <FormField control={form.control} name={`tasks.${index}.personnel.members`} render={({ field }) => (<FormItem><FormLabel>Jumlah Anggota</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                   </div>
                 </div>
+
+                <div className="pt-6 border-t border-slate-100 space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-600"><MessageSquare size={16} /> Keterangan Kegiatan</div>
+                  <FormField control={form.control} name={`tasks.${index}.remarks`} render={({ field }) => (
+                    <FormItem>
+                      <FormControl><Input {...field} placeholder="Catatan khusus untuk lokasi/kegiatan ini..." /></FormControl>
+                    </FormItem>
+                  )} />
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -391,7 +402,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
             volume: 0,
             equipment: [{ type: "", quantity: 1 }],
             heavyEquipment: [],
-            personnel: { coordinator: form.getValues("tasks.0.personnel.coordinator") || "", members: 0 }
+            personnel: { coordinator: form.getValues("tasks.0.personnel.coordinator") || "", members: 0 },
+            remarks: ""
           })}><Plus className="mr-2 h-5 w-5" /> Tambah Kegiatan & Lokasi Baru</Button>
         </div>
 

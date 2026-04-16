@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Edit, Fuel, Users, Wrench } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, Fuel, Users, Wrench, MessageSquare } from 'lucide-react';
 import { Report } from '@/types/report';
 import { showError } from '@/utils/toast';
 import { getUnitByCategory } from '@/utils/report-helpers';
@@ -112,6 +112,13 @@ const ReportDetail = () => {
                           </div>
                         </div>
                       )}
+
+                      {task.remarks && (
+                        <div className="pt-2 border-t">
+                          <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><MessageSquare size={10} /> KETERANGAN KEGIATAN:</p>
+                          <p className="text-[10px] italic">{task.remarks}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -135,7 +142,7 @@ const ReportDetail = () => {
 
           {report.remarks && (
             <div className="pt-6 border-t-2 border-black">
-              <p className="text-slate-500 text-xs uppercase font-bold mb-1">Keterangan Tambahan</p>
+              <p className="text-slate-500 text-xs uppercase font-bold mb-1">Keterangan Tambahan (Umum)</p>
               <p className="text-sm italic">{report.remarks}</p>
             </div>
           )}
