@@ -153,10 +153,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
       const totalVolume = values.tasks.reduce((acc, curr) => acc + curr.volume, 0);
 
-      // Logika untuk memasukkan Plat Kendaraan ke dalam Uraian Kegiatan khusus Tim Siram
       const processedTasks = values.tasks.map(task => {
         if (values.category === "Tim Siram" && values.vehicle) {
-          // Hindari duplikasi jika sudah ada plat di awal
           const platePrefix = `[${values.vehicle}] `;
           const cleanDescription = task.description.startsWith(platePrefix) 
             ? task.description.slice(platePrefix.length) 
@@ -241,25 +239,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         <div className="space-y-6">
           <h2 className="text-xl font-bold flex items-center gap-2"><FileText className="text-blue-600" /> Daftar Kegiatan, Lokasi & Dokumentasi</h2>
           
-          {selectedCategory === "Tim Siram" && (
-            <Card className="border-l-4 border-l-orange-500 bg-orange-50/30">
-              <CardContent className="p-6">
-                <FormField control={form.control} name="vehicle" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Truck size={16} /> Pilih Plat Kendaraan</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Pilih Plat..." /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
-                        <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )} />
-              </CardContent>
-            </Card>
-          )}
-
           {taskFields.map((field, index) => (
             <Card key={field.id} className="border-l-4 border-l-blue-400 overflow-hidden">
               <CardContent className="p-6 space-y-6">
@@ -315,6 +294,23 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         <Card className="border-t-4 border-t-red-500">
           <CardHeader><CardTitle className="text-lg">Operasional Alat Berat & BBM</CardTitle></CardHeader>
           <CardContent className="space-y-6">
+            {selectedCategory === "Tim Siram" && (
+              <div className="p-4 border rounded-lg bg-orange-50/30 border-orange-200 mb-4">
+                <FormField control={form.control} name="vehicle" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-orange-800 font-bold"><Truck size={16} /> Pilih Plat Kendaraan</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger className="bg-white"><SelectValue placeholder="Pilih Plat..." /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
+                        <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
+              </div>
+            )}
+
             {heavyFields.map((field, index) => (
               <div key={field.id} className="p-4 border rounded-lg bg-slate-50 space-y-4">
                 <div className="flex gap-4 items-end">
