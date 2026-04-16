@@ -69,7 +69,6 @@ const taskSchema = z.object({
   heavyEquipment: z.array(z.object({
     type: z.string().min(1, "Jenis alat berat wajib diisi"),
     vehicle: z.string().optional().default(""),
-    quantity: z.coerce.number().int().min(1),
     fuel: fuelSchema,
   })),
   personnel: z.object({
@@ -157,7 +156,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const updatedTasks = tasks.map(task => {
         let coordinator = task.personnel.coordinator;
         if (selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon") {
-          // Jika ada plat di alat berat pertama, gunakan itu untuk koordinator
           const firstVehicle = task.heavyEquipment?.[0]?.vehicle || task.vehicle;
           coordinator = firstVehicle ? vehicleCoordinatorMapping[firstVehicle] || "" : "";
         } else {
@@ -345,10 +343,10 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                     {form.watch(`tasks.${taskIndex}.heavyEquipment`)?.map((_, heIdx) => (
                       <div key={heIdx} className="p-4 border rounded-lg bg-slate-50 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                          <div className="md:col-span-5">
+                          <div className="md:col-span-6">
                             <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.type`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Jenis Alat Berat</FormLabel><FormControl><Input {...field} placeholder="Contoh: Excavator..." /></FormControl></FormItem>)} />
                           </div>
-                          <div className="md:col-span-4">
+                          <div className="md:col-span-5">
                             <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.vehicle`} render={({ field }) => (
                               <FormItem><FormLabel className="text-xs">Plat Kendaraan</FormLabel><FormControl><Input {...field} list="vehicle-list" placeholder="BK 1234 XX" onChange={(e) => {
                                 field.onChange(e);
@@ -358,9 +356,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                                 }
                               }} /></FormControl></FormItem>
                             )} />
-                          </div>
-                          <div className="md:col-span-2">
-                            <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.quantity`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                           </div>
                           <div className="md:col-span-1 flex justify-end">
                             <Button type="button" variant="destructive" size="icon" className="h-10 w-10" onClick={() => {
@@ -378,7 +373,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                     ))}
                     <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => {
                       const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`) || [];
-                      form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", vehicle: "", quantity: 1, fuel: { pertamax: 0, dexlite: 0, solar: 0 } }]);
+                      form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", vehicle: "", fuel: { pertamax: 0, dexlite: 0, solar: 0 } }]);
                     }}><Plus className="h-3 w-3 mr-2" /> Tambah Alat Berat</Button>
                   </div>
                 </div>

@@ -54,7 +54,6 @@ const MonthlyRecap = () => {
     }
   };
 
-  // Meratakan laporan menjadi daftar tugas (tasks) agar setiap kegiatan muncul di baris sendiri
   const flatTasks = reports.flatMap((report, reportIdx) => 
     report.tasks.map((task, taskIdx) => ({
       ...task,
@@ -199,7 +198,7 @@ const MonthlyRecap = () => {
                     <td className="border-2 border-black p-2 align-top text-[10px] overflow-hidden">
                       {task.heavyEquipment?.map((he, i) => (
                         <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1 whitespace-nowrap">
-                          {he.type} {task.vehicle || ""} ({he.quantity})
+                          {he.type} {he.vehicle || ""}
                         </div>
                       ))}
                     </td>

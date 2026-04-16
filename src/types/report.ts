@@ -10,7 +10,8 @@ export interface FuelUsage {
   remarks?: string;
 }
 
-export interface HeavyEquipment extends Equipment {
+export interface HeavyEquipment {
+  type: string;
   vehicle?: string;
   fuel: FuelUsage;
 }

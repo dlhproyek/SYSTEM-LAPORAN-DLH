@@ -126,7 +126,7 @@ const PrintRekap = () => {
                             <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><Fuel size={10} /> ALAT BERAT & BBM:</p>
                             {task.heavyEquipment.map((he, idx) => (
                               <div key={idx} className="mb-1 text-[10px]">
-                                {he.type} ({he.quantity}) - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L
+                                {he.type} {he.vehicle ? `- ${he.vehicle}` : ""} - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L
                               </div>
                             ))}
                           </div>
