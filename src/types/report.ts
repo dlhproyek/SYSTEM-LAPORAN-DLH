@@ -50,6 +50,7 @@ export interface Report {
   id: string;
   date: string;
   category: ReportCategory;
+  vehiclePlate?: string; // New field for Tim Siram
   description: string;
   location: Location;
   tasks: Task[];

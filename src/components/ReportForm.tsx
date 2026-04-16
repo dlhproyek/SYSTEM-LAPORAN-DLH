@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { Report, ReportCategory, Task, FuelUsage, Location } from '@/types/report';
@@ -29,7 +29,11 @@ const coordinatorMapping: Record<string, string> = {
   "Taman Area": "Ismail Siregar",
   "Taman Amplas": "Erwinsyah",
   "Tim Babat": "Benget Simanjuntak",
-  "Tim Siram": "Aluddin Siregar / M. Irwan Syahputra, SE" 
+};
+
+const siramCoordinators: Record<string, string> = {
+  "BK 8128 A": "M. Irwan Syahputra, SE",
+  "BK 9031 J": "Aluddin Gultom"
 };
 
 const locationSchema = z.object({
@@ -60,6 +64,7 @@ const fuelSchema = z.object({
 const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   category: z.string().min(1, "Kategori wajib dipilih"),
+  vehiclePlate: z.string().optional(),
   tasks: z.array(taskSchema).min(1),
   equipment: z.array(z.object({
     type: z.string().min(1, "Jenis alat wajib diisi"),
@@ -91,6 +96,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     defaultValues: initialData ? {
       date: initialData.date,
       category: initialData.category,
+      vehiclePlate: initialData.vehiclePlate || "",
       tasks: initialData.tasks,
       equipment: initialData.equipment,
       heavyEquipment: initialData.heavyEquipment,
@@ -99,6 +105,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     } : {
       date: new Date().toISOString().split('T')[0],
       category: "",
+      vehiclePlate: "",
       tasks: [{ 
         description: "", 
         location: { street: "", village: "", subDistrict: "" },
@@ -113,16 +120,23 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   });
 
   const selectedCategory = form.watch("category");
+  const selectedPlate = form.watch("vehiclePlate");
   const { fields: taskFields, append: appendTask, remove: removeTask } = useFieldArray({ control: form.control, name: "tasks" });
   const { fields: equipFields, append: appendEquip, remove: removeEquip } = useFieldArray({ control: form.control, name: "equipment" });
   const { fields: heavyFields, append: appendHeavy, remove: removeHeavy } = useFieldArray({ control: form.control, name: "heavyEquipment" });
 
   useEffect(() => {
     if (!isEditing && selectedCategory) {
-      const coordinatorName = coordinatorMapping[selectedCategory];
-      if (coordinatorName) form.setValue("personnel.coordinator", coordinatorName);
+      if (selectedCategory === "Tim Siram") {
+        if (selectedPlate) {
+          form.setValue("personnel.coordinator", siramCoordinators[selectedPlate] || "");
+        }
+      } else {
+        const coordinatorName = coordinatorMapping[selectedCategory];
+        if (coordinatorName) form.setValue("personnel.coordinator", coordinatorName);
+      }
     }
-  }, [selectedCategory, form, isEditing]);
+  }, [selectedCategory, selectedPlate, form, isEditing]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -139,6 +153,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const reportData: Omit<Report, 'id' | 'createdAt' | 'syncStatus'> = {
         date: values.date,
         category: values.category as ReportCategory,
+        vehiclePlate: values.vehiclePlate,
         description: values.tasks[0].description,
         location: values.tasks[0].location as Location,
         tasks: values.tasks as Task[],
@@ -198,6 +213,20 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                 </Select>
               </FormItem>
             )} />
+            {selectedCategory === "Tim Siram" && (
+              <FormField control={form.control} name="vehiclePlate" render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel className="flex items-center gap-2"><Truck size={16} className="text-blue-500" /> Plat Kendaraan</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Plat Kendaraan..." /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="BK 8128 A">BK 8128 A</SelectItem>
+                      <SelectItem value="BK 9031 J">BK 9031 J</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+            )}
           </CardContent>
         </Card>
 

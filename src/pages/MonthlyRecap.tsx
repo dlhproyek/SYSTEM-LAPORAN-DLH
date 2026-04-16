@@ -145,7 +145,10 @@ const MonthlyRecap = () => {
                         year: 'numeric' 
                       })}
                     </td>
-                    <td className="border-2 border-black p-1 align-top whitespace-normal break-words">{r.description}</td>
+                    <td className="border-2 border-black p-1 align-top whitespace-normal break-words">
+                      {r.description}
+                      {r.vehiclePlate && <div className="mt-1 font-bold text-[8px] text-blue-600">Plat: {r.vehiclePlate}</div>}
+                    </td>
                     <td className="border-2 border-black p-1 align-top whitespace-normal break-words">
                       {`${r.location.street}, ${r.location.village}, ${r.location.subDistrict}`}
                     </td>

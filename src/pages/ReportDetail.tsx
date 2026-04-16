@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Edit, Fuel } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, Fuel, Truck } from 'lucide-react';
 import { Report } from '@/types/report';
 import { showError } from '@/utils/toast';
 import { getUnitByCategory } from '@/utils/report-helpers';
@@ -53,6 +53,9 @@ const ReportDetail = () => {
             <div className="text-right">
               <h3 className="text-lg font-bold underline">LAPORAN KEGIATAN HARIAN</h3>
               <p className="font-bold">{report.category.toUpperCase()}</p>
+              {report.vehiclePlate && (
+                <p className="text-sm font-bold flex items-center justify-end gap-1"><Truck size={14} /> {report.vehiclePlate}</p>
+              )}
             </div>
           </div>
 
