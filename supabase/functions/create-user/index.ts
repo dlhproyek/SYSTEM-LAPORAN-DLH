@@ -20,8 +20,8 @@ serve(async (req) => {
 
     const { username, password, category, role } = await req.json()
     
-    // Buat email otomatis dari username (misal: user123@gmail.com)
-    const generatedEmail = `${username.toLowerCase().replace(/\s+/g, '_')}@gmail.com`;
+    // Buat email otomatis dari username (misal: user123@dlh.id)
+    const generatedEmail = `${username.toLowerCase().replace(/\s+/g, '_')}@dlh.id`;
 
     console.log(`[create-user] Membuat user: ${username} dengan email: ${generatedEmail}`);
 
