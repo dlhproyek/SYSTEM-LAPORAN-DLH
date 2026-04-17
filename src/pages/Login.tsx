@@ -24,14 +24,19 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      showError("Username dan Password harus diisi");
+      showError("Username/Email dan Password harus diisi");
       return;
     }
 
     setLoading(true);
     try {
-      // Konversi username ke format email internal secara otomatis
-      const email = `${username.toLowerCase().trim().replace(/\s+/g, '_')}@dlh.id`;
+      // Logika Pintar: 
+      // Jika input mengandung '@', gunakan sebagai email langsung.
+      // Jika tidak, tambahkan domain internal @dlh.id
+      let email = username.trim();
+      if (!email.includes('@')) {
+        email = `${email.toLowerCase().replace(/\s+/g, '_')}@dlh.id`;
+      }
       
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -43,7 +48,7 @@ const Login = () => {
       showSuccess("Berhasil masuk");
       navigate('/');
     } catch (error: any) {
-      showError("Username atau Password salah");
+      showError("Username/Email atau Password salah");
       console.error(error);
     } finally {
       setLoading(false);
@@ -58,16 +63,16 @@ const Login = () => {
             <FileText className="text-white h-8 w-8" />
           </div>
           <CardTitle className="text-2xl font-bold">Sistem Laporan DLH</CardTitle>
-          <p className="text-slate-500 text-sm">Masuk dengan Nama Pengguna Anda</p>
+          <p className="text-slate-500 text-sm">Masuk dengan Username atau Email</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Nama Pengguna (Username)</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Username / Email</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  placeholder="Contoh: tim_babat_a" 
+                  placeholder="Username atau email lengkap" 
                   className="pl-10 h-11"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -102,7 +107,7 @@ const Login = () => {
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <p className="text-[10px] text-blue-700 font-medium leading-relaxed text-center">
-              Gunakan Nama Pengguna yang telah didaftarkan oleh Administrator.
+              Anda bisa masuk menggunakan Username tim atau Email Administrator yang sudah terdaftar.
             </p>
           </div>
         </CardContent>
