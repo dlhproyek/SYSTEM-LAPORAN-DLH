@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge";
 import { 
   UserPlus, Users, ArrowLeft, Shield, 
-  Lock, Tag, Loader2, Trash2, Eye, EyeOff 
+  Lock, Tag, Loader2, Trash2 
 } from 'lucide-react';
 import { showSuccess, showError } from '../utils/toast';
 import {
@@ -27,7 +27,6 @@ const AdminUsers = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     username: '',
@@ -122,19 +121,12 @@ const AdminUsers = () => {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input 
-                      type={showPassword ? "text" : "password"}
+                      type="password"
                       placeholder="Min. 6 karakter" 
-                      className="pl-10 pr-10"
+                      className="pl-10"
                       value={formData.password}
                       onChange={e => setFormData({...formData, password: e.target.value})}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
                   </div>
                 </div>
 
