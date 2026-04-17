@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { 
-  Plus, FileText, MapPin, Calendar, Users, Fuel, 
+  Plus, FileText, MapPin, Calendar, Users, 
   Trash2, Eye, Search, Edit, Cloud, Tag, Table, Printer, FileBarChart,
-  MoreVertical, LogOut, User, Settings
+  LogOut, User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '../types/report';
@@ -191,7 +191,8 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-2">
+            {/* Tombol-tombol ini sekarang muncul mulai dari ukuran tablet (md) */}
+            <div className="hidden md:flex items-center gap-2">
               {profile?.role === 'admin' && (
                 <Button variant="outline" size="sm" onClick={() => navigate('/admin/users')} className="bg-blue-50 text-blue-700 border-blue-200">
                   <Users className="h-4 w-4 mr-2" /> Manajemen User
@@ -251,7 +252,8 @@ const Index = () => {
                   <p className="text-[10px] text-slate-500 uppercase tracking-wider">{profile?.role === 'admin' ? 'Administrator' : profile?.category}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <div className="lg:hidden">
+                {/* Menu ini hanya muncul di HP (di bawah ukuran tablet) */}
+                <div className="md:hidden">
                   {profile?.role === 'admin' && (
                     <DropdownMenuItem onClick={() => navigate('/admin/users')}>
                       <Users className="h-4 w-4 mr-2 text-blue-600" /> Manajemen User
