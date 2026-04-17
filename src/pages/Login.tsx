@@ -55,14 +55,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-blue-600">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto mb-4">
-            <img 
-              src="dyad-media://media/sleepy-chameleon-twirl/.dyad/media/d772b988b2f517885576c2f47b8d9f3b.png" 
-              alt="Logo Dinas Lingkungan Hidup Kota Medan" 
-              className="h-40 w-40 object-contain mx-auto"
-            />
-          </div>
+        <CardHeader className="text-center space-y-2 pb-6">
           <div className="space-y-1">
             <CardTitle className="text-xl md:text-2xl font-bold leading-tight">
               Sistem Laporan Wilayah Medan Kota
