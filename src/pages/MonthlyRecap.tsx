@@ -153,9 +153,9 @@ const MonthlyRecap = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h3 className="text-xl font-bold underline uppercase">REKAPITULASI LAPORAN KEGIATAN HARIAN</h3>
+          <h3 className="text-xl font-bold underline uppercase">LAPORAN BULANAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN</h3>
           <p className="text-lg font-medium">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
-          <p className="text-lg font-bold">Kategori: {isUserRestricted ? profile?.category?.toUpperCase() : selectedCategory.toUpperCase()}</p>
+          <p className="text-lg font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
         </div>
 
         <div className="overflow-x-auto">
