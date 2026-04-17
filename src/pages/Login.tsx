@@ -45,28 +45,28 @@ const Login = () => {
             }}
             providers={[]}
             theme="light"
+            // Menambahkan field tambahan untuk pendaftaran
+            additionalData={{
+              username: '',
+            }}
             localization={{
               variables: {
                 sign_in: {
                   email_label: 'Email',
                   password_label: 'Kata Sandi',
                   button_label: 'Masuk',
-                  loading_button_label: 'Masuk...',
-                  email_input_placeholder: 'Alamat email Anda',
-                  password_input_placeholder: 'Kata sandi Anda',
                 },
                 sign_up: {
                   email_label: 'Email',
                   password_label: 'Kata Sandi',
-                  button_label: 'Daftar',
-                  loading_button_label: 'Mendaftar...',
+                  button_label: 'Daftar Akun Baru',
                 }
               }
             }}
           />
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-              <strong>Catatan:</strong> Jika Anda mendaftar akun baru, hubungi Administrator untuk mengatur peran (Admin/User) dan Kategori Tim Anda di database.
+              <strong>Tips:</strong> Saat mendaftar, identitas Anda akan otomatis menggunakan email jika username tidak diatur oleh Admin.
             </p>
           </div>
         </CardContent>
