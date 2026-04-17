@@ -18,15 +18,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { username, password, category, role } = await req.json()
-    
-    // Buat email otomatis dari username (misal: user123@dlh.id)
-    const generatedEmail = `${username.toLowerCase().replace(/\s+/g, '_')}@dlh.id`;
+    // Ambil data dari request
+    const { email, password, username, category, role } = await req.json()
 
-    console.log(`[create-user] Membuat user: ${username} dengan email: ${generatedEmail}`);
+    console.log(`[create-user] Mencoba membuat user: ${email} untuk kategori: ${category}`);
 
+    // Buat user di Auth Supabase
     const { data, error } = await supabaseClient.auth.admin.createUser({
-      email: generatedEmail,
+      email,
       password,
       email_confirm: true,
       user_metadata: { 

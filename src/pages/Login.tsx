@@ -1,108 +1,75 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { FileText, User, Lock, Loader2 } from 'lucide-react';
-import { showError, showSuccess } from '../utils/toast';
+import { FileText } from 'lucide-react';
 
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (session) navigate('/');
-  }, [session, navigate]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username || !password) {
-      showError("Username dan Password harus diisi");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Konversi username ke format email internal secara otomatis
-      const email = `${username.toLowerCase().trim().replace(/\s+/g, '_')}@dlh.id`;
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      showSuccess("Berhasil masuk");
+    if (session) {
       navigate('/');
-    } catch (error: any) {
-      showError("Username atau Password salah");
-      console.error(error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [session, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-blue-600">
+      <Card className="w-full max-md shadow-xl border-t-4 border-t-blue-600">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto bg-blue-600 p-3 rounded-2xl w-fit">
             <FileText className="text-white h-8 w-8" />
           </div>
           <CardTitle className="text-2xl font-bold">Sistem Laporan DLH</CardTitle>
-          <p className="text-slate-500 text-sm">Masuk dengan Nama Pengguna Anda</p>
+          <p className="text-slate-500 text-sm">Silakan masuk untuk mengelola laporan</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Nama Pengguna (Username)</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                  placeholder="Contoh: tim_babat_a" 
-                  className="pl-10 h-11"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Kata Sandi</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                  type="password"
-                  placeholder="••••••••" 
-                  className="pl-10 h-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base font-bold"
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : "Masuk Sekarang"}
-            </Button>
-          </form>
-
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ 
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#2563eb',
+                    brandAccent: '#1d4ed8',
+                  }
+                }
+              }
+            }}
+            providers={[]}
+            theme="light"
+            additionalData={{
+              username: '',
+            }}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Kata Sandi',
+                  button_label: 'Masuk',
+                  loading_button_label: 'Masuk...',
+                  email_input_placeholder: 'Alamat email Anda',
+                  password_input_placeholder: 'Kata sandi Anda',
+                },
+                sign_up: {
+                  email_label: 'Email',
+                  password_label: 'Kata Sandi',
+                  button_label: 'Daftar Akun Baru',
+                  loading_button_label: 'Mendaftar...',
+                }
+              }
+            }}
+          />
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-[10px] text-blue-700 font-medium leading-relaxed text-center">
-              Gunakan Nama Pengguna yang telah didaftarkan oleh Administrator.
+            <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
+              <strong>Penting:</strong> Saat mendaftar, sistem akan meminta email dan password. Nama Pengguna (Username) akan digunakan sebagai identitas Anda di dalam aplikasi.
             </p>
           </div>
         </CardContent>
