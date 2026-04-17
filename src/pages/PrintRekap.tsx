@@ -59,7 +59,7 @@ const PrintRekap = () => {
               <th className="border border-black p-2">Lokasi</th>
               <th className="border border-black p-2 w-16">Volume</th>
               <th className="border border-black p-2 w-24">Koordinator</th>
-              <th className="border border-black p-2 w-32">Foto Dokumentasi</th>
+              <th className="border border-black p-2 w-32">Foto</th>
             </tr>
           </thead>
           <tbody>
@@ -75,10 +75,10 @@ const PrintRekap = () => {
                   <div className="flex flex-wrap gap-1 justify-center">
                     {r.photos && r.photos.length > 0 ? (
                       r.photos.slice(0, 2).map((url, idx) => (
-                        <img key={idx} src={url} alt="Doc" className="w-12 h-12 object-cover border" />
+                        <img key={idx} src={url} alt="Doc" className="w-10 h-10 object-cover border" />
                       ))
                     ) : (
-                      <span className="text-slate-400 italic">Tidak ada foto</span>
+                      <span className="text-[8px] text-slate-400 italic">No Photo</span>
                     )}
                   </div>
                 </td>

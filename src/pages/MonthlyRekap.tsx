@@ -31,14 +31,12 @@ const MonthlyRekap = () => {
     if (profile) loadData();
   }, [profile]);
 
-  // Group by Month
   const groupedData = reports.reduce((acc: any, report) => {
     const date = new Date(report.date);
     const monthYear = date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    if (!acc[monthYear]) acc[monthYear] = { count: 0, volume: 0, reports: [] };
+    if (!acc[monthYear]) acc[monthYear] = { count: 0, volume: 0 };
     acc[monthYear].count += 1;
     acc[monthYear].volume += report.volume;
-    acc[monthYear].reports.push(report);
     return acc;
   }, {});
 
@@ -55,7 +53,7 @@ const MonthlyRekap = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Rekap Bulanan</h1>
-            <p className="text-slate-500 text-sm">Ringkasan laporan berdasarkan bulan</p>
+            <p className="text-slate-500 text-sm">Ringkasan laporan kategori: {profile?.category}</p>
           </div>
         </div>
 
@@ -66,8 +64,8 @@ const MonthlyRekap = () => {
         ) : (
           <div className="space-y-4">
             {Object.entries(groupedData).map(([month, data]: [string, any]) => (
-              <Card key={month} className="overflow-hidden border-l-4 border-l-purple-500">
-                <CardHeader className="bg-white pb-2">
+              <Card key={month} className="border-l-4 border-l-purple-500">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-purple-600" />
                     {month}
