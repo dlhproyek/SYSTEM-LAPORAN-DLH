@@ -59,13 +59,9 @@ const Login = () => {
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto mb-4">
             <img 
-              src="/logo-dlh.png" 
+              src="dyad-media://media/sleepy-chameleon-twirl/.dyad/media/fe4aaacb1b993e249a0e59981647a541.png" 
               alt="Logo Dinas Lingkungan Hidup Kota Medan" 
-              className="h-28 w-28 object-contain mx-auto drop-shadow-sm"
-              onError={(e) => {
-                // Fallback jika gambar belum diunggah
-                e.currentTarget.src = "https://pasted-image-2026-04-17T07-29-39-497Z.png";
-              }}
+              className="h-32 w-32 object-contain mx-auto drop-shadow-sm"
             />
           </div>
           <div className="space-y-1">
@@ -124,12 +120,6 @@ const Login = () => {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-              <strong>Catatan:</strong> Masukkan username yang telah didaftarkan oleh Admin. Sistem akan otomatis mengenali akun Anda.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
