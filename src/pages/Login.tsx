@@ -61,7 +61,7 @@ const Login = () => {
             <img 
               src="dyad-media://media/sleepy-chameleon-twirl/.dyad/media/fe4aaacb1b993e249a0e59981647a541.png" 
               alt="Logo Dinas Lingkungan Hidup Kota Medan" 
-              className="h-32 w-32 object-contain mx-auto drop-shadow-sm"
+              className="h-32 w-32 object-contain mx-auto mix-blend-multiply"
             />
           </div>
           <div className="space-y-1">
