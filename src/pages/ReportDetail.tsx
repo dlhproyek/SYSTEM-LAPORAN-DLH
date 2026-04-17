@@ -6,7 +6,7 @@ import { reportService } from '../services/reportService';
 import { Report } from '../types/report';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { ArrowLeft, Calendar, MapPin, Tag, Edit, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Tag, Edit } from 'lucide-react';
 import { getUnitByCategory } from '../utils/report-helpers';
 
 const ReportDetail = () => {
@@ -89,22 +89,6 @@ const ReportDetail = () => {
                 </div>
               </div>
             </div>
-
-            {/* Galeri Foto */}
-            {report.photos && report.photos.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" /> Dokumentasi Kegiatan
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {report.photos.map((url, idx) => (
-                    <div key={idx} className="aspect-video rounded-xl overflow-hidden border bg-slate-100 shadow-sm">
-                      <img src={url} alt={`Kegiatan ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {report.remarks && (
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">

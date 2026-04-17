@@ -34,7 +34,7 @@ const PrintRekap = () => {
 
   return (
     <div className="min-h-screen bg-white p-4 md:p-10">
-      <div className="max-w-6xl mx-auto print:p-0">
+      <div className="max-w-5xl mx-auto print:p-0">
         <div className="flex justify-between items-center mb-8 print:hidden">
           <Button variant="outline" onClick={() => navigate('/')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
@@ -50,16 +50,15 @@ const PrintRekap = () => {
           <p className="text-sm mt-2">Kategori: {category === 'semua' ? 'Semua Tim' : category}</p>
         </div>
 
-        <table className="w-full border-collapse border border-black text-[10px]">
+        <table className="w-full border-collapse border border-black text-xs">
           <thead>
             <tr className="bg-slate-100">
-              <th className="border border-black p-2 w-8">No</th>
-              <th className="border border-black p-2 w-20">Tanggal</th>
+              <th className="border border-black p-2">No</th>
+              <th className="border border-black p-2">Tanggal</th>
               <th className="border border-black p-2">Uraian Kegiatan</th>
               <th className="border border-black p-2">Lokasi</th>
-              <th className="border border-black p-2 w-16">Volume</th>
-              <th className="border border-black p-2 w-24">Koordinator</th>
-              <th className="border border-black p-2 w-32">Foto Dokumentasi</th>
+              <th className="border border-black p-2">Volume</th>
+              <th className="border border-black p-2">Koordinator</th>
             </tr>
           </thead>
           <tbody>
@@ -71,17 +70,6 @@ const PrintRekap = () => {
                 <td className="border border-black p-2">{r.location.street}</td>
                 <td className="border border-black p-2 text-center">{r.volume} {getUnitByCategory(r.category)}</td>
                 <td className="border border-black p-2">{r.personnel.coordinator}</td>
-                <td className="border border-black p-2">
-                  <div className="flex flex-wrap gap-1 justify-center">
-                    {r.photos && r.photos.length > 0 ? (
-                      r.photos.slice(0, 2).map((url, idx) => (
-                        <img key={idx} src={url} alt="Doc" className="w-12 h-12 object-cover border" />
-                      ))
-                    ) : (
-                      <span className="text-slate-400 italic">Tidak ada foto</span>
-                    )}
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
