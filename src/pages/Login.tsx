@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2, Lock, User } from 'lucide-react';
+import { Loader2, Lock, User } from 'lucide-react';
 import { showError } from '@/utils/toast';
 
 const Login = () => {
@@ -57,8 +57,16 @@ const Login = () => {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-blue-600">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto bg-blue-600 p-3 rounded-2xl w-fit mb-2">
-            <FileText className="text-white h-8 w-8" />
+          <div className="mx-auto mb-4">
+            <img 
+              src="/logo-dlh.png" 
+              alt="Logo Dinas Lingkungan Hidup Kota Medan" 
+              className="h-28 w-28 object-contain mx-auto drop-shadow-sm"
+              onError={(e) => {
+                // Fallback jika gambar belum diunggah
+                e.currentTarget.src = "https://pasted-image-2026-04-17T07-29-39-497Z.png";
+              }}
+            />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-xl md:text-2xl font-bold leading-tight">
