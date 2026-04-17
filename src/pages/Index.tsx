@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, Users, Fuel, 
   Trash2, Eye, Search, Edit, Cloud, Tag, Table, Printer, FileBarChart,
-  MoreVertical, LogOut, User
+  MoreVertical, LogOut, User, Lock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -55,9 +55,17 @@ const Index = () => {
   const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
 
+  const isUserRestricted = profile?.role !== 'admin';
+
   useEffect(() => {
-    if (profile) loadReports();
-  }, [profile]);
+    if (profile) {
+      loadReports();
+      // Set default print category based on profile if restricted
+      if (isUserRestricted && profile.category) {
+        setSelectedPrintCategory(profile.category);
+      }
+    }
+  }, [profile, isUserRestricted]);
 
   const loadReports = async () => {
     try {
@@ -202,21 +210,36 @@ const Index = () => {
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Cetak Rekap Laporan</DialogTitle>
-                    <DialogDescription>Pilih kategori laporan yang ingin dicetak.</DialogDescription>
+                    <DialogDescription>
+                      {isUserRestricted 
+                        ? `Mencetak laporan untuk kategori: ${profile?.category}`
+                        : "Pilih kategori laporan yang ingin dicetak."}
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <Select onValueChange={setSelectedPrintCategory} defaultValue={selectedPrintCategory}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Kategori" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat === 'semua' ? 'Semua Kategori' : cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Select 
+                        onValueChange={setSelectedPrintCategory} 
+                        value={selectedPrintCategory}
+                        disabled={isUserRestricted}
+                      >
+                        <SelectTrigger className={isUserRestricted ? "bg-slate-50 text-slate-500" : ""}>
+                          <SelectValue placeholder="Pilih Kategori" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat === 'semua' ? 'Semua Kategori' : cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isUserRestricted && (
+                        <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm">
+                          <Lock size={10} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button onClick={handlePrintAction} className="w-full bg-blue-600">Buka Preview Cetak</Button>
