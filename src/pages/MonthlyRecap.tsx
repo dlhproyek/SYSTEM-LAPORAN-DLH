@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Lock } from 'lucide-react';
+import { ArrowLeft, Printer, Lock, Fuel, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +17,8 @@ const months = [
 
 const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
+type RecapMode = "with-fuel" | "without-fuel";
+
 const MonthlyRecap = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -24,6 +26,7 @@ const MonthlyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [recapMode, setRecapMode] = useState<RecapMode>("with-fuel");
   
   // Default category berdasarkan profil user jika bukan admin
   const [selectedCategory, setSelectedCategory] = useState("semua");
@@ -137,6 +140,20 @@ const MonthlyRecap = () => {
                 </div>
               )}
             </div>
+
+            <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
+              <SelectTrigger className="w-[200px] bg-blue-50 border-blue-200 text-blue-700 font-medium">
+                <SelectValue placeholder="Mode Rekap" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="with-fuel">
+                  <div className="flex items-center gap-2"><Fuel size={14} /> Rekap Dengan BBM</div>
+                </SelectItem>
+                <SelectItem value="without-fuel">
+                  <div className="flex items-center gap-2"><FileText size={14} /> Rekap Tanpa BBM</div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button onClick={() => window.print()} className="bg-blue-600">
@@ -170,7 +187,9 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Peralatan</th>
                 <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Alat Berat</th>
-                <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
+                {recapMode === "with-fuel" && (
+                  <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
+                )}
                 <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Koordinator</th>
                 <th className="border-2 border-black p-2 w-[120px]" rowSpan={2}>Keterangan</th>
               </tr>
@@ -178,9 +197,13 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-1 w-[110px]">0%</th>
                 <th className="border-2 border-black p-1 w-[110px]">50%</th>
                 <th className="border-2 border-black p-1 w-[110px]">100%</th>
-                <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
-                <th className="border-2 border-black p-1 text-[9px] w-[40px]">D</th>
-                <th className="border-2 border-black p-1 text-[9px] w-[40px]">S</th>
+                {recapMode === "with-fuel" && (
+                  <>
+                    <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
+                    <th className="border-2 border-black p-1 text-[9px] w-[40px]">D</th>
+                    <th className="border-2 border-black p-1 text-[9px] w-[40px]">S</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -241,27 +264,31 @@ const MonthlyRecap = () => {
                         </div>
                       ))}
                     </td>
-                    <td className="border-2 border-black p-2 align-top text-[10px] text-center">
-                      {task.heavyEquipment?.map((he, i) => (
-                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {he.fuel?.pertamax || 0}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border-2 border-black p-2 align-top text-[10px] text-center">
-                      {task.heavyEquipment?.map((he, i) => (
-                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {he.fuel?.dexlite || 0}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border-2 border-black p-2 align-top text-[10px] text-center">
-                      {task.heavyEquipment?.map((he, i) => (
-                        <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
-                          {he.fuel?.solar || 0}
-                        </div>
-                      ))}
-                    </td>
+                    {recapMode === "with-fuel" && (
+                      <>
+                        <td className="border-2 border-black p-2 align-top text-[10px] text-center">
+                          {task.heavyEquipment?.map((he, i) => (
+                            <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
+                              {he.fuel?.pertamax || 0}
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border-2 border-black p-2 align-top text-[10px] text-center">
+                          {task.heavyEquipment?.map((he, i) => (
+                            <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
+                              {he.fuel?.dexlite || 0}
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border-2 border-black p-2 align-top text-[10px] text-center">
+                          {task.heavyEquipment?.map((he, i) => (
+                            <div key={i} className="mb-1 border-b border-slate-200 last:border-0 pb-1">
+                              {he.fuel?.solar || 0}
+                            </div>
+                          ))}
+                        </td>
+                      </>
+                    )}
                     <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
                     
                     {task.isFirstInReport ? (
@@ -273,7 +300,7 @@ const MonthlyRecap = () => {
                 );
               }) : (
                 <tr>
-                  <td colSpan={15} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td>
+                  <td colSpan={recapMode === "with-fuel" ? 15 : 12} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td>
                 </tr>
               )}
             </tbody>
