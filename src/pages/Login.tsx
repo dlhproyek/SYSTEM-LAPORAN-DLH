@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { FileText, User, Lock, Loader2 } from 'lucide-react';
+import { FileText, User, Lock, Loader2, Info } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
 
 const Login = () => {
@@ -30,10 +30,8 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Logika Pintar: 
-      // Jika input mengandung '@', gunakan sebagai email langsung.
-      // Jika tidak, tambahkan domain internal @dlh.id
       let email = username.trim();
+      // Jika tidak ada '@', otomatis tambah @dlh.id (untuk tim lapangan)
       if (!email.includes('@')) {
         email = `${email.toLowerCase().replace(/\s+/g, '_')}@dlh.id`;
       }
@@ -48,8 +46,8 @@ const Login = () => {
       showSuccess("Berhasil masuk");
       navigate('/');
     } catch (error: any) {
-      showError("Username/Email atau Password salah");
-      console.error(error);
+      showError("Gagal masuk. Periksa kembali Username/Email dan Password.");
+      console.error("Login error:", error.message);
     } finally {
       setLoading(false);
     }
@@ -63,7 +61,7 @@ const Login = () => {
             <FileText className="text-white h-8 w-8" />
           </div>
           <CardTitle className="text-2xl font-bold">Sistem Laporan DLH</CardTitle>
-          <p className="text-slate-500 text-sm">Masuk dengan Username atau Email</p>
+          <p className="text-slate-500 text-sm">Masuk ke akun Anda</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -72,7 +70,7 @@ const Login = () => {
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  placeholder="Username atau email lengkap" 
+                  placeholder="Contoh: tim_babat atau email@gmail.com" 
                   className="pl-10 h-11"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -105,10 +103,15 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-[10px] text-blue-700 font-medium leading-relaxed text-center">
-              Anda bisa masuk menggunakan Username tim atau Email Administrator yang sudah terdaftar.
-            </p>
+          <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-100 flex gap-3">
+            <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-[11px] text-amber-800 leading-relaxed">
+              <p className="font-bold mb-1">Informasi Login:</p>
+              <ul className="list-disc ml-4 space-y-1">
+                <li><strong>Tim Lapangan:</strong> Cukup ketik username (otomatis menggunakan @dlh.id).</li>
+                <li><strong>Admin/Gmail:</strong> Wajib mengetik email lengkap (contoh: nama@gmail.com).</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
