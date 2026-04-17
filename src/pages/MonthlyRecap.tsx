@@ -152,10 +152,10 @@ const MonthlyRecap = () => {
           <p className="text-sm italic">Jl. Sidorame No.12, Kec. Medan Perjuangan, Kota Medan, Sumatera Utara</p>
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 space-y-1">
           <h3 className="text-xl font-bold underline uppercase">LAPORAN BULANAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN</h3>
-          <p className="text-lg font-medium">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
-          <p className="text-lg font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
+          <p className="text-xl font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
+          <p className="text-xl font-bold uppercase">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
         </div>
 
         <div className="overflow-x-auto">
