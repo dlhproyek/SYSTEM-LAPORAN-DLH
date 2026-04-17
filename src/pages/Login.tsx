@@ -7,13 +7,14 @@ import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { FileText, User, Lock, Loader2 } from 'lucide-react';
+import { FileText, User, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
 
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -83,13 +84,20 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••" 
-                  className="pl-10 h-11"
+                  className="pl-10 pr-10 h-11"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -103,7 +111,7 @@ const Login = () => {
           </form>
 
           <div className="mt-4 flex flex-col gap-3 items-center">
-            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline font-medium">
+            <Link to="/forgot-password" title="Lupa Kata Sandi?" className="text-sm text-blue-600 hover:underline font-medium">
               Lupa Kata Sandi?
             </Link>
             <div className="text-sm text-slate-500">

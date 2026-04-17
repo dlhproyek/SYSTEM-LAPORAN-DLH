@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { UserPlus, User, Lock, Loader2, Tag, ArrowLeft } from 'lucide-react';
+import { UserPlus, User, Lock, Loader2, Tag, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { showError, showSuccess } from '../utils/toast';
 import {
   Select,
@@ -21,6 +21,7 @@ const categories = ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Ti
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -106,13 +107,20 @@ const Register = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Min. 6 karakter" 
-                  className="pl-10 h-11"
+                  className="pl-10 pr-10 h-11"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
