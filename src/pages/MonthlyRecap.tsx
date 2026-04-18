@@ -27,6 +27,9 @@ const allCategories = [
   "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
 ];
 
+const LOGO_MEDAN_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Logo_Kota_Medan.png/600px-Logo_Kota_Medan.png";
+const LOGO_DLH_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png/600px-Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png";
+
 type RecapMode = "with-fuel" | "without-fuel";
 
 const MonthlyRecap = () => {
@@ -146,6 +149,30 @@ const MonthlyRecap = () => {
 
       worksheet.columns = columns;
 
+      // Fungsi untuk menyematkan gambar (Logo)
+      const addLogoToExcel = async (url: string, col: number, row: number) => {
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          const imageId = workbook.addImage({
+            buffer: arrayBuffer,
+            extension: 'png',
+          });
+          worksheet.addImage(imageId, {
+            tl: { col: col, row: row },
+            ext: { width: 80, height: 80 },
+            editAs: 'oneCell'
+          });
+        } catch (e) {
+          console.error("Gagal memuat logo:", e);
+        }
+      };
+
+      // Tambahkan Logo ke Excel
+      await addLogoToExcel(LOGO_MEDAN_URL, 0, 0);
+      await addLogoToExcel(LOGO_DLH_URL, columns.length - 2, 0);
+
       // Header Instansi
       worksheet.mergeCells('A1:M1');
       const title1 = worksheet.getCell('A1');
@@ -173,8 +200,9 @@ const MonthlyRecap = () => {
 
       // Spasi sebelum tabel
       worksheet.addRow([]);
+      worksheet.addRow([]);
 
-      // Header Tabel (Row 6 & 7)
+      // Header Tabel
       const headerRow1 = worksheet.addRow(columns.map(c => c.header));
       headerRow1.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
@@ -212,7 +240,7 @@ const MonthlyRecap = () => {
           cell.alignment = { vertical: 'middle', wrapText: true };
         });
 
-        // Fungsi untuk menyematkan gambar
+        // Fungsi untuk menyematkan gambar kegiatan
         const addImageToCell = async (url: string, colIndex: number) => {
           if (!url) return;
           try {
@@ -384,10 +412,14 @@ const MonthlyRecap = () => {
       </div>
 
       <div className="print-area bg-white p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
-        <div className="text-center border-b-4 border-double border-black pb-4 mb-6">
-          <h1 className="text-2xl font-bold uppercase">Pemerintah Kota Medan</h1>
-          <h2 className="text-3xl font-black uppercase">Dinas Lingkungan Hidup</h2>
-          <p className="text-sm italic">Jl. Pinang Baris, Lalang Kec. Medan Sunggal, Kota Medan, Sumatera Utara</p>
+        <div className="flex items-center justify-between border-b-4 border-double border-black pb-4 mb-6">
+          <img src={LOGO_MEDAN_URL} className="h-24 w-auto" alt="Logo Medan" />
+          <div className="text-center flex-1">
+            <h1 className="text-2xl font-bold uppercase">Pemerintah Kota Medan</h1>
+            <h2 className="text-3xl font-black uppercase">Dinas Lingkungan Hidup</h2>
+            <p className="text-sm italic">Jl. Pinang Baris, Lalang Kec. Medan Sunggal, Kota Medan, Sumatera Utara</p>
+          </div>
+          <img src={LOGO_DLH_URL} className="h-24 w-auto" alt="Logo DLH" />
         </div>
 
         <div className="text-center mb-8 space-y-1">
