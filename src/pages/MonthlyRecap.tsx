@@ -185,8 +185,8 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Vol</th>
-                <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Peralatan</th>
-                <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Alat Berat</th>
+                <th className="border-2 border-black p-2 w-[140px]" rowSpan={2}>Peralatan</th>
+                <th className="border-2 border-black p-2 w-[140px]" rowSpan={2}>Alat Berat</th>
                 {recapMode === "with-fuel" && (
                   <th className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>
                 )}
