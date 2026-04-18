@@ -5,10 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Lock, Fuel, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, Lock, Fuel, FileText, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -16,6 +19,10 @@ const months = [
 ];
 
 const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
+const allCategories = [
+  "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
+];
 
 type RecapMode = "with-fuel" | "without-fuel";
 
@@ -28,27 +35,28 @@ const MonthlyRecap = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   
-  // Default category berdasarkan profil user jika bukan admin
-  const [selectedCategory, setSelectedCategory] = useState("semua");
+  // State untuk multi-select kategori
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile) {
       if (profile.role !== 'admin' && profile.category) {
-        setSelectedCategory(profile.category);
+        setSelectedCategories([profile.category]);
+      } else {
+        setSelectedCategories(['semua']);
       }
     }
   }, [profile]);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && selectedCategories.length > 0) {
       loadData();
     }
-  }, [selectedMonth, selectedYear, selectedCategory, profile]);
+  }, [selectedMonth, selectedYear, selectedCategories, profile]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      // Gunakan service untuk ambil data, filter kategori dilakukan di sisi klien untuk rekap ini
       let data = await reportService.getAllReports();
       
       data = data.filter(r => {
@@ -59,12 +67,14 @@ const MonthlyRecap = () => {
         const matchMonth = m === selectedMonth;
         const matchYear = y === selectedYear;
         
-        // Logika Filter Kategori:
-        // 1. Jika admin, ikuti pilihan dropdown (bisa "semua")
-        // 2. Jika user, paksa hanya kategori timnya sendiri
+        // Logika Filter Kategori Multi-select:
         let matchCategory = false;
         if (profile?.role === 'admin') {
-          matchCategory = selectedCategory === "semua" || r.category === selectedCategory;
+          if (selectedCategories.includes('semua')) {
+            matchCategory = true;
+          } else {
+            matchCategory = selectedCategories.includes(r.category);
+          }
         } else {
           matchCategory = r.category === profile?.category;
         }
@@ -78,6 +88,26 @@ const MonthlyRecap = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleCategory = (category: string) => {
+    if (category === 'semua') {
+      setSelectedCategories(['semua']);
+      return;
+    }
+
+    let newSelected = [...selectedCategories].filter(c => c !== 'semua');
+    if (newSelected.includes(category)) {
+      newSelected = newSelected.filter(c => c !== category);
+    } else {
+      newSelected.push(category);
+    }
+
+    if (newSelected.length === 0) {
+      setSelectedCategories(['semua']);
+    } else {
+      setSelectedCategories(newSelected);
     }
   };
 
@@ -115,25 +145,52 @@ const MonthlyRecap = () => {
               <SelectContent>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
             </Select>
 
+            {/* Multi-select Kategori */}
             <div className="relative">
-              <Select 
-                value={selectedCategory} 
-                onValueChange={setSelectedCategory}
-                disabled={isUserRestricted}
-              >
-                <SelectTrigger className={`w-[180px] ${isUserRestricted ? 'bg-slate-50 text-slate-500' : ''}`}>
-                  <SelectValue placeholder="Kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semua">Semua Kategori</SelectItem>
-                  <SelectItem value="Taman Kota">Taman Kota</SelectItem>
-                  <SelectItem value="Taman Amplas">Taman Amplas</SelectItem>
-                  <SelectItem value="Taman Area">Taman Area</SelectItem>
-                  <SelectItem value="Tim Babat">Tim Babat</SelectItem>
-                  <SelectItem value="Tim Siram">Tim Siram</SelectItem>
-                  <SelectItem value="Tim Pohon">Tim Pohon</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    role="combobox" 
+                    disabled={isUserRestricted}
+                    className={cn(
+                      "w-[220px] justify-between font-normal",
+                      isUserRestricted && "bg-slate-50 text-slate-500"
+                    )}
+                  >
+                    <span className="truncate">
+                      {selectedCategories.includes('semua') 
+                        ? "Semua Kategori" 
+                        : selectedCategories.length > 1 
+                          ? `${selectedCategories.length} Kategori Terpilih` 
+                          : selectedCategories[0]}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[220px] p-0" align="start">
+                  <div className="p-2 space-y-1">
+                    <div 
+                      className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-md cursor-pointer"
+                      onClick={() => toggleCategory('semua')}
+                    >
+                      <Checkbox checked={selectedCategories.includes('semua')} />
+                      <label className="text-sm font-medium leading-none cursor-pointer">Semua Kategori</label>
+                    </div>
+                    <div className="h-px bg-slate-200 my-1" />
+                    {allCategories.map((cat) => (
+                      <div 
+                        key={cat} 
+                        className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-md cursor-pointer"
+                        onClick={() => toggleCategory(cat)}
+                      >
+                        <Checkbox checked={selectedCategories.includes(cat)} />
+                        <label className="text-sm font-medium leading-none cursor-pointer">{cat}</label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
               {isUserRestricted && (
                 <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm" title="Akses Terbatas">
                   <Lock size={10} />
