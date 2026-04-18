@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench, Loader2, MessageSquare, MapPin } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, FileText, Fuel, Image as ImageIcon, Truck, Users, Wrench, Loader2, MessageSquare, MapPin, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { Report, ReportCategory, Task, FuelUsage, Location, Equipment, HeavyEquipment } from '@/types/report';
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { getUnitByCategory } from '@/utils/report-helpers';
 import { reportService } from '@/services/reportService';
 import { storageService } from '@/services/storageService';
+import { useAuth } from '@/context/AuthContext';
 
 const categories: ReportCategory[] = [
   "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
@@ -93,9 +94,12 @@ interface ReportFormProps {
 
 const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [existingVehicles, setExistingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
+
+  const isUserRestricted = profile?.role !== 'admin';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -112,7 +116,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       remarks: initialData.remarks,
     } : {
       date: new Date().toISOString().split('T')[0],
-      category: "",
+      category: isUserRestricted ? (profile?.category || "") : "",
       tasks: [{ 
         description: "", 
         location: { street: "", village: [""], subDistrict: "" },
@@ -258,11 +262,32 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField control={form.control} name="date" render={({ field }) => (<FormItem><FormLabel>Hari / Tanggal</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>)} />
             <FormField control={form.control} name="category" render={({ field }) => (
-              <FormItem><FormLabel>Kategori / Tim</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl>
-                  <SelectContent>{categories.map((cat) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}</SelectContent>
-                </Select>
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Kategori / Tim {isUserRestricted && <Lock size={12} className="text-amber-500" />}
+                </FormLabel>
+                <div className="relative">
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={isUserRestricted}
+                  >
+                    <FormControl>
+                      <SelectTrigger className={isUserRestricted ? "bg-slate-50 text-slate-500" : ""}>
+                        <SelectValue placeholder="Pilih kategori..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((cat) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                  {isUserRestricted && (
+                    <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm z-10">
+                      <Lock size={10} />
+                    </div>
+                  )}
+                </div>
+                {isUserRestricted && <p className="text-[10px] text-slate-400 mt-1 italic">* Kategori dikunci sesuai profil Anda</p>}
               </FormItem>
             )} />
           </CardContent>
