@@ -55,7 +55,10 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       gapiScript.src = "https://apis.google.com/js/api.js";
       gapiScript.onload = () => {
         (window as any).gapi.load('picker', {
-          callback: () => setIsPickerApiLoaded(true)
+          callback: () => {
+            console.log("Picker API loaded");
+            setIsPickerApiLoaded(true);
+          }
         });
       };
       document.body.appendChild(gapiScript);
@@ -95,15 +98,22 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       return;
     }
 
-    if (!isPickerApiLoaded) {
-      showError("Modul pemilih folder sedang dimuat, silakan tunggu sebentar...");
+    const google = (window as any).google;
+    const gapi = (window as any).gapi;
+
+    if (!isPickerApiLoaded || !google || !google.picker) {
+      showError("Modul pemilih folder belum siap. Silakan tunggu sebentar...");
       return;
     }
 
     try {
-      const google = (window as any).google;
+      // Gunakan DocsView khusus untuk folder agar lebih akurat
+      const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+        .setSelectFolderEnabled(true)
+        .setIncludeFolders(true);
+
       const picker = new google.picker.PickerBuilder()
-        .addView(google.picker.ViewId.FOLDERS)
+        .addView(view)
         .setOAuthToken(accessToken)
         .setDeveloperKey(API_KEY)
         .setCallback((data: any) => {
@@ -115,9 +125,9 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
         })
         .build();
       picker.setVisible(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Picker error:", err);
-      showError("Gagal membuka pemilih folder. Pastikan API Key Anda mengizinkan Google Picker API.");
+      showError(`Gagal membuka pemilih: ${err.message || "Cek izin API Key"}`);
     }
   };
 
@@ -190,14 +200,13 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             <Button 
               variant="outline" 
               onClick={openPicker}
-              disabled={!accessToken || isUploading || !isPickerApiLoaded}
+              disabled={!accessToken || isUploading}
               className="justify-start font-normal h-10 border-slate-200"
             >
               <span className="truncate">{folderName}</span>
               {!isPickerApiLoaded && accessToken && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
             </Button>
             {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
-            {accessToken && !isPickerApiLoaded && <p className="text-[10px] text-blue-600 italic">* Sedang memuat modul pemilih...</p>}
           </div>
         </div>
 
