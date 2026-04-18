@@ -26,7 +26,7 @@ const MonthlyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-  const [recapMode, setRecapMode] = useState<RecapMode>("with-fuel");
+  const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   
   // Default category berdasarkan profil user jika bukan admin
   const [selectedCategory, setSelectedCategory] = useState("semua");
