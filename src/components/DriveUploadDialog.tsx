@@ -15,11 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Folder, User, FileText, Loader2, CloudUpload } from 'lucide-react';
 import { showSuccess, showError } from '@/utils/toast';
 
-/**
- * Kredensial Google Cloud yang telah dikonfigurasi
- */
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "323264526689-91gea696tm6ftv49jt4lb4tqjo5a1947.apps.googleusercontent.com"; 
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyDzRtvJVVWSYJ1e9VGKBhA1CxRYtlda1PY";
+const CLIENT_ID = "323264526689-91gea696tm6ftv49jt4lb4tqjo5a1947.apps.googleusercontent.com"; 
+const API_KEY = "AIzaSyDzRtvJVVWSYJ1e9VGKBhA1CxRYtlda1PY";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 interface DriveUploadDialogProps {
@@ -40,14 +37,12 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   useEffect(() => {
     if (!isOpen) return;
 
-    // Load Google Identity Services
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
 
-    // Load Google API Client (GAPI) for Picker
     const gapiScript = document.createElement("script");
     gapiScript.src = "https://apis.google.com/js/api.js";
     gapiScript.async = true;
@@ -60,10 +55,10 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       const client = (window as any).google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
+        ux_mode: 'popup',
         callback: (response: any) => {
           if (response.access_token) {
             setAccessToken(response.access_token);
-            // Ambil info email user
             fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`)
               .then(res => res.json())
               .then(data => setUserEmail(data.email))
