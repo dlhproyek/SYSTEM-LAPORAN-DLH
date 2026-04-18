@@ -180,11 +180,11 @@ const MonthlyRecap = () => {
             <thead>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-2 w-[35px]" rowSpan={2}>No</th>
-                <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Hari / Tgl</th>
-                <th className="border-2 border-black p-2 w-[140px]" rowSpan={2}>Uraian Kegiatan</th>
-                <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Lokasi</th>
+                <th className="border-2 border-black p-2 w-[80px]" rowSpan={2}>Hari / Tgl</th>
+                <th className="border-2 border-black p-2 w-[120px]" rowSpan={2}>Uraian Kegiatan</th>
+                <th className="border-2 border-black p-2 w-[160px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
-                <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Vol</th>
+                <th className="border-2 border-black p-2 w-[50px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[115px]" rowSpan={2}>Peralatan</th>
                 <th className="border-2 border-black p-2 w-[115px]" rowSpan={2}>Alat Berat</th>
                 {recapMode === "with-fuel" && (
@@ -194,9 +194,9 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[170px]" rowSpan={2}>Keterangan</th>
               </tr>
               <tr className="bg-slate-50">
-                <th className="border-2 border-black p-1 w-[110px]">0%</th>
-                <th className="border-2 border-black p-1 w-[110px]">50%</th>
-                <th className="border-2 border-black p-1 w-[110px]">100%</th>
+                <th className="border-2 border-black p-1 w-[137px]">0%</th>
+                <th className="border-2 border-black p-1 w-[137px]">50%</th>
+                <th className="border-2 border-black p-1 w-[137px]">100%</th>
                 {recapMode === "with-fuel" && (
                   <>
                     <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
@@ -233,17 +233,17 @@ const MonthlyRecap = () => {
                       {`${task.location.street}, ${villages}, ${task.location.subDistrict}`}
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[130px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-cover" alt="0%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[130px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-cover" alt="50%" /> : null}
                       </div>
                     </td>
                     <td className="border-2 border-black p-1 align-middle">
-                      <div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">
+                      <div className="w-full h-[130px] bg-slate-100 border border-slate-300 overflow-hidden">
                         {task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-cover" alt="100%" /> : null}
                       </div>
                     </td>
