@@ -12,8 +12,9 @@ import { useAuth } from '@/context/AuthContext';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import * as XLSX from 'xlsx';
-import { showSuccess, showError } from '@/utils/toast';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -104,70 +105,157 @@ const MonthlyRecap = () => {
     }))
   );
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (flatTasks.length === 0) {
       showError("Tidak ada data untuk diekspor");
       return;
     }
 
-    const data = flatTasks.map((task) => {
-      const villages = Array.isArray(task.location.village) 
-        ? task.location.village.join(", ") 
-        : task.location.village;
+    const toastId = showLoading("Sedang menyiapkan file Excel dengan foto...");
+    
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Rekap Laporan');
 
-      const row: any = {
-        "No": task.displayIdx,
-        "Hari / Tgl": new Date(task.reportDate).toLocaleDateString('id-ID', { 
-          weekday: 'short', 
-          day: '2-digit', 
-          month: 'short', 
-          year: 'numeric' 
-        }),
-        "Uraian Kegiatan": task.description,
-        "Lokasi": `${task.location.street}, ${villages}, ${task.location.subDistrict}`,
-        "Foto 0%": task.photos?.zero || "-",
-        "Foto 50%": task.photos?.fifty || "-",
-        "Foto 100%": task.photos?.hundred || "-",
-        "Volume": `${task.volume} ${getUnitByCategory(task.reportCategory)}`,
-        "Peralatan": task.equipment?.map(e => `${e.type} (${e.quantity})`).join(", ") || "-",
-        "Alat Berat": task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join(", ") || "-",
-      };
+      // Konfigurasi Kolom
+      const columns = [
+        { header: 'No', key: 'no', width: 5 },
+        { header: 'Hari / Tgl', key: 'date', width: 15 },
+        { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
+        { header: 'Lokasi', key: 'loc', width: 40 },
+        { header: '0%', key: 'p0', width: 22 },
+        { header: '50%', key: 'p50', width: 22 },
+        { header: '100%', key: 'p100', width: 22 },
+        { header: 'Vol', key: 'vol', width: 10 },
+        { header: 'Peralatan', key: 'eq', width: 25 },
+        { header: 'Alat Berat', key: 'he', width: 25 },
+      ];
 
       if (recapMode === "with-fuel") {
-        row["BBM Pertamax (L)"] = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
-        row["BBM Dexlite (L)"] = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
-        row["BBM Solar (L)"] = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
+        columns.push(
+          { header: 'P', key: 'fp', width: 6 },
+          { header: 'D', key: 'fd', width: 6 },
+          { header: 'S', key: 'fs', width: 6 }
+        );
       }
 
-      row["Koordinator"] = task.personnel.coordinator;
-      row["Keterangan"] = [
-        task.remarks, 
-        task.isFirstInReport ? task.reportRemarks : ""
-      ].filter(Boolean).join(" | ") || "-";
+      columns.push(
+        { header: 'Koordinator', key: 'coord', width: 20 },
+        { header: 'Keterangan', key: 'rem', width: 35 }
+      );
 
-      return row;
-    });
+      worksheet.columns = columns;
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    
-    // Atur lebar kolom agar rapi
-    const wscols = [
-      {wch: 5}, {wch: 15}, {wch: 30}, {wch: 40}, {wch: 20}, 
-      {wch: 20}, {wch: 20}, {wch: 12}, {wch: 25}, {wch: 25}
-    ];
-    
-    if (recapMode === "with-fuel") {
-      wscols.push({wch: 15}, {wch: 15}, {wch: 15});
+      // Header Instansi
+      worksheet.mergeCells('A1:M1');
+      const title1 = worksheet.getCell('A1');
+      title1.value = 'PEMERINTAH KOTA MEDAN';
+      title1.font = { bold: true, size: 14 };
+      title1.alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A2:M2');
+      const title2 = worksheet.getCell('A2');
+      title2.value = 'DINAS LINGKUNGAN HIDUP';
+      title2.font = { bold: true, size: 16 };
+      title2.alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A3:M3');
+      const title3 = worksheet.getCell('A3');
+      title3.value = 'LAPORAN BULANAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN';
+      title3.font = { bold: true, underline: true };
+      title3.alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A4:M4');
+      const title4 = worksheet.getCell('A4');
+      title4.value = `BULAN: ${months[parseInt(selectedMonth)-1].toUpperCase()} ${selectedYear}`;
+      title4.font = { bold: true };
+      title4.alignment = { horizontal: 'center' };
+
+      // Spasi sebelum tabel
+      worksheet.addRow([]);
+
+      // Header Tabel (Row 6 & 7)
+      const headerRow1 = worksheet.addRow(columns.map(c => c.header));
+      headerRow1.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { bold: true };
+      });
+
+      // Isi Data
+      for (const task of flatTasks) {
+        const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
+        
+        const rowData: any = {
+          no: task.isFirstInReport ? task.displayIdx : '',
+          date: task.isFirstInReport ? new Date(task.reportDate).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' }) : '',
+          desc: task.description,
+          loc: `${task.location.street}, ${villages}`,
+          vol: `${task.volume} ${getUnitByCategory(task.reportCategory)}`,
+          eq: task.equipment?.map(e => `${e.type} (${e.quantity})`).join("\n"),
+          he: task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join("\n"),
+          coord: task.personnel.coordinator,
+          rem: [task.remarks, task.isFirstInReport ? task.reportRemarks : ""].filter(Boolean).join(" | ")
+        };
+
+        if (recapMode === "with-fuel") {
+          rowData.fp = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
+          rowData.fd = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
+          rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
+        }
+
+        const row = worksheet.addRow(rowData);
+        row.height = 120; // Tinggi baris untuk foto
+        row.eachCell(cell => {
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          cell.alignment = { vertical: 'middle', wrapText: true };
+        });
+
+        // Fungsi untuk menyematkan gambar
+        const addImageToCell = async (url: string, colIndex: number) => {
+          if (!url) return;
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            const imageId = workbook.addImage({
+              buffer: arrayBuffer,
+              extension: 'jpeg',
+            });
+            worksheet.addImage(imageId, {
+              tl: { col: colIndex - 1, row: row.number - 1 },
+              ext: { width: 150, height: 150 },
+              editAs: 'oneCell'
+            });
+          } catch (e) {
+            console.error("Gagal memuat gambar:", e);
+          }
+        };
+
+        await addImageToCell(task.photos.zero, 5);
+        await addImageToCell(task.photos.fifty, 6);
+        await addImageToCell(task.photos.hundred, 7);
+      }
+
+      // Tanda Tangan
+      worksheet.addRow([]);
+      const signRow = worksheet.addRow([]);
+      worksheet.mergeCells(`K${signRow.number}:M${signRow.number}`);
+      worksheet.getCell(`K${signRow.number}`).value = `Medan, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+      worksheet.getCell(`K${signRow.number}`).alignment = { horizontal: 'center' };
+
+      // Simpan File
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `Rekap_A3_DLH_${months[parseInt(selectedMonth)-1]}_${selectedYear}.xlsx`);
+      
+      dismissToast(toastId);
+      showSuccess("Rekap Excel dengan foto berhasil diunduh");
+    } catch (error) {
+      console.error(error);
+      dismissToast(toastId);
+      showError("Gagal membuat file Excel");
     }
-    
-    wscols.push({wch: 20}, {wch: 35});
-    ws['!cols'] = wscols;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Rekap Laporan");
-    const fileName = `Rekap_A3_DLH_${months[parseInt(selectedMonth)-1]}_${selectedYear}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    showSuccess("Rekap Excel (Format A3) berhasil diunduh");
   };
 
   const toggleCategory = (category: string) => {
