@@ -16,7 +16,11 @@ import { Folder, User, FileText, Loader2, CloudUpload, AlertCircle } from 'lucid
 import { showSuccess, showError } from '@/utils/toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// GANTI "YOUR_..." DENGAN KUNCI ASLI DARI GOOGLE CLOUD CONSOLE
+/**
+ * INSTRUKSI:
+ * 1. Ganti CLIENT_ID dengan Client ID dari Google Cloud (OAuth 2.0 Client IDs)
+ * 2. Ganti API_KEY dengan API Key dari Google Cloud (API Keys)
+ */
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "MASUKKAN_CLIENT_ID_ANDA_DI_SINI"; 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "MASUKKAN_API_KEY_ANDA_DI_SINI";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
@@ -36,7 +40,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Cek apakah user sudah mengganti placeholder
   const isConfigMissing = CLIENT_ID.includes("MASUKKAN") || API_KEY.includes("MASUKKAN");
 
   useEffect(() => {
