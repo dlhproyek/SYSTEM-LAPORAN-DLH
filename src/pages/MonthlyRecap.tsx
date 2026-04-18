@@ -5,12 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Lock, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut, CloudUpload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Lock, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut, CloudUpload, Loader2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -18,6 +19,15 @@ import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast
 import { supabase } from '@/lib/supabase';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -52,6 +62,8 @@ const MonthlyRecap = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
+  const [targetFolderId, setTargetFolderId] = useState("");
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
@@ -116,18 +128,17 @@ const MonthlyRecap = () => {
   const handleSaveToDrive = async () => {
     if (!printRef.current || reports.length === 0) return;
     
+    setIsDriveDialogOpen(false);
     const toastId = showLoading("Menyiapkan PDF dan mengunggah ke Drive...");
     setIsUploading(true);
     
     try {
-      // 1. Render HTML ke Canvas
       const canvas = await html2canvas(printRef.current, {
-        scale: 2, // Kualitas tinggi
+        scale: 2,
         useCORS: true,
         logging: false,
       });
       
-      // 2. Konversi Canvas ke PDF (A3 Landscape)
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -142,16 +153,19 @@ const MonthlyRecap = () => {
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
       
-      // 3. Panggil Edge Function untuk upload ke Drive
       const fileName = `Rekap_${months[parseInt(selectedMonth)-1]}_${selectedYear}_${selectedCategories.join('_')}.pdf`;
       
       const { data, error } = await supabase.functions.invoke('upload-to-drive', {
-        body: { pdfBase64, fileName }
+        body: { 
+          pdfBase64, 
+          fileName,
+          folderId: targetFolderId // Mengirim Folder ID pilihan user
+        }
       });
 
       if (error) throw error;
       
-      showSuccess("PDF berhasil diproses! Pastikan Google Drive API sudah dikonfigurasi.");
+      showSuccess(`PDF berhasil diproses untuk folder: ${targetFolderId || 'Utama'}`);
     } catch (error: any) {
       console.error(error);
       showError("Gagal mengunggah: " + error.message);
@@ -358,9 +372,36 @@ const MonthlyRecap = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button onClick={handleSaveToDrive} disabled={isUploading || reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CloudUpload className="mr-2 h-4 w-4" />} Simpan ke Drive
-            </Button>
+            <Dialog open={isDriveDialogOpen} onOpenChange={setIsDriveDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={isUploading || reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CloudUpload className="mr-2 h-4 w-4" />} Simpan ke Drive
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2"><FolderOpen className="text-blue-600" /> Pilih Tujuan Google Drive</DialogTitle>
+                  <DialogDescription>Masukkan Folder ID tujuan penyimpanan laporan PDF Anda.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Folder ID Google Drive</label>
+                    <Input 
+                      placeholder="Contoh: 1abc123xyz..." 
+                      value={targetFolderId} 
+                      onChange={(e) => setTargetFolderId(e.target.value)}
+                    />
+                    <p className="text-[10px] text-slate-400 italic">* Kosongkan jika ingin menyimpan di folder utama (Root).</p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleSaveToDrive} className="w-full bg-blue-600" disabled={isUploading}>
+                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Mulai Unggah Sekarang"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button onClick={handleExportExcel} variant="outline" className="bg-green-50 text-green-700 border-green-200"><Table className="mr-2 h-4 w-4" /> Rekap Excel</Button>
             <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap A3</Button>
           </div>
