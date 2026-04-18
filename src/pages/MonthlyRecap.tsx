@@ -180,11 +180,11 @@ const MonthlyRecap = () => {
             <thead>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-2 w-[35px]" rowSpan={2}>No</th>
-                <th className="border-2 border-black p-2 w-[100px]" rowSpan={2}>Hari / Tgl</th>
-                <th className="border-2 border-black p-2 w-[140px]" rowSpan={2}>Uraian Kegiatan</th>
-                <th className="border-2 border-black p-2 w-[180px]" rowSpan={2}>Lokasi</th>
+                <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Hari / Tgl</th>
+                <th className="border-2 border-black p-2 w-[110px]" rowSpan={2}>Uraian Kegiatan</th>
+                <th className="border-2 border-black p-2 w-[150px]" rowSpan={2}>Lokasi</th>
                 <th className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
-                <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Vol</th>
+                <th className="border-2 border-black p-2 w-[65px]" rowSpan={2}>Vol</th>
                 <th className="border-2 border-black p-2 w-[115px]" rowSpan={2}>Peralatan</th>
                 <th className="border-2 border-black p-2 w-[115px]" rowSpan={2}>Alat Berat</th>
                 {recapMode === "with-fuel" && (
@@ -194,9 +194,9 @@ const MonthlyRecap = () => {
                 <th className="border-2 border-black p-2 w-[170px]" rowSpan={2}>Keterangan</th>
               </tr>
               <tr className="bg-slate-50">
-                <th className="border-2 border-black p-1 w-[110px]">0%</th>
-                <th className="border-2 border-black p-1 w-[110px]">50%</th>
-                <th className="border-2 border-black p-1 w-[110px]">100%</th>
+                <th className="border-2 border-black p-1 w-[142px]">0%</th>
+                <th className="border-2 border-black p-1 w-[142px]">50%</th>
+                <th className="border-2 border-black p-1 w-[142px]">100%</th>
                 {recapMode === "with-fuel" && (
                   <>
                     <th className="border-2 border-black p-1 text-[9px] w-[40px]">P</th>
