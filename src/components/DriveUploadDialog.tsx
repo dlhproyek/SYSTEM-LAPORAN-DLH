@@ -39,7 +39,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   useEffect(() => {
     if (!isOpen) return;
 
-    // Load Google Identity Services (GIS)
     if (!document.getElementById('google-gis')) {
       const script = document.createElement("script");
       script.id = 'google-gis';
@@ -49,7 +48,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       document.body.appendChild(script);
     }
 
-    // Load Google API Client (GAPI) for Picker
     if (!document.getElementById('google-gapi')) {
       const gapiScript = document.createElement("script");
       gapiScript.id = 'google-gapi';
