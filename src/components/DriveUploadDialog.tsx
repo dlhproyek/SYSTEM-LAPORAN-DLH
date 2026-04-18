@@ -18,8 +18,7 @@ import { cn } from "@/lib/utils";
 
 const CLIENT_ID = "323264526689-91gea696tm6ftv49jt4lb4tqjo5a1947.apps.googleusercontent.com"; 
 const API_KEY = "AIzaSyDzRtvJVVWSYJ1e9VGKBhA1CxRYtlda1PY";
-// Menambahkan scope metadata agar bisa melihat daftar folder
-const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly";
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 interface DriveUploadDialogProps {
   isOpen: boolean;
@@ -57,10 +56,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       gapiScript.src = "https://apis.google.com/js/api.js";
       gapiScript.onload = () => {
         (window as any).gapi.load('picker', {
-          callback: () => {
-            console.log("[DriveUpload] Picker API loaded");
-            setIsPickerApiLoaded(true);
-          }
+          callback: () => setIsPickerApiLoaded(true)
         });
       };
       document.body.appendChild(gapiScript);
@@ -94,7 +90,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       });
       client.requestAccessToken();
     } catch (err) {
-      console.error("[DriveUpload] Auth error:", err);
+      console.error("Auth error:", err);
       showError("Gagal memulai autentikasi Google");
     }
   };
@@ -112,7 +108,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
     }
 
     try {
-      // Membuat view khusus untuk folder
       const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
         .setSelectFolderEnabled(true)
         .setIncludeFolders(true);
@@ -129,13 +124,12 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             const doc = data.docs[0];
             setFolderName(doc.name);
             setFolderId(doc.id);
-            console.log("[DriveUpload] Folder selected:", doc.name, doc.id);
           }
         })
         .build();
       picker.setVisible(true);
     } catch (err: any) {
-      console.error("[DriveUpload] Picker error:", err);
+      console.error("Picker error:", err);
       showError(`Gagal membuka pemilih: ${err.message}`);
     }
   };
@@ -151,7 +145,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       showSuccess("Berhasil diunggah ke Google Drive");
       onClose();
     } catch (error) {
-      console.error("[DriveUpload] Upload error:", error);
+      console.error("Upload error:", error);
       showError("Gagal mengunggah ke Drive");
     } finally {
       setIsUploading(false);
@@ -224,7 +218,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
               <span className="truncate font-medium">{folderName}</span>
               {!isPickerApiLoaded && accessToken && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
             </Button>
-            {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk melihat daftar folder</p>}
+            {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
           </div>
         </div>
 
