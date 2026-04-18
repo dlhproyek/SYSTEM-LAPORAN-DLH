@@ -1,15 +1,11 @@
-// @ts-ignore: Deno imports are not recognized by standard TS compiler
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-
-// Declare Deno global for TypeScript compiler
-declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req: Request) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -22,6 +18,8 @@ serve(async (req: Request) => {
       throw new Error("Data PDF tidak ditemukan");
     }
 
+    // Ambil Google Credentials dari Environment Variables
+    // Anda harus menyetel GOOGLE_SERVICE_ACCOUNT_EMAIL dan GOOGLE_PRIVATE_KEY di Supabase Dashboard
     const clientEmail = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_EMAIL");
     const privateKey = Deno.env.get("GOOGLE_PRIVATE_KEY")?.replace(/\\n/g, '\n');
 
@@ -32,25 +30,24 @@ serve(async (req: Request) => {
       );
     }
 
-    // Metadata untuk Google Drive API
-    const metadata = {
-      name: fileName,
-      mimeType: 'application/pdf',
-      parents: folderId ? [folderId] : []
-    };
+    // Logika sederhana untuk mendapatkan Access Token (Menggunakan JWT)
+    // Catatan: Untuk implementasi produksi yang lebih kuat, gunakan library 'google-auth-library'
+    // Di sini kita asumsikan token dikirim atau menggunakan mekanisme fetch ke Google OAuth
+    
+    console.log("[upload-to-drive] Mengunggah file:", fileName);
 
-    console.log("[upload-to-drive] Mengunggah file ke folder:", folderId || "Root");
+    // Ini adalah placeholder untuk pemanggilan API Google Drive
+    // Karena keterbatasan environment, Anda perlu mengonfigurasi OAuth2/Service Account
     
     return new Response(
       JSON.stringify({ 
-        message: `File siap diunggah ke folder: ${folderId || 'Utama'}. Pastikan Service Account memiliki akses ke folder tersebut.`,
-        fileName,
-        folderId
+        message: "Sistem siap. Silakan hubungkan Service Account Google Anda di Dashboard Supabase.",
+        fileName 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("[upload-to-drive] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
