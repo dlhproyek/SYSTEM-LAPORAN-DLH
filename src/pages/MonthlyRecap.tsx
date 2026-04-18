@@ -17,7 +17,7 @@ import { saveAs } from 'file-saver';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { supabase } from '@/lib/supabase';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import DriveUploadDialog from '@/components/DriveUploadDialog';
 import {
   Tooltip,
@@ -117,30 +117,23 @@ const MonthlyRecap = () => {
   const handleDriveUpload = async (config: { fileName: string; folderId: string; accessToken: string }) => {
     if (!printRef.current) return;
     
-    const toastId = showLoading("Sedang memproses PDF kualitas tinggi...");
+    const toastId = showLoading("Menyiapkan PDF Multi-Halaman A3...");
     
     try {
       window.scrollTo(0, 0);
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2.5,
+      const element = printRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 1800, // Lebar lebih luas untuk memastikan tabel A3 tertangkap penuh
-        onclone: (clonedDoc) => {
-          const element = clonedDoc.querySelector('.print-area') as HTMLElement;
-          if (element) {
-            element.style.overflow = 'visible';
-            element.style.maxHeight = 'none';
-          }
-        }
+        windowWidth: 1600,
       });
       
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -148,10 +141,23 @@ const MonthlyRecap = () => {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const canvasRatio = canvas.height / canvas.width;
-      const targetHeight = pdfWidth * canvasRatio;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, targetHeight);
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage('a3', 'landscape');
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
       
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
       
