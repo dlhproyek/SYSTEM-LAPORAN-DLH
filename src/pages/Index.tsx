@@ -8,15 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Tag, Printer, FileBarChart,
-  LogOut, User, Lock
+  LogOut, User, Lock, RefreshCw, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { showSuccess, showError } from '@/utils/toast';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { reportService } from '@/services/reportService';
 import { useAuth } from '@/context/AuthContext';
 import { getUnitByCategory } from '@/utils/report-helpers';
+import { supabase } from '@/lib/supabase';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ const Index = () => {
   const { profile, signOut } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
@@ -76,6 +78,37 @@ const Index = () => {
       showError("Gagal memuat data dari database");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncLogos = async () => {
+    setIsSyncing(true);
+    const toastId = showLoading("Sedang menyinkronkan logo ke storage...");
+    
+    try {
+      const logos = [
+        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Logo_Kota_Medan.png/200px-Logo_Kota_Medan.png", name: "logo-medan.png" },
+        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png/200px-Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png", name: "logo-dlh.png" }
+      ];
+
+      for (const logo of logos) {
+        const response = await fetch(logo.url);
+        const blob = await response.blob();
+        
+        const { error } = await supabase.storage
+          .from('assets')
+          .upload(logo.name, blob, { upsert: true });
+          
+        if (error) throw error;
+      }
+
+      showSuccess("Logo berhasil disinkronkan ke Storage!");
+    } catch (error: any) {
+      console.error(error);
+      showError("Gagal sinkronisasi: " + error.message);
+    } finally {
+      setIsSyncing(false);
+      dismissToast(toastId);
     }
   };
 
@@ -144,6 +177,20 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Sync Button for Admin */}
+            {!isUserRestricted && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSyncLogos} 
+                disabled={isSyncing}
+                className="hidden md:flex bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+              >
+                {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Sinkron Logo
+              </Button>
+            )}
+
             {/* Desktop Buttons */}
             <div className="hidden lg:flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200">
@@ -206,6 +253,11 @@ const Index = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  {!isUserRestricted && (
+                    <DropdownMenuItem onClick={handleSyncLogos}>
+                      <RefreshCw className="h-4 w-4 mr-2 text-amber-600" /> Sinkron Logo
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => navigate('/monthly-rekap')}>
                     <FileBarChart className="h-4 w-4 mr-2 text-purple-600" /> Rekap Bulanan
                   </DropdownMenuItem>
