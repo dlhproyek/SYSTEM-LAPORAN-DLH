@@ -87,8 +87,8 @@ const Index = () => {
     
     try {
       const logos = [
-        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Logo_Kota_Medan.png/200px-Logo_Kota_Medan.png", name: "logo-medan.png" },
-        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png/200px-Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png", name: "logo-dlh.png" }
+        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Logo_Kota_Medan.png/200px-Logo_Kota_Medan.png", name: "logo-medan.jpg" },
+        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png/200px-Logo_Kementerian_Lingkungan_Hidup_dan_Kehutanan.png", name: "logo-dlh.jpg" }
       ];
 
       for (const logo of logos) {

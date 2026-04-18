@@ -34,8 +34,8 @@ const getLogoUrl = (fileName: string) => {
   return data.publicUrl;
 };
 
-const LOGO_MEDAN_URL = getLogoUrl('logo-medan.png');
-const LOGO_DLH_URL = getLogoUrl('logo-dlh.png');
+const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
+const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
 type RecapMode = "with-fuel" | "without-fuel";
 
@@ -258,7 +258,7 @@ const MonthlyRecap = () => {
           const arrayBuffer = await blob.arrayBuffer();
           const imageId = workbook.addImage({
             buffer: arrayBuffer,
-            extension: 'png',
+            extension: 'jpeg',
           });
           worksheet.addImage(imageId, {
             tl: { col: col, row: row },
