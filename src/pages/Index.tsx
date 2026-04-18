@@ -40,6 +40,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const categories: string[] = [
   "semua", "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
@@ -80,11 +86,13 @@ const Index = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      showError("Gagal keluar");
+    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+      try {
+        await signOut();
+        navigate('/login');
+      } catch (error) {
+        showError("Gagal keluar");
+      }
     }
   };
 
@@ -216,26 +224,33 @@ const Index = () => {
               </DropdownMenu>
             </div>
 
-            {/* User Menu Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-blue-200 bg-blue-50 text-blue-600">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="p-2 px-3">
-                  <p className="text-xs font-bold text-slate-900">{profile?.role === 'admin' ? 'Administrator' : 'User Tim'}</p>
-                  <p className="text-[10px] text-slate-500">{profile?.category || 'Semua Akses'}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                  <LogOut className="h-4 w-4 mr-2" /> Keluar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User Info & Logout */}
+            <div className="flex items-center gap-1 border-l pl-2 ml-1">
+              <div className="hidden sm:flex flex-col items-end mr-2">
+                <p className="text-[10px] font-bold text-slate-900 leading-none">{profile?.role === 'admin' ? 'Admin' : 'User'}</p>
+                <p className="text-[8px] text-slate-500 truncate max-w-[80px]">{profile?.category || 'Semua'}</p>
+              </div>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleLogout}
+                      className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full"
+                    >
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Keluar Sistem</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
 
-            <Button onClick={() => navigate('/create')} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3 md:px-4">
+            <Button onClick={() => navigate('/create')} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3 md:px-4 ml-1">
               <Plus className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Laporan Baru</span>
             </Button>
           </div>

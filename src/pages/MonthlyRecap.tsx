@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Lock, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Printer, Lock, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,12 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { supabase } from '@/lib/supabase';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -41,7 +47,7 @@ type RecapMode = "with-fuel" | "without-fuel";
 
 const MonthlyRecap = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
@@ -99,6 +105,17 @@ const MonthlyRecap = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+      try {
+        await signOut();
+        navigate('/login');
+      } catch (error) {
+        showError("Gagal keluar");
+      }
     }
   };
 
@@ -325,9 +342,29 @@ const MonthlyRecap = () => {
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+            </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleLogout}
+                    className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Keluar Sistem</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           
           <div className="flex flex-wrap items-center gap-3">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
