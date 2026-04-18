@@ -1,7 +1,8 @@
 /**
  * Mengompres dan meresize gambar sebelum diunggah
- * Melakukan 'Center Crop' agar gambar mengisi bingkai (object-fit: cover)
  * Target: Width 2.26" dan Height 2.95" dengan resolusi 150 PPI
+ * 
+ * UPDATE: Resolusi ditingkatkan ke 150 PPI dan kualitas ke 90%
  */
 export const compressImage = (
   base64: string, 
@@ -17,11 +18,11 @@ export const compressImage = (
       
       // Konversi Inci ke Piksel (150 DPI/PPI)
       const PPI = 150;
-      const targetWidth = Math.round(targetWidthInches * PPI);
-      const targetHeight = Math.round(targetHeightInches * PPI);
+      const width = Math.round(targetWidthInches * PPI);
+      const height = Math.round(targetHeightInches * PPI);
 
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
+      canvas.width = width;
+      canvas.height = height;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -29,35 +30,10 @@ export const compressImage = (
         return;
       }
 
-      // Hitung rasio untuk Center Crop (Object-fit: cover)
-      const imgWidth = img.width;
-      const imgHeight = img.height;
-      const targetRatio = targetWidth / targetHeight;
-      const imgRatio = imgWidth / imgHeight;
+      // Gambar ditarik (stretch) untuk mengisi seluruh area canvas
+      ctx.drawImage(img, 0, 0, width, height);
 
-      let sourceX = 0;
-      let sourceY = 0;
-      let sourceWidth = imgWidth;
-      let sourceHeight = imgHeight;
-
-      if (imgRatio > targetRatio) {
-        // Gambar terlalu lebar (landscape), potong sisi kiri & kanan
-        sourceWidth = imgHeight * targetRatio;
-        sourceX = (imgWidth - sourceWidth) / 2;
-      } else {
-        // Gambar terlalu tinggi (portrait), potong sisi atas & bawah
-        sourceHeight = imgWidth / targetRatio;
-        sourceY = (imgHeight - sourceHeight) / 2;
-      }
-
-      // Gambar ke canvas dengan pemotongan dari tengah
-      ctx.drawImage(
-        img, 
-        sourceX, sourceY, sourceWidth, sourceHeight, // Area sumber (crop)
-        0, 0, targetWidth, targetHeight              // Area tujuan (canvas)
-      );
-
-      // Ekspor sebagai JPG dengan kualitas tinggi
+      // Ekspor sebagai JPG dengan kualitas 90%
       const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
       resolve(compressedBase64);
     };
