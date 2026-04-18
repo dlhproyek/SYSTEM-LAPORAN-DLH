@@ -12,17 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Folder, User, FileText, Loader2, CloudUpload, AlertCircle } from 'lucide-react';
+import { Folder, User, FileText, Loader2, CloudUpload } from 'lucide-react';
 import { showSuccess, showError } from '@/utils/toast';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /**
- * PANDUAN PENGISIAN:
- * 1. CLIENT_ID: Ambil dari 'OAuth 2.0 Client IDs' di Google Cloud.
- * 2. API_KEY: Ambil dari 'API Keys' di Google Cloud.
+ * Kredensial Google Cloud yang telah dikonfigurasi
  */
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "MASUKKAN_CLIENT_ID_ANDA_DI_SINI"; 
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "MASUKKAN_API_KEY_ANDA_DI_SINI";
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "323264526689-91gea696tm6ftv49jt4lb4tqjo5a1947.apps.googleusercontent.com"; 
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyDzRtvJVVWSYJ1e9VGKBhA1CxRYtlda1PY";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 interface DriveUploadDialogProps {
@@ -40,17 +37,17 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const isConfigMissing = CLIENT_ID.includes("MASUKKAN") || API_KEY.includes("MASUKKAN");
-
   useEffect(() => {
     if (!isOpen) return;
 
+    // Load Google Identity Services
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
 
+    // Load Google API Client (GAPI) for Picker
     const gapiScript = document.createElement("script");
     gapiScript.src = "https://apis.google.com/js/api.js";
     gapiScript.async = true;
@@ -59,11 +56,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   }, [isOpen]);
 
   const handleAuth = () => {
-    if (isConfigMissing) {
-      showError("Kredensial Google belum diisi di kode.");
-      return;
-    }
-
     try {
       const client = (window as any).google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
@@ -71,6 +63,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
         callback: (response: any) => {
           if (response.access_token) {
             setAccessToken(response.access_token);
+            // Ambil info email user
             fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`)
               .then(res => res.json())
               .then(data => setUserEmail(data.email))
@@ -141,16 +134,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             Atur lokasi dan nama file untuk laporan PDF Anda.
           </DialogDescription>
         </DialogHeader>
-        
-        {isConfigMissing && (
-          <Alert variant="destructive" className="my-2">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Konfigurasi Diperlukan</AlertTitle>
-            <AlertDescription className="text-[10px]">
-              Silakan masukkan Client ID dan API Key yang Anda dapatkan dari Google Cloud Console ke dalam file DriveUploadDialog.tsx.
-            </AlertDescription>
-          </Alert>
-        )}
 
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
@@ -173,7 +156,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             <Button 
               variant="outline" 
               onClick={handleAuth}
-              disabled={isUploading || isConfigMissing}
+              disabled={isUploading}
               className="justify-start font-normal h-10 border-slate-200"
             >
               {userEmail ? (
@@ -196,7 +179,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             >
               <span className="truncate">{folderName}</span>
             </Button>
-            {!accessToken && !isConfigMissing && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
+            {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
           </div>
         </div>
 
