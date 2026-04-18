@@ -419,31 +419,31 @@ const MonthlyRecap = () => {
       </div>
 
       <div className="print-area bg-white p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
-        <div className="flex items-center justify-between border-b-4 border-double border-black pb-4 mb-6">
-          <div className="w-24 h-24 flex items-center justify-center bg-slate-50 rounded border border-dashed border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
+          <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
             <img 
               src={LOGO_MEDAN_URL} 
               className="max-h-full max-w-full object-contain" 
               alt="Logo Medan" 
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<div class="text-[8px] text-slate-400 text-center p-1">Logo Medan Belum Diupload</div>';
+                e.currentTarget.parentElement!.innerHTML = '<div class="text-[8px] text-slate-400 text-center p-1">Logo Medan</div>';
               }}
             />
           </div>
-          <div className="text-center flex-1 px-4">
+          <div className="text-center px-4">
             <h1 className="text-2xl font-bold uppercase">Pemerintah Kota Medan</h1>
             <h2 className="text-3xl font-black uppercase">Dinas Lingkungan Hidup</h2>
             <p className="text-sm italic">Jl. Pinang Baris, Lalang Kec. Medan Sunggal, Kota Medan, Sumatera Utara</p>
           </div>
-          <div className="w-24 h-24 flex items-center justify-center bg-slate-50 rounded border border-dashed border-slate-200 overflow-hidden">
+          <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
             <img 
               src={LOGO_DLH_URL} 
               className="max-h-full max-w-full object-contain" 
               alt="Logo DLH" 
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<div class="text-[8px] text-slate-400 text-center p-1">Logo DLH Belum Diupload</div>';
+                e.currentTarget.parentElement!.innerHTML = '<div class="text-[8px] text-slate-400 text-center p-1">Logo DLH</div>';
               }}
             />
           </div>
