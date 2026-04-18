@@ -120,24 +120,18 @@ const MonthlyRecap = () => {
     const toastId = showLoading("Sedang memproses PDF kualitas tinggi...");
     
     try {
-      // Pastikan posisi scroll di paling atas agar tidak terpotong
       window.scrollTo(0, 0);
-      
-      // Tunggu sebentar agar rendering stabil
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const canvas = await html2canvas(printRef.current, {
-        scale: 2.5, // Skala yang seimbang antara ketajaman dan ukuran file
+        scale: 2.5,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
         scrollX: 0,
         scrollY: 0,
-        x: 0,
-        y: 0,
-        windowWidth: 1600, // Paksa lebar window saat capture agar tabel tidak terpotong horizontal
+        windowWidth: 1800, // Lebar lebih luas untuk memastikan tabel A3 tertangkap penuh
         onclone: (clonedDoc) => {
-          // Pastikan elemen di dalam klon tidak memiliki overflow yang mengganggu
           const element = clonedDoc.querySelector('.print-area') as HTMLElement;
           if (element) {
             element.style.overflow = 'visible';
@@ -154,13 +148,9 @@ const MonthlyRecap = () => {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Hitung rasio agar pas di satu halaman A3
       const canvasRatio = canvas.height / canvas.width;
       const targetHeight = pdfWidth * canvasRatio;
 
-      // Jika konten lebih panjang dari satu halaman A3, biarkan ia mengisi halaman
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, targetHeight);
       
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
@@ -330,6 +320,9 @@ const MonthlyRecap = () => {
   const showSignatory4 = selectedCategories.includes('semua') || selectedCategories.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
   const showSignatory5 = selectedCategories.includes('semua') || selectedCategories.includes("Tim Pohon");
 
+  const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
+  const subHeaderStyle = { backgroundColor: '#f8fafc', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -416,24 +409,24 @@ const MonthlyRecap = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
             <thead>
-              <tr className="bg-slate-100">
-                <th className="border-2 border-black p-2 w-[35px] bg-slate-100" rowSpan={2}>No</th>
-                <th className="border-2 border-black p-2 w-[70px] bg-slate-100" rowSpan={2}>Hari / Tgl</th>
-                <th className="border-2 border-black p-2 w-[110px] bg-slate-100" rowSpan={2}>Uraian Kegiatan</th>
-                <th className="border-2 border-black p-2 w-[150px] bg-slate-100" rowSpan={2}>Lokasi</th>
-                <th className="border-2 border-black p-2 bg-slate-100" colSpan={3}>Dokumentasi</th>
-                <th className="border-2 border-black p-2 w-[65px] bg-slate-100" rowSpan={2}>Vol</th>
-                <th className="border-2 border-black p-2 w-[115px] bg-slate-100" rowSpan={2}>Peralatan</th>
-                <th className="border-2 border-black p-2 w-[115px] bg-slate-100" rowSpan={2}>Alat Berat</th>
-                {recapMode === "with-fuel" && (<th className="border-2 border-black p-2 w-[120px] bg-slate-100" colSpan={3}>BBM (Liter)</th>)}
-                <th className="border-2 border-black p-2 w-[100px] bg-slate-100" rowSpan={2}>Koordinator</th>
-                <th className="border-2 border-black p-2 w-[170px] bg-slate-100" rowSpan={2}>Keterangan</th>
+              <tr style={{ height: '40px' }}>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[35px]" rowSpan={2}><div className="flex items-center justify-center h-full">No</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[70px]" rowSpan={2}><div className="flex items-center justify-center h-full">Hari / Tgl</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[110px]" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[150px]" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[65px]" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Peralatan</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
+                {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>)}
+                <th style={headerStyle} className="border-2 border-black p-2 w-[100px]" rowSpan={2}><div className="flex items-center justify-center h-full">Koordinator</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[170px]" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
               </tr>
-              <tr className="bg-slate-50">
-                <th className="border-2 border-black p-1 w-[142px] bg-slate-50">0%</th>
-                <th className="border-2 border-black p-1 w-[142px] bg-slate-50">50%</th>
-                <th className="border-2 border-black p-1 w-[142px] bg-slate-50">100%</th>
-                {recapMode === "with-fuel" && (<><th className="border-2 border-black p-1 text-[9px] w-[40px] bg-slate-50">P</th><th className="border-2 border-black p-1 text-[9px] w-[40px] bg-slate-50">D</th><th className="border-2 border-black p-1 text-[9px] w-[40px] bg-slate-50">S</th></>)}
+              <tr style={{ height: '30px' }}>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">0%</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">50%</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">100%</th>
+                {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">S</th></>)}
               </tr>
             </thead>
             <tbody>
