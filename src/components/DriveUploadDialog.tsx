@@ -33,21 +33,37 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPickerApiLoaded, setIsPickerApiLoaded] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+    // Load Google Identity Services (GIS)
+    if (!document.getElementById('google-gis')) {
+      const script = document.createElement("script");
+      script.id = 'google-gis';
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
 
-    const gapiScript = document.createElement("script");
-    gapiScript.src = "https://apis.google.com/js/api.js";
-    gapiScript.async = true;
-    gapiScript.defer = true;
-    document.body.appendChild(gapiScript);
+    // Load Google API Client (GAPI) for Picker
+    if (!document.getElementById('google-gapi')) {
+      const gapiScript = document.createElement("script");
+      gapiScript.id = 'google-gapi';
+      gapiScript.src = "https://apis.google.com/js/api.js";
+      gapiScript.onload = () => {
+        (window as any).gapi.load('picker', {
+          callback: () => setIsPickerApiLoaded(true)
+        });
+      };
+      document.body.appendChild(gapiScript);
+    } else if ((window as any).gapi) {
+      (window as any).gapi.load('picker', {
+        callback: () => setIsPickerApiLoaded(true)
+      });
+    }
   }, [isOpen]);
 
   const handleAuth = () => {
@@ -79,6 +95,11 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       return;
     }
 
+    if (!isPickerApiLoaded) {
+      showError("Modul pemilih folder sedang dimuat, silakan tunggu sebentar...");
+      return;
+    }
+
     try {
       const google = (window as any).google;
       const picker = new google.picker.PickerBuilder()
@@ -96,7 +117,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       picker.setVisible(true);
     } catch (err) {
       console.error("Picker error:", err);
-      showError("Gagal membuka pemilih folder");
+      showError("Gagal membuka pemilih folder. Pastikan API Key Anda mengizinkan Google Picker API.");
     }
   };
 
@@ -169,12 +190,14 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             <Button 
               variant="outline" 
               onClick={openPicker}
-              disabled={!accessToken || isUploading}
+              disabled={!accessToken || isUploading || !isPickerApiLoaded}
               className="justify-start font-normal h-10 border-slate-200"
             >
               <span className="truncate">{folderName}</span>
+              {!isPickerApiLoaded && accessToken && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
             </Button>
             {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
+            {accessToken && !isPickerApiLoaded && <p className="text-[10px] text-blue-600 italic">* Sedang memuat modul pemilih...</p>}
           </div>
         </div>
 
