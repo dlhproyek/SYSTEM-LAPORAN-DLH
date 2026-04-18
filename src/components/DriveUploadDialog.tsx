@@ -12,12 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Folder, User, FileText, Loader2, CloudUpload } from 'lucide-react';
+import { Folder, User, FileText, Loader2, CloudUpload, AlertCircle } from 'lucide-react';
 import { showSuccess, showError } from '@/utils/toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Catatan: Anda perlu mendapatkan Client ID dan API Key dari Google Cloud Console
-const CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"; 
-const API_KEY = "YOUR_GOOGLE_API_KEY";
+// Menggunakan variabel lingkungan atau placeholder
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID"; 
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "YOUR_GOOGLE_API_KEY";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 interface DriveUploadDialogProps {
@@ -35,8 +36,11 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Load Google API Scripts
+  const isConfigMissing = CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID" || API_KEY === "YOUR_GOOGLE_API_KEY";
+
   useEffect(() => {
+    if (!isOpen) return;
+
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
@@ -48,23 +52,37 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
     gapiScript.async = true;
     gapiScript.defer = true;
     document.body.appendChild(gapiScript);
-  }, []);
+
+    return () => {
+      // Cleanup jika diperlukan
+    };
+  }, [isOpen]);
 
   const handleAuth = () => {
-    const client = (window as any).google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: (response: any) => {
-        if (response.access_token) {
-          setAccessToken(response.access_token);
-          // Ambil info profil sederhana
-          fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`)
-            .then(res => res.json())
-            .then(data => setUserEmail(data.email));
-        }
-      },
-    });
-    client.requestAccessToken();
+    if (isConfigMissing) {
+      showError("Kredensial Google belum dikonfigurasi di kode.");
+      return;
+    }
+
+    try {
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (response: any) => {
+          if (response.access_token) {
+            setAccessToken(response.access_token);
+            fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`)
+              .then(res => res.json())
+              .then(data => setUserEmail(data.email))
+              .catch(() => setUserEmail("Akun Terhubung"));
+          }
+        },
+      });
+      client.requestAccessToken();
+    } catch (err) {
+      console.error("Auth error:", err);
+      showError("Gagal memulai autentikasi Google");
+    }
   };
 
   const openPicker = () => {
@@ -73,20 +91,25 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       return;
     }
 
-    const google = (window as any).google;
-    const picker = new google.picker.PickerBuilder()
-      .addView(google.picker.ViewId.FOLDERS)
-      .setOAuthToken(accessToken)
-      .setDeveloperKey(API_KEY)
-      .setCallback((data: any) => {
-        if (data.action === google.picker.Action.PICKED) {
-          const doc = data.docs[0];
-          setFolderName(doc.name);
-          setFolderId(doc.id);
-        }
-      })
-      .build();
-    picker.setVisible(true);
+    try {
+      const google = (window as any).google;
+      const picker = new google.picker.PickerBuilder()
+        .addView(google.picker.ViewId.FOLDERS)
+        .setOAuthToken(accessToken)
+        .setDeveloperKey(API_KEY)
+        .setCallback((data: any) => {
+          if (data.action === google.picker.Action.PICKED) {
+            const doc = data.docs[0];
+            setFolderName(doc.name);
+            setFolderId(doc.id);
+          }
+        })
+        .build();
+      picker.setVisible(true);
+    } catch (err) {
+      console.error("Picker error:", err);
+      showError("Gagal membuka pemilih folder");
+    }
   };
 
   const handleFinalUpload = async () => {
@@ -100,6 +123,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       showSuccess("Berhasil diunggah ke Google Drive");
       onClose();
     } catch (error) {
+      console.error("Upload error:", error);
       showError("Gagal mengunggah ke Drive");
     } finally {
       setIsUploading(false);
@@ -118,8 +142,17 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
           </DialogDescription>
         </DialogHeader>
         
+        {isConfigMissing && (
+          <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Konfigurasi Diperlukan</AlertTitle>
+            <AlertDescription className="text-[10px]">
+              Anda harus memasukkan Client ID dan API Key dari Google Cloud Console ke dalam file DriveUploadDialog.tsx.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid gap-6 py-4">
-          {/* Nama File */}
           <div className="grid gap-2">
             <Label htmlFor="filename" className="flex items-center gap-2">
               <FileText size={14} /> Nama File
@@ -129,10 +162,10 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
               placeholder="Masukkan nama file..."
+              disabled={isUploading}
             />
           </div>
 
-          {/* Akun Google */}
           <div className="grid gap-2">
             <Label className="flex items-center gap-2">
               <User size={14} /> Akun Google
@@ -140,17 +173,17 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             <Button 
               variant="outline" 
               onClick={handleAuth}
+              disabled={isUploading || isConfigMissing}
               className="justify-start font-normal h-10 border-slate-200"
             >
               {userEmail ? (
-                <span className="text-blue-600 font-medium">{userEmail}</span>
+                <span className="text-blue-600 font-medium truncate">{userEmail}</span>
               ) : (
                 <span className="text-slate-500">Klik untuk pilih akun...</span>
               )}
             </Button>
           </div>
 
-          {/* Lokasi Folder */}
           <div className="grid gap-2">
             <Label className="flex items-center gap-2">
               <Folder size={14} /> Lokasi Penyimpanan
@@ -158,12 +191,12 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             <Button 
               variant="outline" 
               onClick={openPicker}
-              disabled={!accessToken}
+              disabled={!accessToken || isUploading}
               className="justify-start font-normal h-10 border-slate-200"
             >
               <span className="truncate">{folderName}</span>
             </Button>
-            {!accessToken && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
+            {!accessToken && !isConfigMissing && <p className="text-[10px] text-amber-600 italic">* Pilih akun dulu untuk memilih folder</p>}
           </div>
         </div>
 
