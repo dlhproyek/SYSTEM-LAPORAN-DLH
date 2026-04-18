@@ -124,13 +124,6 @@ const MonthlyRecap = () => {
 
   const isUserRestricted = profile?.role !== 'admin';
 
-  // Mendapatkan teks kategori untuk header sambungan
-  const getCategoryText = () => {
-    if (selectedCategories.includes('semua')) return "Semua Kategori";
-    if (selectedCategories.length > 1) return `${selectedCategories.length} Kategori`;
-    return selectedCategories[0] || "";
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -223,10 +216,7 @@ const MonthlyRecap = () => {
         </div>
       </div>
 
-      <div className="print-area bg-white p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm] relative">
-        {/* Cover untuk menyembunyikan baris sambungan di halaman pertama */}
-        <div className="first-page-header-cover no-print-screen"></div>
-
+      <div className="print-area bg-white p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
         <div className="text-center border-b-4 border-double border-black pb-4 mb-6">
           <h1 className="text-2xl font-bold uppercase">Pemerintah Kota Medan</h1>
           <h2 className="text-3xl font-black uppercase">Dinas Lingkungan Hidup</h2>
@@ -242,12 +232,6 @@ const MonthlyRecap = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
             <thead>
-              {/* Baris Sambungan - Hanya muncul di halaman 2+ karena ditutup cover di halaman 1 */}
-              <tr className="continuation-row bg-yellow-50">
-                <th colSpan={recapMode === "with-fuel" ? 15 : 12} className="border-2 border-black p-2 text-left italic font-bold text-blue-800">
-                  Sambungan Rekap Bulanan {months[parseInt(selectedMonth)-1]} {selectedYear} - {getCategoryText()} ...
-                </th>
-              </tr>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-2 w-[35px]" rowSpan={2}>No</th>
                 <th className="border-2 border-black p-2 w-[70px]" rowSpan={2}>Hari / Tgl</th>
@@ -409,9 +393,6 @@ const MonthlyRecap = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @media screen {
-          .no-print-screen { display: none !important; }
-        }
         @media print {
           body { background: white !important; }
           .no-print { display: none !important; }
@@ -422,7 +403,6 @@ const MonthlyRecap = () => {
             margin: 0 !important;
             width: 100% !important;
             max-width: none !important;
-            position: relative;
           }
           @page { 
             size: A3 landscape; 
@@ -448,18 +428,6 @@ const MonthlyRecap = () => {
           .signature-section {
             page-break-inside: avoid;
             margin-top: 2cm;
-          }
-
-          /* Trik untuk menyembunyikan baris sambungan di halaman pertama */
-          .first-page-header-cover {
-            display: block !important;
-            position: absolute;
-            top: 145px; /* Sesuaikan dengan posisi baris sambungan di halaman 1 */
-            left: 0;
-            width: 100%;
-            height: 35px;
-            background: white;
-            z-index: 20;
           }
         }
       `}} />
