@@ -151,7 +151,6 @@ const MonthlyRecap = () => {
       
       let currentY = margin;
 
-      // 1. Capture Header
       const headerEl = document.querySelector('.pdf-header') as HTMLElement;
       let headerImg = "";
       let headerHeight = 0;
@@ -163,7 +162,6 @@ const MonthlyRecap = () => {
         currentY += headerHeight + 5;
       }
 
-      // 2. Capture Table Header
       const tableHeaderEl = document.querySelector('.pdf-table-header') as HTMLElement;
       let tableHeaderImg = "";
       let tableHeaderHeight = 0;
@@ -175,7 +173,6 @@ const MonthlyRecap = () => {
         currentY += tableHeaderHeight;
       }
 
-      // 3. Capture Footer (untuk hitung tinggi)
       const footerEl = document.querySelector('.pdf-footer') as HTMLElement;
       let footerImg = "";
       let footerHeight = 0;
@@ -185,7 +182,6 @@ const MonthlyRecap = () => {
         footerHeight = (canvas.height * contentWidth) / canvas.width;
       }
 
-      // 4. Capture Report Blocks
       const reportBlocks = document.querySelectorAll('.pdf-report-block');
       for (let i = 0; i < reportBlocks.length; i++) {
         const block = reportBlocks[i] as HTMLElement;
@@ -219,7 +215,6 @@ const MonthlyRecap = () => {
         currentY += imgHeight;
       }
 
-      // 5. Tambahkan Footer
       if (footerImg) {
         if (currentY + footerHeight > pdfHeight - margin) {
           pdf.addPage('a3', 'landscape');
@@ -230,7 +225,7 @@ const MonthlyRecap = () => {
       
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
       
-      const { error } = await supabase.functions.invoke('upload-to-drive', {
+      const { data, error } = await supabase.functions.invoke('upload-to-drive', {
         body: { 
           pdfBase64, 
           fileName: config.fileName.endsWith('.pdf') ? config.fileName : `${config.fileName}.pdf`,
@@ -240,10 +235,11 @@ const MonthlyRecap = () => {
       });
 
       if (error) throw error;
-      showSuccess("Berhasil diunggah ke Google Drive");
+      return data;
     } catch (error: any) {
       console.error(error);
       showError("Gagal mengunggah: " + error.message);
+      throw error;
     } finally {
       dismissToast(toastId);
     }

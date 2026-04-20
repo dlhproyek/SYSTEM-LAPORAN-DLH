@@ -1,11 +1,10 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+// @ts-ignore: Deno namespace is available in Supabase Edge Functions
+Deno.serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -28,7 +27,7 @@ serve(async (req) => {
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'application/pdf' });
 
-    // Persiapkan Multipart Upload untuk Google Drive API
+    // 1. Unggah File
     const metadata = {
       name: fileName,
       parents: [folderId],
@@ -39,7 +38,7 @@ serve(async (req) => {
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', blob);
 
-    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${userAccessToken}`,
@@ -47,18 +46,52 @@ serve(async (req) => {
       body: form,
     });
 
-    const result = await response.json();
+    const uploadResult = await uploadResponse.json();
 
-    if (!response.ok) {
-      throw new Error(result.error?.message || "Gagal mengunggah ke Google Drive");
+    if (!uploadResponse.ok) {
+      throw new Error(uploadResult.error?.message || "Gagal mengunggah ke Google Drive");
     }
 
+    const fileId = uploadResult.id;
+
+    // 2. Atur Izin (Permissions) menjadi "Anyone with the link"
+    console.log(`[upload-to-drive] Mengatur izin publik untuk file ${fileId}`);
+    const permissionResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'role': 'reader',
+        'type': 'anyone'
+      }),
+    });
+
+    if (!permissionResponse.ok) {
+      const permError = await permissionResponse.json();
+      console.warn("[upload-to-drive] Gagal mengatur izin publik:", permError.error?.message);
+    }
+
+    // 3. Ambil Link File (webViewLink)
+    const getFileResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink`, {
+      headers: {
+        'Authorization': `Bearer ${userAccessToken}`,
+      },
+    });
+    
+    const fileData = await getFileResponse.json();
+
     return new Response(
-      JSON.stringify({ message: "Berhasil diunggah", fileId: result.id }),
+      JSON.stringify({ 
+        message: "Berhasil diunggah dan diatur publik", 
+        fileId: fileId,
+        webViewLink: fileData.webViewLink 
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("[upload-to-drive] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
