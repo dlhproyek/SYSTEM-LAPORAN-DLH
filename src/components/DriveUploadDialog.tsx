@@ -105,7 +105,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
 
     try {
       setIsPickerOpen(true);
-      // Menggunakan DocsView yang lebih spesifik untuk folder
       const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
         .setSelectFolderEnabled(true)
         .setIncludeFolders(true)
@@ -188,22 +187,16 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
           onClose(); 
         }
       }}
+      modal={false} // PENTING: Menonaktifkan modal agar elemen luar (Picker) bisa diklik
     >
+      {/* Overlay manual karena modal={false} menghilangkan overlay default */}
+      {isOpen && <div className="fixed inset-0 bg-black/50 z-50 no-print" onClick={() => !isUploading && !isPickerOpen && onClose()} />}
+      
       <DialogContent 
-        className="sm:max-w-[450px]"
+        className="sm:max-w-[450px] z-[51]"
         onInteractOutside={(e) => {
-          // Sangat penting: Izinkan interaksi dengan elemen di luar dialog (Picker)
+          // Izinkan interaksi dengan Picker
           if (isPickerOpen) {
-            e.preventDefault();
-          }
-        }}
-        onPointerDownOutside={(e) => {
-          if (isPickerOpen || isUploading || isCreatingFolder) {
-            e.preventDefault();
-          }
-        }}
-        onEscapeKeyDown={(e) => {
-          if (isUploading || isCreatingFolder || isPickerOpen) {
             e.preventDefault();
           }
         }}
