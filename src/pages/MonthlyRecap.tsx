@@ -5,7 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, Loader2, Lock } from 'lucide-react';
+import { 
+  ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
+  Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, 
+  Loader2, Lock, ChevronDown 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
@@ -25,6 +29,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -69,7 +79,6 @@ const MonthlyRecap = () => {
         setSelectedCategories(['semua']);
       }
     } else {
-      // Default untuk publik: Semua Kategori
       setSelectedCategories(['semua']);
     }
   }, [profile, isLoggedIn]);
@@ -396,8 +405,22 @@ const MonthlyRecap = () => {
                 <CloudUpload className="mr-2 h-4 w-4" /> Simpan ke Drive
               </Button>
             )}
-            <Button onClick={handleExportExcel} variant="outline" className="bg-green-50 text-green-700 border-green-200"><Table className="mr-2 h-4 w-4" /> Rekap Excel</Button>
-            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap A3</Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 min-w-[120px]">
+                  <Printer className="mr-2 h-4 w-4" /> Cetak <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
+                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Rekap A3
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
