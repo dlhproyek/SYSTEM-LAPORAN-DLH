@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Tag, Printer, FileBarChart,
-  LogOut, LogIn, User, Lock
+  LogOut, LogIn, Filter, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -20,7 +20,6 @@ import { getUnitByCategory } from '@/utils/report-helpers';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -33,21 +32,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const categories: string[] = [
   "semua", "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
+];
+
+const months = [
+  { value: "semua", label: "Semua Bulan" },
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
 ];
 
 const Index = () => {
@@ -56,6 +59,8 @@ const Index = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("semua");
+  const [filterMonth, setFilterMonth] = useState("semua");
   const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
 
@@ -66,13 +71,13 @@ const Index = () => {
     loadReports();
     if (isUserRestricted && profile?.category) {
       setSelectedPrintCategory(profile.category);
+      setFilterCategory(profile.category);
     }
   }, [profile, isUserRestricted]);
 
   const loadReports = async () => {
     try {
       setLoading(true);
-      // Jika admin atau tamu, ambil semua. Jika user biasa, ambil sesuai kategori.
       const categoryFilter = (isLoggedIn && profile?.role !== 'admin') ? profile?.category : null;
       const data = await reportService.getAllReports(categoryFilter);
       setReports(data);
@@ -108,13 +113,25 @@ const Index = () => {
     }
   };
 
+  const resetFilters = () => {
+    setSearchQuery("");
+    setFilterCategory(isUserRestricted ? (profile?.category || "semua") : "semua");
+    setFilterMonth("semua");
+  };
+
   const filteredReports = reports.filter(report => {
     const search = searchQuery.toLowerCase();
-    return (
+    const reportDate = new Date(report.date);
+    const reportMonth = (reportDate.getMonth() + 1).toString();
+
+    const matchesSearch = 
       report.description.toLowerCase().includes(search) ||
-      report.location.street.toLowerCase().includes(search) ||
-      report.category?.toLowerCase().includes(search)
-    );
+      report.location.street.toLowerCase().includes(search);
+    
+    const matchesCategory = filterCategory === "semua" || report.category === filterCategory;
+    const matchesMonth = filterMonth === "semua" || reportMonth === filterMonth;
+
+    return matchesSearch && matchesCategory && matchesMonth;
   });
 
   return (
@@ -141,7 +158,6 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Tombol Rekap & Cetak hanya untuk User Login */}
             {isLoggedIn && (
               <div className="hidden lg:flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200">
@@ -174,7 +190,6 @@ const Index = () => {
               </div>
             )}
 
-            {/* User Info / Login Button */}
             <div className="flex items-center gap-1 border-l pl-2 ml-1">
               {isLoggedIn ? (
                 <>
@@ -203,10 +218,51 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input placeholder="Cari laporan..." className="pl-10 bg-white h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        {/* Filter Section */}
+        <div className="bg-white p-4 rounded-xl border shadow-sm mb-6 space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-2">
+            <Filter size={16} className="text-blue-600" /> Filter Laporan
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input 
+                placeholder="Cari uraian atau jalan..." 
+                className="pl-10 bg-slate-50 border-slate-200 h-10 text-sm" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
+            </div>
+
+            <Select value={filterCategory} onValueChange={setFilterCategory} disabled={isUserRestricted}>
+              <SelectTrigger className="bg-slate-50 border-slate-200 h-10 text-sm">
+                <SelectValue placeholder="Pilih Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterMonth} onValueChange={setFilterMonth}>
+              <SelectTrigger className="bg-slate-50 border-slate-200 h-10 text-sm">
+                <SelectValue placeholder="Pilih Bulan" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map(m => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button 
+              variant="ghost" 
+              onClick={resetFilters}
+              className="h-10 text-slate-500 hover:text-red-500 hover:bg-red-50"
+            >
+              <X size={16} className="mr-2" /> Reset Filter
+            </Button>
           </div>
         </div>
 
@@ -215,7 +271,9 @@ const Index = () => {
         ) : filteredReports.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-slate-200">
             <FileText className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">Tidak ada laporan</h3>
+            <h3 className="text-lg font-medium text-slate-900">Tidak ada laporan yang sesuai</h3>
+            <p className="text-sm text-slate-500 mt-1">Coba ubah filter atau kata kunci pencarian Anda</p>
+            <Button variant="link" onClick={resetFilters} className="mt-4 text-blue-600">Tampilkan Semua Laporan</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
