@@ -152,16 +152,16 @@ const Index = () => {
           <div className="flex items-center gap-2">
             {/* Tombol Rekap Bulanan (Sekarang Publik) */}
             <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200">
-              <FileBarChart className="h-4 w-4 mr-2" /> Rekap Bulanan
+              <FileBarChart className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rekap Bulanan</span>
             </Button>
 
             {isLoggedIn ? (
               <>
-                <div className="hidden lg:flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200">
-                        <Printer className="h-4 w-4 mr-2" /> Cetak Harian
+                        <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Harian</span>
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -197,7 +197,7 @@ const Index = () => {
             ) : (
               !authLoading && (
                 <Button onClick={() => navigate('/login')} size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                  <LogIn className="mr-2 h-4 w-4" /> Masuk Sistem
+                  <LogIn className="mr-2 h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk Sistem</span>
                 </Button>
               )
             )}

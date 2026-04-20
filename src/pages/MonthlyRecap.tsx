@@ -402,19 +402,21 @@ const MonthlyRecap = () => {
           <div className="flex items-center gap-2">
             {isLoggedIn && (
               <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                <CloudUpload className="mr-2 h-4 w-4" /> Simpan ke Drive
+                <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 min-w-[120px]">
-                  <Printer className="mr-2 h-4 w-4" /> Cetak <ChevronDown className="ml-2 h-4 w-4" />
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Printer className="h-4 w-4 md:mr-2" /> 
+                  <span className="hidden md:inline">Cetak</span>
+                  <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
-                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Rekap A3
+                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Rekap
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
                   <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
