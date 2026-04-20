@@ -105,7 +105,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
 
     try {
       setIsPickerOpen(true);
-      // Menggunakan DocsView yang lebih spesifik untuk folder
       const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
         .setSelectFolderEnabled(true)
         .setIncludeFolders(true)
@@ -183,6 +182,8 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   return (
     <Dialog 
       open={isOpen} 
+      // SANGAT PENTING: Matikan mode modal saat Picker terbuka agar interaksi di luar dialog diizinkan
+      modal={!isPickerOpen}
       onOpenChange={(open) => { 
         if (!open && !isUploading && !isCreatingFolder && !isPickerOpen) {
           onClose(); 
@@ -192,18 +193,14 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       <DialogContent 
         className="sm:max-w-[450px]"
         onInteractOutside={(e) => {
-          // Sangat penting: Izinkan interaksi dengan elemen di luar dialog (Picker)
-          if (isPickerOpen) {
-            e.preventDefault();
-          }
-        }}
-        onPointerDownOutside={(e) => {
+          // Mencegah dialog tertutup saat mengklik Picker
           if (isPickerOpen || isUploading || isCreatingFolder) {
             e.preventDefault();
           }
         }}
-        onEscapeKeyDown={(e) => {
-          if (isUploading || isCreatingFolder || isPickerOpen) {
+        onFocusOutside={(e) => {
+          // Mencegah Radix menarik kembali fokus saat Picker sedang digunakan
+          if (isPickerOpen) {
             e.preventDefault();
           }
         }}
