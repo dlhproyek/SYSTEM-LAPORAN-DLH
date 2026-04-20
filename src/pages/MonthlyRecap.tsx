@@ -216,6 +216,8 @@ const MonthlyRecap = () => {
     try {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Laporan');
+      
+      // Setup Columns
       const columns = [
         { header: 'No', key: 'no', width: 5 },
         { header: 'Hari / Tgl', key: 'date', width: 15 },
@@ -228,40 +230,53 @@ const MonthlyRecap = () => {
         { header: 'Peralatan', key: 'eq', width: 25 },
         { header: 'Alat Berat', key: 'he', width: 25 },
       ];
+      
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
       columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
-      worksheet.mergeCells('A1:M1');
+
+      // Header Titles
+      const lastColLetter = String.fromCharCode(64 + columns.length);
+      
+      worksheet.mergeCells(`A1:${lastColLetter}1`);
       const title1 = worksheet.getCell('A1');
       title1.value = 'PEMERINTAH KOTA MEDAN';
       title1.font = { bold: true, size: 14 };
       title1.alignment = { horizontal: 'center' };
-      worksheet.mergeCells('A2:M2');
+      
+      worksheet.mergeCells(`A2:${lastColLetter}2`);
       const title2 = worksheet.getCell('A2');
       title2.value = 'DINAS LINGKUNGAN HIDUP';
       title2.font = { bold: true, size: 16 };
       title2.alignment = { horizontal: 'center' };
-      worksheet.mergeCells('A3:M3');
+      
+      worksheet.mergeCells(`A3:${lastColLetter}3`);
       const title3 = worksheet.getCell('A3');
       title3.value = 'LAPORAN BULANAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN';
       title3.font = { bold: true, underline: true };
       title3.alignment = { horizontal: 'center' };
-      worksheet.mergeCells('A4:M4');
+      
+      worksheet.mergeCells(`A4:${lastColLetter}4`);
       const title4 = worksheet.getCell('A4');
       title4.value = `BULAN: ${months[parseInt(selectedMonth)-1].toUpperCase()} ${selectedYear}`;
       title4.font = { bold: true };
       title4.alignment = { horizontal: 'center' };
+
       worksheet.addRow([]);
       worksheet.addRow([]);
-      const headerRow1 = worksheet.addRow(columns.map(c => c.header));
-      headerRow1.eachCell(cell => {
+
+      // Table Header
+      const headerRow = worksheet.addRow(columns.map(c => c.header));
+      headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
         cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.font = { bold: true };
       });
+
+      // Data Rows
       for (const task of flatTasks) {
         const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
         const rowData: any = {
@@ -275,17 +290,21 @@ const MonthlyRecap = () => {
           coord: task.personnel.coordinator,
           rem: [task.remarks, task.isFirstInReport ? task.reportRemarks : ""].filter(Boolean).join(" | ")
         };
+        
         if (recapMode === "with-fuel") {
           rowData.fp = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
           rowData.fd = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
           rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
         }
+        
         const row = worksheet.addRow(rowData);
         row.height = 120;
         row.eachCell(cell => {
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
           cell.alignment = { vertical: 'middle', wrapText: true };
         });
+
+        // Add Images
         const addImageToCell = async (url: string, colIndex: number) => {
           if (!url) return;
           try {
@@ -293,13 +312,20 @@ const MonthlyRecap = () => {
             const blob = await response.blob();
             const arrayBuffer = await blob.arrayBuffer();
             const imageId = workbook.addImage({ buffer: arrayBuffer, extension: 'jpeg' });
-            worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 150, height: 150 }, editAs: 'oneCell' });
+            worksheet.addImage(imageId, { 
+              tl: { col: colIndex - 1, row: row.number - 1 }, 
+              ext: { width: 150, height: 150 }, 
+              editAs: 'oneCell' 
+            });
           } catch (e) { console.error(e); }
         };
+        
         await addImageToCell(task.photos.zero, 5);
         await addImageToCell(task.photos.fifty, 6);
         await addImageToCell(task.photos.hundred, 7);
       }
+
+      // Add Logos
       const addLogoToExcel = async (url: string, col: number, row: number) => {
         try {
           const response = await fetch(url);
@@ -312,11 +338,113 @@ const MonthlyRecap = () => {
       };
       await addLogoToExcel(LOGO_MEDAN_URL, 0, 0);
       await addLogoToExcel(LOGO_DLH_URL, columns.length - 1, 0);
+
+      // Signatories Section
       worksheet.addRow([]);
-      const signRow = worksheet.addRow([]);
-      worksheet.mergeCells(`K${signRow.number}:M${signRow.number}`);
-      worksheet.getCell(`K${signRow.number}`).value = `Medan, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-      worksheet.getCell(`K${signRow.number}`).alignment = { horizontal: 'center' };
+      worksheet.addRow([]);
+      
+      const dateRow = worksheet.addRow([]);
+      const dateCell = dateRow.getCell(columns.length - 2);
+      dateCell.value = `Medan, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+      dateCell.alignment = { horizontal: 'center' };
+      worksheet.mergeCells(dateRow.number, columns.length - 2, dateRow.number, columns.length);
+
+      const signHeaderRow = worksheet.addRow([]);
+      signHeaderRow.height = 30;
+      
+      // Column indices for 4 signatories
+      const col1 = 2; // Kabid
+      const col2 = 5; // Ketua Tim
+      const col3 = 8; // Pengawas
+      const col4 = 11; // Koordinator
+
+      // Titles
+      worksheet.getCell(signHeaderRow.number, col1).value = 'Mengetahui :';
+      worksheet.getCell(signHeaderRow.number, col2).value = 'Diketahui :';
+      worksheet.getCell(signHeaderRow.number, col3).value = 'Diketahui :';
+      worksheet.getCell(signHeaderRow.number, col4).value = 'Diketahui :';
+
+      const signRoleRow1 = worksheet.addRow([]);
+      worksheet.getCell(signRoleRow1.number, col1).value = 'Kabid Tata Lingkungan';
+      worksheet.getCell(signRoleRow1.number, col2).value = 'Ketua Tim Pemeliharaan Lingkungan';
+      worksheet.getCell(signRoleRow1.number, col3).value = 'Pengawas Taman Penghijauan';
+      
+      const showSignatory4 = selectedCategories.includes('semua') || selectedCategories.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
+      const showSignatory5 = selectedCategories.includes('semua') || selectedCategories.includes("Tim Pohon");
+      
+      if (showSignatory4 && !showSignatory5) {
+        worksheet.getCell(signRoleRow1.number, col4).value = 'Kepala Koordinator Taman';
+      } else if (showSignatory5 && !showSignatory4) {
+        worksheet.getCell(signRoleRow1.number, col4).value = 'Kepala Koordinator Tim Pohon';
+      } else {
+        worksheet.getCell(signRoleRow1.number, col4).value = 'Koordinator Taman & Tim Pohon';
+      }
+
+      const signRoleRow2 = worksheet.addRow([]);
+      worksheet.getCell(signRoleRow2.number, col1).value = 'Dinas Lingkungan Hidup';
+      worksheet.getCell(signRoleRow2.number, col2).value = 'Dinas Lingkungan Hidup';
+      worksheet.getCell(signRoleRow2.number, col3).value = 'Dinas Lingkungan Hidup';
+      worksheet.getCell(signRoleRow2.number, col4).value = 'Dinas Lingkungan Hidup';
+
+      const signRoleRow3 = worksheet.addRow([]);
+      worksheet.getCell(signRoleRow3.number, col1).value = 'Kota Medan';
+      worksheet.getCell(signRoleRow3.number, col2).value = 'Kota Medan';
+      worksheet.getCell(signRoleRow3.number, col3).value = 'Kota Medan';
+      worksheet.getCell(signRoleRow3.number, col4).value = 'Kota Medan';
+
+      // Spacer for signature
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+
+      // Names and NIP
+      const signNameRow = worksheet.addRow([]);
+      const kabidCell = worksheet.getCell(signNameRow.number, col1);
+      kabidCell.value = 'Heni Rustati, ST, M.Si';
+      kabidCell.font = { bold: true, underline: true };
+      
+      const ketuaCell = worksheet.getCell(signNameRow.number, col2);
+      ketuaCell.value = 'Anitha Florida Ginting, ST, M. Si';
+      ketuaCell.font = { bold: true, underline: true };
+      
+      const pengawasCell = worksheet.getCell(signNameRow.number, col3);
+      pengawasCell.value = 'Jhosua Sibarani, S.T';
+      pengawasCell.font = { bold: true, underline: true };
+
+      if (showSignatory4 && !showSignatory5) {
+        const coordCell = worksheet.getCell(signNameRow.number, col4);
+        coordCell.value = 'Tiurmaida Silitonga';
+        coordCell.font = { bold: true, underline: true };
+      } else if (showSignatory5 && !showSignatory4) {
+        const coordCell = worksheet.getCell(signNameRow.number, col4);
+        coordCell.value = 'Ardiansyah Siregar';
+        coordCell.font = { bold: true, underline: true };
+      } else {
+        const coordCell = worksheet.getCell(signNameRow.number, col4);
+        coordCell.value = 'Tiurmaida Silitonga / Ardiansyah Siregar';
+        coordCell.font = { bold: true, underline: true };
+      }
+
+      const signNipRow = worksheet.addRow([]);
+      worksheet.getCell(signNipRow.number, col1).value = 'NIP. 19720223 200604 2 002';
+      worksheet.getCell(signNipRow.number, col2).value = 'NIP. 19811128 201001 2 011';
+      worksheet.getCell(signNipRow.number, col3).value = 'NIP. 19740907 200903 1 002';
+      
+      if (showSignatory4 && !showSignatory5) {
+        worksheet.getCell(signNipRow.number, col4).value = 'NIP. 19690507 200701 2 042';
+      } else if (showSignatory5 && !showSignatory4) {
+        worksheet.getCell(signNipRow.number, col4).value = 'NIP. 19860404 201001 1 015';
+      }
+
+      // Center all signature cells
+      [signHeaderRow, signRoleRow1, signRoleRow2, signRoleRow3, signNameRow, signNipRow].forEach(row => {
+        [col1, col2, col3, col4].forEach(col => {
+          const cell = worksheet.getCell(row.number, col);
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+      });
+
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), `Rekap_A3_DLH_${months[parseInt(selectedMonth)-1]}_${selectedYear}.xlsx`);
       dismissToast(toastId);
