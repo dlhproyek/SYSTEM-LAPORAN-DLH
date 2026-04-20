@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory } from '@/utils/report-helpers';
-import { ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, Loader2, Lock, Download } from 'lucide-react';
+import { ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
@@ -69,6 +69,7 @@ const MonthlyRecap = () => {
         setSelectedCategories(['semua']);
       }
     } else {
+      // Default untuk publik: Semua Kategori
       setSelectedCategories(['semua']);
     }
   }, [profile, isLoggedIn]);
@@ -389,18 +390,14 @@ const MonthlyRecap = () => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-2">
             {isLoggedIn && (
-              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
-                <CloudUpload className="mr-2 h-4 w-4" /> Drive
+              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <CloudUpload className="mr-2 h-4 w-4" /> Simpan ke Drive
               </Button>
             )}
-            <Button onClick={handleExportExcel} variant="ghost" size="sm" className="text-green-700 hover:bg-green-50">
-              <Table className="mr-2 h-4 w-4" /> Excel
-            </Button>
-            <Button onClick={() => window.print()} size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Printer className="mr-2 h-4 w-4" /> Cetak A3
-            </Button>
+            <Button onClick={handleExportExcel} variant="outline" className="bg-green-50 text-green-700 border-green-200"><Table className="mr-2 h-4 w-4" /> Rekap Excel</Button>
+            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap A3</Button>
           </div>
         </div>
       </div>
