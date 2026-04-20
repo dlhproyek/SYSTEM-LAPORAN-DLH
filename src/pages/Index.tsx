@@ -208,7 +208,6 @@ const Index = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input placeholder="Cari laporan..." className="pl-10 bg-white h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
-          {!isLoggedIn && <p className="text-xs text-amber-600 font-medium bg-amber-50 px-3 py-1 rounded-full border border-amber-100">Mode Lihat Saja (Tamu)</p>}
         </div>
 
         {loading ? (
