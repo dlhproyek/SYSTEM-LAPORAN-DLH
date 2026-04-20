@@ -72,7 +72,7 @@ const ReportDetail = () => {
             </div>
           </div>
 
-          {/* Konten Laporan tetap sama seperti sebelumnya */}
+          {/* Info Dasar */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div><p className="text-slate-500">Tanggal</p><p className="font-bold">{report.date}</p></div>
             <div><p className="text-slate-500">Total Volume</p><p className="font-bold">{report.volume} {getUnitByCategory(report.category)}</p></div>
@@ -119,10 +119,10 @@ const ReportDetail = () => {
                       
                       {task.heavyEquipment?.length > 0 && (
                         <div className="pt-2 border-t">
-                          <p className="font-bold text-[10px] mb-1">ALAT BERAT & BBM:</p>
+                          <p className="font-bold text-[10px] mb-1">ALAT BERAT:</p>
                           {task.heavyEquipment.map((he, idx) => (
                             <div key={idx} className="mb-1 text-[10px]">
-                              {he.type} {he.vehicle ? `- ${he.vehicle}` : ""} - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L
+                              {he.type} {he.vehicle ? `- ${he.vehicle}` : ""}
                             </div>
                           ))}
                         </div>

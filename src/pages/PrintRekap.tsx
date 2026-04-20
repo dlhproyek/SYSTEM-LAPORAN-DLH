@@ -123,10 +123,10 @@ const PrintRekap = () => {
                         
                         {task.heavyEquipment?.length > 0 && (
                           <div className="pt-2 border-t border-slate-200">
-                            <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><Fuel size={10} /> ALAT BERAT & BBM:</p>
+                            <p className="font-bold text-[10px] mb-1 flex items-center gap-1"><Fuel size={10} /> ALAT BERAT:</p>
                             {task.heavyEquipment.map((he, idx) => (
                               <div key={idx} className="mb-1 text-[10px]">
-                                {he.type} {he.vehicle ? `- ${he.vehicle}` : ""} - P:{he.fuel.pertamax}L, D:{he.fuel.dexlite}L, S:{he.fuel.solar}L
+                                {he.type} {he.vehicle ? `- ${he.vehicle}` : ""}
                               </div>
                             ))}
                           </div>
