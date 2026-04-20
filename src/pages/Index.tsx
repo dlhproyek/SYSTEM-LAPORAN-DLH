@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Tag, Printer, FileBarChart,
-  LogOut, LogIn, Filter, X
+  LogOut, LogIn, Filter, X, CalendarDays
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -53,7 +53,6 @@ const months = [
   { value: "12", label: "Desember" },
 ];
 
-// Generate daftar tahun (5 tahun terakhir)
 const currentYear = new Date().getFullYear();
 const years = [
   { value: "semua", label: "Semua Tahun" },
@@ -72,6 +71,7 @@ const Index = () => {
   const [filterCategory, setFilterCategory] = useState("semua");
   const [filterMonth, setFilterMonth] = useState("semua");
   const [filterYear, setFilterYear] = useState("semua");
+  const [filterDate, setFilterDate] = useState("");
   const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
 
@@ -129,13 +129,14 @@ const Index = () => {
     setFilterCategory(isUserRestricted ? (profile?.category || "semua") : "semua");
     setFilterMonth("semua");
     setFilterYear("semua");
+    setFilterDate("");
   };
 
   const filteredReports = reports.filter(report => {
     const search = searchQuery.toLowerCase();
-    const reportDate = new Date(report.date);
-    const reportMonth = (reportDate.getMonth() + 1).toString();
-    const reportYear = reportDate.getFullYear().toString();
+    const reportDateObj = new Date(report.date);
+    const reportMonth = (reportDateObj.getMonth() + 1).toString();
+    const reportYear = reportDateObj.getFullYear().toString();
 
     const matchesSearch = 
       report.description.toLowerCase().includes(search) ||
@@ -144,8 +145,9 @@ const Index = () => {
     const matchesCategory = filterCategory === "semua" || report.category === filterCategory;
     const matchesMonth = filterMonth === "semua" || reportMonth === filterMonth;
     const matchesYear = filterYear === "semua" || reportYear === filterYear;
+    const matchesDate = filterDate === "" || report.date === filterDate;
 
-    return matchesSearch && matchesCategory && matchesMonth && matchesYear;
+    return matchesSearch && matchesCategory && matchesMonth && matchesYear && matchesDate;
   });
 
   return (
@@ -237,7 +239,7 @@ const Index = () => {
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-2">
             <Filter size={16} className="text-blue-600" /> Filter Laporan
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
@@ -280,6 +282,16 @@ const Index = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="relative">
+              <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Input 
+                type="date"
+                className="pl-10 bg-slate-50 border-slate-200 h-10 text-sm" 
+                value={filterDate} 
+                onChange={(e) => setFilterDate(e.target.value)} 
+              />
+            </div>
 
             <Button 
               variant="ghost" 
