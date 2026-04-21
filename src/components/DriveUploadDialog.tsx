@@ -12,9 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Folder, User, FileText, Loader2, CloudUpload, FolderPlus, Check, X, Search, Copy, ExternalLink, Share2 } from 'lucide-react';
+import { Folder, User, FileText, Loader2, CloudUpload, FolderPlus, Check, X, Search, Copy, ExternalLink, Share2, ShieldAlert } from 'lucide-react';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from "@/lib/utils";
+import { useAuth } from '@/context/AuthContext';
 
 const CLIENT_ID = "323264526689-91gea696tm6ftv49jt4lb4tqjo5a1947.apps.googleusercontent.com"; 
 const API_KEY = "AIzaSyDzRtvJVVWSYJ1e9VGKBhA1CxRYtlda1PY";
@@ -28,6 +29,7 @@ interface DriveUploadDialogProps {
 }
 
 const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: DriveUploadDialogProps) => {
+  const { session, profile } = useAuth();
   const [fileName, setFileName] = useState(defaultFileName);
   const [folderName, setFolderName] = useState("Drive Saya (Root)");
   const [folderId, setFolderId] = useState("root");
@@ -42,6 +44,8 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   const [uploadResult, setUploadResult] = useState<{ link: string; folderLink?: string; name: string } | null>(null);
+
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
 
   useEffect(() => {
     if (!isOpen) {
@@ -157,6 +161,10 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   };
 
   const handleFinalUpload = async () => {
+    if (isPimpinan) {
+      showError("Akun Pimpinan tidak diizinkan mengunggah file");
+      return;
+    }
     if (!accessToken) { showError("Akun belum terhubung"); return; }
     setIsUploading(true);
     try {
@@ -182,7 +190,6 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
   return (
     <Dialog 
       open={isOpen} 
-      // SANGAT PENTING: Matikan mode modal saat Picker terbuka agar interaksi di luar dialog diizinkan
       modal={!isPickerOpen}
       onOpenChange={(open) => { 
         if (!open && !isUploading && !isCreatingFolder && !isPickerOpen) {
@@ -193,13 +200,11 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
       <DialogContent 
         className="sm:max-w-[450px]"
         onInteractOutside={(e) => {
-          // Mencegah dialog tertutup saat mengklik Picker
           if (isPickerOpen || isUploading || isCreatingFolder) {
             e.preventDefault();
           }
         }}
         onFocusOutside={(e) => {
-          // Mencegah Radix menarik kembali fokus saat Picker sedang digunakan
           if (isPickerOpen) {
             e.preventDefault();
           }
@@ -214,6 +219,13 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
             {uploadResult ? "File dan folder sekarang tersedia secara publik." : "Pilih akun Google dan tentukan lokasi penyimpanan."}
           </DialogDescription>
         </DialogHeader>
+
+        {isPimpinan && !uploadResult && (
+          <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex items-center gap-2 text-amber-800 text-xs">
+            <ShieldAlert className="h-4 w-4 shrink-0" />
+            <p>Mode Pantau: Tombol <strong>Mulai Unggah</strong> dinonaktifkan.</p>
+          </div>
+        )}
 
         {uploadResult ? (
           <div className="py-4 space-y-4">
@@ -262,7 +274,7 @@ const DriveUploadDialog = ({ isOpen, onClose, onUpload, defaultFileName }: Drive
           </div>
         )}
 
-        <DialogFooter>{uploadResult ? <Button onClick={onClose} className="w-full bg-slate-900">Selesai</Button> : <><Button variant="ghost" onClick={onClose} disabled={isUploading}>Batal</Button><Button onClick={handleFinalUpload} disabled={isUploading || !accessToken || showNewFolderInput} className="bg-blue-600 min-w-[120px] h-11 font-bold">{isUploading ? <><Loader2 className="animate-spin h-4 w-4 mr-2" /> Mengunggah...</> : "Mulai Unggah"}</Button></>}</DialogFooter>
+        <DialogFooter>{uploadResult ? <Button onClick={onClose} className="w-full bg-slate-900">Selesai</Button> : <><Button variant="ghost" onClick={onClose} disabled={isUploading}>Batal</Button><Button onClick={handleFinalUpload} disabled={isUploading || !accessToken || showNewFolderInput || isPimpinan} className={cn("bg-blue-600 min-w-[1200px] h-11 font-bold", isPimpinan && "opacity-50 cursor-not-allowed")}>{isUploading ? <><Loader2 className="animate-spin h-4 w-4 mr-2" /> Mengunggah...</> : "Mulai Unggah"}</Button></>}</DialogFooter>
       </DialogContent>
     </Dialog>
   );

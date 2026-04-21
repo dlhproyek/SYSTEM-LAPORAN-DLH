@@ -95,13 +95,13 @@ interface ReportFormProps {
 
 const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { session, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [existingVehicles, setExistingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
 
-  const isPimpinan = profile?.role === 'pimpinan';
-  const isUserRestricted = profile?.role === 'user';
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
+  const isUserRestricted = profile?.role === 'user' && !isPimpinan;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
