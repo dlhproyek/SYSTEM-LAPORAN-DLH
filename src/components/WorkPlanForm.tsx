@@ -38,6 +38,7 @@ const getAutoPurpose = (name: string): string => {
   if (lowerName.includes("mobil tangga")) return "Alat Bantu Untuk Menjangkau Ranting Yang Tinggi";
   if (lowerName.includes("dump truck")) return "Pengangkut Sampah Pemangkasan Pohon";
   if (lowerName.includes("truk siram") || lowerName.includes("truck siram")) return "Penyiraman Tanaman Median Jalan";
+  if (lowerName.includes("mesin babat")) return "Memotong Rumput";
   return "";
 };
 
