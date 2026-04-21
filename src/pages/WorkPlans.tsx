@@ -3,13 +3,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-  Plus, FileText, Calendar, MapPin, Eye, 
+  Plus, Calendar, MapPin, Eye, 
   Trash2, Edit, ArrowLeft, Search, FilterX, 
-  ChevronDown, LayoutGrid
+  Table as TableIcon, ClipboardList, User
 } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { workPlanService } from '@/services/workPlanService';
 import { WorkPlan } from '@/types/work-plan';
 import { showSuccess, showError } from '@/utils/toast';
@@ -81,19 +89,24 @@ const WorkPlans = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/')} className="hover:bg-white">
               <ArrowLeft className="h-4 w-4 mr-2" /> Beranda
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Daftar Rencana Kerja</h1>
-              <p className="text-xs text-slate-500">Kelola dan pantau rencana kegiatan harian</p>
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <ClipboardList className="text-white h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">Rekap Rencana Kerja</h1>
+                <p className="text-xs text-slate-500">Daftar seluruh rencana kegiatan operasional</p>
+              </div>
             </div>
           </div>
-          <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600 hover:bg-blue-700 shadow-md">
+          <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600 hover:bg-blue-700 shadow-md font-bold">
             <Plus className="mr-2 h-4 w-4" /> Buat Rencana Baru
           </Button>
         </div>
@@ -103,11 +116,11 @@ const WorkPlans = () => {
           <CardContent className="p-4 bg-white">
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 w-full space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Cari Kegiatan</label>
+                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Cari Kegiatan / Lokasi</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
-                    placeholder="Ketik uraian kegiatan..." 
+                    placeholder="Ketik uraian kegiatan atau jalan..." 
                     className="pl-10 bg-slate-50 border-slate-200 h-10 focus:bg-white transition-colors" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -156,83 +169,132 @@ const WorkPlans = () => {
           </CardContent>
         </Card>
 
-        {/* Results Section */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            <p className="text-slate-500 text-sm font-medium">Memuat data rencana kerja...</p>
-          </div>
-        ) : filteredPlans.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPlans.map((wp) => (
-              <Card 
-                key={wp.id} 
-                className="group hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-blue-500 bg-white overflow-hidden" 
-                onClick={() => navigate(`/work-plans/${wp.id}`)}
-              >
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex justify-between items-start">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] px-2 py-0">
-                      {wp.category}
-                    </Badge>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" 
-                        onClick={(e) => { e.stopPropagation(); navigate(`/work-plans/edit/${wp.id}`); }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50" 
-                        onClick={(e) => handleDelete(e, wp.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardTitle className="text-base mt-2 line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[3rem]">
-                    {wp.description}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-3">
-                  <div className="flex items-center text-[11px] text-slate-500 font-medium">
-                    <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-500" /> 
-                    {new Date(wp.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                  <div className="flex items-start gap-2 text-[11px] text-slate-600">
-                    <MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /> 
-                    <span className="line-clamp-1">
-                      {wp.locations?.[0]?.street || wp.street}, {wp.locations?.[0]?.sub_district || wp.sub_district}
-                    </span>
-                  </div>
-                  <div className="pt-3 border-t flex justify-between items-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Detail Rencana</span>
-                    <span className="text-blue-600 text-[10px] font-bold flex items-center group-hover:translate-x-1 transition-transform">
-                      Lihat <Eye className="ml-1 h-3 w-3" />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
-            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="h-8 w-8 text-slate-300" />
-            </div>
-            <h3 className="text-slate-900 font-bold">Tidak ada rencana ditemukan</h3>
-            <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
-              Coba ubah filter kategori atau tanggal untuk menemukan data yang Anda cari.
-            </p>
-            <Button variant="link" onClick={resetFilters} className="mt-4 text-blue-600 font-bold">
-              Reset Semua Filter
-            </Button>
-          </div>
-        )}
+        {/* Table Section */}
+        <Card className="border-none shadow-md overflow-hidden bg-white">
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                <p className="text-slate-500 text-sm font-medium">Memuat data rekap...</p>
+              </div>
+            ) : filteredPlans.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                      <TableHead className="w-[60px] text-center font-bold text-slate-700">No</TableHead>
+                      <TableHead className="w-[120px] font-bold text-slate-700">Tanggal</TableHead>
+                      <TableHead className="w-[140px] font-bold text-slate-700">Kategori</TableHead>
+                      <TableHead className="min-w-[200px] font-bold text-slate-700">Uraian Kegiatan</TableHead>
+                      <TableHead className="min-w-[200px] font-bold text-slate-700">Lokasi</TableHead>
+                      <TableHead className="w-[100px] text-center font-bold text-slate-700">Personil</TableHead>
+                      <TableHead className="w-[150px] font-bold text-slate-700">Koordinator</TableHead>
+                      <TableHead className="w-[120px] text-right font-bold text-slate-700 pr-6">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPlans.map((plan, idx) => (
+                      <TableRow key={plan.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <TableCell className="text-center font-medium text-slate-500">{idx + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-700">
+                              {new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {new Date(plan.date).toLocaleDateString('id-ID', { year: 'numeric' })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] whitespace-nowrap">
+                            {plan.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-700 max-w-[250px]">
+                          <div className="line-clamp-2 leading-tight">{plan.description}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {plan.locations?.length > 0 ? (
+                              plan.locations.map((loc, i) => (
+                                <div key={i} className="flex items-start gap-1 text-[11px] text-slate-600 leading-tight">
+                                  <MapPin className="h-3 w-3 mt-0.5 text-red-500 shrink-0" />
+                                  <span>{loc.street} ({loc.sub_district})</span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="flex items-start gap-1 text-[11px] text-slate-600 leading-tight">
+                                <MapPin className="h-3 w-3 mt-0.5 text-red-500 shrink-0" />
+                                <span>{plan.street} ({plan.sub_district})</span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-bold text-slate-700">{plan.personnel}</span>
+                            <span className="text-[9px] text-slate-400 uppercase">Orang</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                            <User className="h-3 w-3 text-blue-500" />
+                            <span className="font-medium">{plan.coordinator}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right pr-4">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-blue-600 hover:bg-blue-100" 
+                              onClick={() => navigate(`/work-plans/${plan.id}`)}
+                              title="Lihat Detail"
+                            >
+                              <Eye size={16} />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-slate-500 hover:bg-slate-100" 
+                              onClick={() => navigate(`/work-plans/edit/${plan.id}`)}
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-500 hover:bg-red-100" 
+                              onClick={(e) => handleDelete(e, plan.id)}
+                              title="Hapus"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-24 bg-white">
+                <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <TableIcon className="h-8 w-8 text-slate-300" />
+                </div>
+                <h3 className="text-slate-900 font-bold">Tidak ada data rekap ditemukan</h3>
+                <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
+                  Coba ubah filter kategori atau tanggal untuk menemukan data yang Anda cari.
+                </p>
+                <Button variant="link" onClick={resetFilters} className="mt-4 text-blue-600 font-bold">
+                  Reset Semua Filter
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
