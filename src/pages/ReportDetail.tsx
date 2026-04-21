@@ -20,7 +20,8 @@ const ReportDetail = () => {
   const [loading, setLoading] = useState(true);
 
   const isLoggedIn = !!session;
-  const isPimpinan = profile?.role === 'pimpinan';
+  // Menyamakan logika Pimpinan dengan halaman lain (cek role atau email khusus)
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
 
   useEffect(() => { if (id) loadReport(id); }, [id]);
 
@@ -67,7 +68,13 @@ const ReportDetail = () => {
                 variant="destructive" 
                 className={cn(isPimpinan && "opacity-50 cursor-not-allowed")}
                 disabled={isPimpinan}
-                onClick={async () => { if(confirm("Hapus?")) { await reportService.deleteReport(report.id); navigate('/'); } }}
+                onClick={async () => { 
+                  if (isPimpinan) return;
+                  if(confirm("Hapus?")) { 
+                    await reportService.deleteReport(report.id); 
+                    navigate('/'); 
+                  } 
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" /> Hapus
               </Button>
