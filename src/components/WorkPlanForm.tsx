@@ -159,6 +159,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         ? values.basis.map(b => `• ${b.value}`).join('\n')
         : values.basis[0].value;
 
+      // Payload disesuaikan dengan skema database yang mewajibkan kolom-kolom tertentu
       const payload = {
         date: values.date,
         category: values.category,
@@ -166,6 +167,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         street: firstLoc.street,
         sub_district: firstLoc.sub_district,
         villages: firstLoc.villages,
+        equipment: [], // Mengirim array kosong untuk memenuhi batasan NOT NULL di DB
         locations: values.locations,
         coordinator: values.coordinator,
         personnel: values.personnel,
