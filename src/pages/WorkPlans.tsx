@@ -37,9 +37,9 @@ const WorkPlans = () => {
   const [workPlans, setWorkPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Filter States - Default date to today
+  // Filter States - Default to empty to show all
   const [selectedCategory, setSelectedCategory] = useState("semua");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const WorkPlans = () => {
 
   const resetFilters = () => {
     setSelectedCategory("semua");
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate("");
     setSearchQuery("");
   };
 
