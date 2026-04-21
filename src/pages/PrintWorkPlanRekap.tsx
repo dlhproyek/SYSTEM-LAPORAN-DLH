@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { WorkPlan, WorkPlanEquipment } from '@/types/work-plan';
+import { WorkPlan } from '@/types/work-plan';
 import { workPlanService } from '@/services/workPlanService';
 import { ArrowLeft, FileCheck, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ const getLogoUrl = (fileName: string) => {
 const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
-// Urutan kategori yang diinginkan
 const CATEGORY_ORDER = ["Tim Pohon", "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"];
 
 const PrintWorkPlanRekap = () => {
@@ -39,11 +38,9 @@ const PrintWorkPlanRekap = () => {
       const allPlans = await workPlanService.getAllWorkPlans();
       const filtered = allPlans.filter(p => p.date === date);
       
-      // Urutkan: Tim Pohon pertama, sisanya sesuai CATEGORY_ORDER atau abjad
       filtered.sort((a, b) => {
         const indexA = CATEGORY_ORDER.indexOf(a.category);
         const indexB = CATEGORY_ORDER.indexOf(b.category);
-        
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
@@ -65,10 +62,9 @@ const PrintWorkPlanRekap = () => {
     }, 100);
   };
 
-  // Fungsi untuk mengecek apakah alat di semua lokasi dalam satu tim adalah identik
+  // Cek apakah alat di semua lokasi identik
   const isEquipmentIdenticalAcrossLocations = (plan: WorkPlan) => {
     if (!plan.locations || plan.locations.length <= 1) return false;
-    
     const firstLocEq = JSON.stringify(plan.locations[0].equipment || []);
     return plan.locations.every(loc => JSON.stringify(loc.equipment || []) === firstLocEq);
   };
@@ -98,6 +94,7 @@ const PrintWorkPlanRekap = () => {
       </div>
 
       <div className="print-area bg-white p-10 mx-auto shadow-none border-none w-full max-w-[1400px]">
+        {/* Header */}
         <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
           <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_MEDAN_URL} className="max-h-full max-w-full object-contain" alt="Logo Medan" /></div>
           <div className="text-center px-4">
@@ -132,12 +129,10 @@ const PrintWorkPlanRekap = () => {
           <tbody>
             {plans.length > 0 ? plans.map((plan, idx) => {
               const isGlobalSDM = ["Tim Pohon", "Tim Babat"].includes(plan.category);
-              const totalRows = plan.locations?.reduce((acc, loc) => acc + Math.max(1, loc.equipment?.length || 0), 0) || 1;
-              
-              // Cek apakah alat sama di semua lokasi untuk menghemat kata
               const isEqGlobal = isEquipmentIdenticalAcrossLocations(plan);
-              const globalEqList = isEqGlobal ? (plan.locations[0].equipment || []) : [];
-              const globalEqRows = Math.max(1, globalEqList.length);
+              
+              // Hitung total baris untuk rowspan No dan Tim
+              const totalRows = plan.locations?.reduce((acc, loc) => acc + Math.max(1, loc.equipment?.length || 0), 0) || 1;
 
               return (
                 <React.Fragment key={plan.id}>
@@ -147,33 +142,55 @@ const PrintWorkPlanRekap = () => {
                     return (
                       <React.Fragment key={`${plan.id}-loc-${locIdx}`}>
                         <tr>
+                          {/* Kolom No dan Tim (Rowspan seluruh lokasi tim) */}
                           {locIdx === 0 && (
                             <>
                               <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{idx + 1}</td>
-                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.category}</td>
+                              <td className="border-2 border-black p-2 text-center align-middle font-bold" rowSpan={totalRows}>{plan.category}</td>
                             </>
                           )}
+
+                          {/* Kolom Kegiatan dan Lokasi (Rowspan per lokasi) */}
                           <td className="border-2 border-black p-2 align-middle" rowSpan={locRows}>{loc.description}</td>
                           <td className="border-2 border-black p-2 align-middle" rowSpan={locRows}>{loc.street} ({loc.sub_district})</td>
                           
-                          {/* Logika Penghematan Kata untuk Alat Operasional */}
+                          {/* Kolom Alat Operasional */}
                           {isEqGlobal ? (
+                            // Jika alat identik, tampilkan hanya sekali untuk seluruh tim
                             locIdx === 0 ? (
                               <>
-                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows / globalEqRows * (globalEqList.length > 0 ? 1 : 1)}>
-                                  {globalEqList[0]?.name || "-"} {globalEqList[0]?.vehicle ? `(${globalEqList[0].vehicle})` : ""}
+                                <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows}>
+                                  <div className="space-y-1">
+                                    {(loc.equipment || []).map((eq, eqIdx) => (
+                                      <div key={eqIdx} className="border-b border-slate-100 last:border-0 pb-1 mb-1">
+                                        {eq.name} {eq.vehicle ? `(${eq.vehicle})` : ""}
+                                      </div>
+                                    ))}
+                                    {(!loc.equipment || loc.equipment.length === 0) && "-"}
+                                  </div>
                                 </td>
-                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows / globalEqRows * (globalEqList.length > 0 ? 1 : 1)}>
-                                  {globalEqList[0]?.quantity || "-"}
+                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>
+                                  <div className="space-y-1">
+                                    {(loc.equipment || []).map((eq, eqIdx) => (
+                                      <div key={eqIdx} className="border-b border-slate-100 last:border-0 pb-1 mb-1">{eq.quantity}</div>
+                                    ))}
+                                    {(!loc.equipment || loc.equipment.length === 0) && "-"}
+                                  </div>
                                 </td>
-                                <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows / globalEqRows * (globalEqList.length > 0 ? 1 : 1)}>
-                                  {globalEqList[0]?.purpose || "-"}
+                                <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows}>
+                                  <div className="space-y-1">
+                                    {(loc.equipment || []).map((eq, eqIdx) => (
+                                      <div key={eqIdx} className="border-b border-slate-100 last:border-0 pb-1 mb-1">{eq.purpose || "-"}</div>
+                                    ))}
+                                    {(!loc.equipment || loc.equipment.length === 0) && "-"}
+                                  </div>
                                 </td>
                               </>
                             ) : null
                           ) : (
+                            // Jika alat berbeda per lokasi, tampilkan per baris alat
                             <>
-                              <td className="border-2 border-black p-2 text-center align-middle">
+                              <td className="border-2 border-black p-2 align-middle">
                                 {loc.equipment?.[0]?.name || "-"} {loc.equipment?.[0]?.vehicle ? `(${loc.equipment[0].vehicle})` : ""}
                               </td>
                               <td className="border-2 border-black p-2 text-center align-middle">{loc.equipment?.[0]?.quantity || "-"}</td>
@@ -181,52 +198,40 @@ const PrintWorkPlanRekap = () => {
                             </>
                           )}
 
-                          {/* Koordinator & Personil: Global vs Per Lokasi */}
-                          { isGlobalSDM ? (
+                          {/* Koordinator & Personil */}
+                          {isGlobalSDM ? (
                             locIdx === 0 ? (
                               <>
                                 <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.coordinator}</td>
-                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.personnel}</td>
+                                <td className="border-2 border-black p-2 text-center align-middle font-bold" rowSpan={totalRows}>{plan.personnel}</td>
                               </>
                             ) : null
                           ) : (
                             <>
                               <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.coordinator}</td>
-                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.personnel}</td>
+                              <td className="border-2 border-black p-2 text-center align-middle font-bold" rowSpan={locRows}>{loc.personnel}</td>
                             </>
                           )}
 
-                          <td className="border-2 border-black p-2 align-middle whitespace-pre-wrap" rowSpan={locRows}>{loc.basis}</td>
+                          {/* Dasar Pengerjaan */}
+                          <td className="border-2 border-black p-2 align-middle" rowSpan={locRows}>{loc.basis}</td>
                           
+                          {/* Keterangan (Rowspan seluruh tim) */}
                           {locIdx === 0 && (
-                            <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows}>{plan.remarks || ""}</td>
+                            <td className="border-2 border-black p-2 align-middle italic" rowSpan={totalRows}>{plan.remarks || ""}</td>
                           )}
                         </tr>
 
-                        {/* Baris tambahan untuk alat operasional (jika lebih dari 1) */}
-                        {isEqGlobal ? (
-                          // Jika alat global, tampilkan sisa alat hanya di lokasi pertama tapi span ke seluruh lokasi
-                          locIdx === 0 && globalEqList.slice(1).map((eq, eqIdx) => (
-                            <tr key={`${plan.id}-global-eq-${eqIdx}`}>
-                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows / globalEqRows}>
-                                {eq.name} {eq.vehicle ? `(${eq.vehicle})` : ""}
-                              </td>
-                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows / globalEqRows}>{eq.quantity}</td>
-                              <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows / globalEqRows}>{eq.purpose}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          // Jika alat per lokasi, tampilkan sisa alat di bawah lokasi masing-masing
-                          loc.equipment?.slice(1).map((eq, eqIdx) => (
-                            <tr key={`${plan.id}-loc-${locIdx}-eq-${eqIdx}`}>
-                              <td className="border-2 border-black p-2 text-center align-middle">
-                                {eq.name} {eq.vehicle ? `(${eq.vehicle})` : ""}
-                              </td>
-                              <td className="border-2 border-black p-2 text-center align-middle">{eq.quantity}</td>
-                              <td className="border-2 border-black p-2 align-middle">{eq.purpose}</td>
-                            </tr>
-                          ))
-                        )}
+                        {/* Baris tambahan untuk alat operasional jika tidak digabung (isEqGlobal = false) */}
+                        {!isEqGlobal && loc.equipment?.slice(1).map((eq, eqIdx) => (
+                          <tr key={`${plan.id}-loc-${locIdx}-eq-${eqIdx}`}>
+                            <td className="border-2 border-black p-2 align-middle">
+                              {eq.name} {eq.vehicle ? `(${eq.vehicle})` : ""}
+                            </td>
+                            <td className="border-2 border-black p-2 text-center align-middle">{eq.quantity}</td>
+                            <td className="border-2 border-black p-2 align-middle">{eq.purpose}</td>
+                          </tr>
+                        ))}
                       </React.Fragment>
                     );
                   })}
@@ -238,6 +243,7 @@ const PrintWorkPlanRekap = () => {
           </tbody>
         </table>
 
+        {/* Tanda Tangan */}
         <div className={cn("mt-12 grid grid-cols-3 gap-4 text-[11px]", !showSignatures && "hidden")}>
           <div className="text-center space-y-16">
             <div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p></div>
