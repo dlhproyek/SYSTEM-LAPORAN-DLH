@@ -95,7 +95,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dailyPlans, setDailyPlans] = useState<WorkPlan[]>([]);
   const [loadingDaily, setLoadingDaily] = useState(false);
-  const [existingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
+  const [baseVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
 
   const processInitialBasis = (basisStr: string) => {
     if (!basisStr) return [{ value: "Laporan Masyarakat / Rutin" }];
@@ -147,6 +147,15 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const selectedCategory = form.watch("category");
   const isGlobalSDM = ["Tim Pohon", "Tim Babat"].includes(selectedCategory);
 
+  // Mengumpulkan semua Plat Nomor yang sedang diinput di form ini untuk saran real-time
+  const currentLocations = form.watch("locations");
+  const dynamicVehicleList = new Set(baseVehicles);
+  currentLocations?.forEach(loc => {
+    loc.equipment?.forEach(eq => {
+      if (eq.vehicle) dynamicVehicleList.add(eq.vehicle.toUpperCase());
+    });
+  });
+
   const loadDailyPlans = async (date: string) => {
     if (!date) return;
     try {
@@ -165,7 +174,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       
       if (isGlobalSDM) {
         form.setValue("coordinator", defaultCoordinator);
-        // Reset per-location SDM if switching to global
         const locations = form.getValues("locations");
         form.setValue("locations", locations.map(loc => ({ ...loc, coordinator: "", personnel: 0 })));
       } else {
@@ -244,7 +252,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       <Form {...form}>
         <form className="space-y-6">
           <datalist id="vehicle-list">
-            {existingVehicles.map(v => <option key={v} value={v} />)}
+            {Array.from(dynamicVehicleList).map(v => <option key={v} value={v} />)}
           </datalist>
           
           <datalist id="equipment-suggestions">
@@ -327,7 +335,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     </div>
                   </div>
 
-                  {/* SDM per Lokasi (Hanya untuk tim non-global) */}
                   { !isGlobalSDM && (
                     <div className="pt-6 border-t border-slate-100 space-y-4">
                       <h3 className="text-sm font-bold flex items-center gap-2 text-green-600"><Users size={14} /> Sumber Daya Manusia Lokasi #{locIndex + 1}</h3>
@@ -338,7 +345,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     </div>
                   )}
 
-                  {/* Alat Operasional per Lokasi */}
                   <div className="pt-6 border-t border-slate-100 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold flex items-center gap-2 text-orange-600"><Wrench size={14} /> Alat Operasional Lokasi #{locIndex + 1}</h3>
@@ -412,7 +418,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
             ))}
           </div>
 
-          {/* SDM Global (Hanya untuk Tim Pohon & Tim Babat) */}
           { isGlobalSDM && (
             <Card className="shadow-sm border-l-4 border-l-green-500">
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600" /> Sumber Daya Manusia (Tim)</CardTitle></CardHeader>
