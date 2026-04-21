@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { medanDistricts } from '@/data/medan-districts';
 import { workPlanService } from '@/services/workPlanService';
-import { WorkPlan, WorkPlanLocation } from '@/types/work-plan';
+import { WorkPlan } from '@/types/work-plan';
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -65,8 +65,19 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-      ...initialData,
-      locations: initialData.locations || [{ street: initialData.street || "", sub_district: initialData.sub_district || "", villages: initialData.villages || [""] }]
+      date: initialData.date,
+      category: initialData.category,
+      description: initialData.description,
+      locations: initialData.locations || [{ 
+        street: initialData.street || "", 
+        sub_district: initialData.sub_district || "", 
+        villages: Array.isArray(initialData.villages) ? initialData.villages : [""] 
+      }],
+      equipment: initialData.equipment || [],
+      coordinator: initialData.coordinator,
+      personnel: initialData.personnel,
+      basis: initialData.basis,
+      remarks: initialData.remarks || "",
     } : {
       date: new Date().toISOString().split('T')[0],
       category: "",
@@ -90,8 +101,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     name: "equipment"
   });
 
-  const selectedCategory = form.watch("category");
   const selectedDate = form.watch("date");
+  const selectedCategory = form.watch("category");
 
   const loadDailyPlans = async (date: string) => {
     if (!date) return;
@@ -120,13 +131,22 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   async function onSubmit(values: z.infer<typeof formSchema>, shouldAddAnother = false) {
     setIsSubmitting(true);
     try {
-      // Untuk kompatibilitas dengan kolom lama di DB, kita ambil lokasi pertama
       const firstLoc = values.locations[0];
+      
+      // Payload yang bersih (hanya kolom yang pasti ada di DB)
       const payload = {
-        ...values,
+        date: values.date,
+        category: values.category,
+        description: values.description,
         street: firstLoc.street,
         sub_district: firstLoc.sub_district,
-        villages: firstLoc.villages
+        villages: firstLoc.villages,
+        locations: values.locations, // Pastikan kolom ini sudah ditambah di Supabase
+        equipment: values.equipment,
+        coordinator: values.coordinator,
+        personnel: values.personnel,
+        basis: values.basis,
+        remarks: values.remarks,
       };
 
       if (isEditing && initialData) {
@@ -156,8 +176,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           navigate('/work-plans');
         }
       }
-    } catch (error) {
-      showError("Gagal menyimpan data");
+    } catch (error: any) {
+      console.error("Submit error:", error);
+      showError(error.message || "Gagal menyimpan data. Pastikan kolom 'locations' sudah ditambahkan di database.");
     } finally {
       setIsSubmitting(false);
     }
