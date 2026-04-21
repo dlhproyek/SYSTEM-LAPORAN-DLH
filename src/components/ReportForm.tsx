@@ -345,7 +345,18 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               <CardContent className="p-6 space-y-8">
                 <div className="flex justify-between items-center border-b pb-4">
                   <Badge variant="secondary" className="bg-blue-600 text-white px-3 py-1">Kegiatan #{taskIndex + 1}</Badge>
-                  {taskFields.length > 1 && <Button type="button" variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => removeTask(taskIndex)}><Trash2 className="h-4 w-4 mr-1" /> Hapus Kegiatan</Button>}
+                  {taskFields.length > 1 && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className={cn("text-red-500 hover:bg-red-50", isPimpinan && "opacity-50 cursor-not-allowed")} 
+                      disabled={isPimpinan}
+                      onClick={() => removeTask(taskIndex)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" /> Hapus Kegiatan
+                    </Button>
+                  )}
                 </div>
                 
                 <div className="space-y-4">
@@ -383,10 +394,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                             </FormItem>
                           )} />
                           {form.watch(`tasks.${taskIndex}.location.village`).length > 1 && (
-                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:text-red-600" onClick={() => {
-                              const current = form.getValues(`tasks.${taskIndex}.location.village`);
-                              form.setValue(`tasks.${taskIndex}.location.village`, current.filter((_, i) => i !== vIdx));
-                            }}><Trash2 size={14} /></Button>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className={cn("h-9 w-9 text-red-400 hover:text-red-600", isPimpinan && "opacity-50 cursor-not-allowed")} 
+                              disabled={isPimpinan}
+                              onClick={() => {
+                                const current = form.getValues(`tasks.${taskIndex}.location.village`);
+                                form.setValue(`tasks.${taskIndex}.location.village`, current.filter((_, i) => i !== vIdx));
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </Button>
                           )}
                         </div>
                       ))}
@@ -427,10 +447,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                             )} />
                           </div>
                           <div className="md:col-span-1 flex justify-end">
-                            <Button type="button" variant="destructive" size="icon" className="h-10 w-10" onClick={() => {
-                              const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`);
-                              form.setValue(`tasks.${taskIndex}.heavyEquipment`, current.filter((_, i) => i !== heIdx));
-                            }}><Trash2 className="h-4 w-4" /></Button>
+                            <Button 
+                              type="button" 
+                              variant="destructive" 
+                              size="icon" 
+                              className={cn("h-10 w-10", isPimpinan && "opacity-50 cursor-not-allowed")} 
+                              disabled={isPimpinan}
+                              onClick={() => {
+                                const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`);
+                                form.setValue(`tasks.${taskIndex}.heavyEquipment`, current.filter((_, i) => i !== heIdx));
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4 p-3 bg-white rounded border border-red-100">
@@ -454,10 +483,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                       <div key={eqIdx} className="flex gap-4 items-end">
                         <div className="flex-1"><FormField control={form.control} name={`tasks.${taskIndex}.equipment.${eqIdx}.type`} render={({ field }) => (<FormItem><FormLabel>Jenis Alat</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div>
                         <div className="w-24"><FormField control={form.control} name={`tasks.${taskIndex}.equipment.${eqIdx}.quantity`} render={({ field }) => (<FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div>
-                        <Button type="button" variant="destructive" size="icon" onClick={() => {
-                          const current = form.getValues(`tasks.${taskIndex}.equipment`);
-                          form.setValue(`tasks.${taskIndex}.equipment`, current.filter((_, i) => i !== eqIdx));
-                        }}><Trash2 className="h-4 w-4" /></Button>
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className={cn(isPimpinan && "opacity-50 cursor-not-allowed")}
+                          disabled={isPimpinan}
+                          onClick={() => {
+                            const current = form.getValues(`tasks.${taskIndex}.equipment`);
+                            form.setValue(`tasks.${taskIndex}.equipment`, current.filter((_, i) => i !== eqIdx));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                     <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => {
