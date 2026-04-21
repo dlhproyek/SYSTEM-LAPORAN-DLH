@@ -129,6 +129,13 @@ const MonthlyRecap = () => {
     }
   };
 
+  const handlePrint = () => {
+    // Berikan jeda 150ms agar menu dropdown tertutup sempurna sebelum dialog cetak muncul
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const handleDriveUpload = async (config: { fileName: string; folderId: string; accessToken: string }) => {
     if (!printRef.current) return;
     
@@ -446,7 +453,7 @@ const MonthlyRecap = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={handlePrint} className="cursor-pointer py-2">
                   <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Rekap
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
@@ -568,7 +575,14 @@ const MonthlyRecap = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body { background: white !important; }
-          .no-print, [data-radix-portal] { display: none !important; }
+          .no-print, 
+          [data-radix-portal], 
+          [role="menu"], 
+          [data-radix-popper-content-wrapper] { 
+            display: none !important; 
+            visibility: hidden !important;
+            opacity: 0 !important;
+          }
           .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
           @page { size: A3 landscape; margin: 1.5cm; }
           table { page-break-inside: auto; width: 100% !important; }
