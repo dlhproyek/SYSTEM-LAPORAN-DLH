@@ -64,7 +64,7 @@ const MonthlyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  // Filter States - Diubah ke "semua" agar langsung tampil semua
+  // Filter States
   const [selectedMonth, setSelectedMonth] = useState("semua");
   const [selectedYear, setSelectedYear] = useState("semua");
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
@@ -72,11 +72,15 @@ const MonthlyRecap = () => {
   
   const printRef = useRef<HTMLDivElement>(null);
   const isLoggedIn = !!session;
+  
+  // Logika Peran
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
 
   useEffect(() => {
     if (isLoggedIn && profile) {
-      // Pimpinan dan Admin bisa melihat semua kategori
-      if (profile.role === 'user' && profile.category) {
+      // Pimpinan dan Admin bisa melihat semua kategori secara default
+      if (isUserRestricted && profile.category) {
         setSelectedCategories([profile.category]);
       } else {
         setSelectedCategories(['semua']);
@@ -84,7 +88,7 @@ const MonthlyRecap = () => {
     } else {
       setSelectedCategories(['semua']);
     }
-  }, [profile, isLoggedIn]);
+  }, [profile, isLoggedIn, isUserRestricted]);
 
   useEffect(() => {
     if (selectedCategories.length > 0) {
@@ -106,7 +110,7 @@ const MonthlyRecap = () => {
         
         let matchCategory = false;
         // Admin dan Pimpinan bisa filter semua atau kategori tertentu
-        if (!isLoggedIn || profile?.role === 'admin' || profile?.role === 'pimpinan') {
+        if (!isLoggedIn || profile?.role === 'admin' || isPimpinan) {
           matchCategory = selectedCategories.includes('semua') || selectedCategories.includes(r.category);
         } else {
           // User biasa hanya bisa melihat kategorinya sendiri
@@ -380,9 +384,6 @@ const MonthlyRecap = () => {
     else { setSelectedCategories(newSelected); }
   };
 
-  const isUserRestricted = isLoggedIn && profile?.role === 'user';
-  const isPimpinan = isLoggedIn && profile?.role === 'pimpinan';
-  
   const showSignatory4 = selectedCategories.includes('semua') || selectedCategories.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
   const showSignatory5 = selectedCategories.includes('semua') || selectedCategories.includes("Tim Pohon");
 
