@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Edit, MapPin, Calendar, Wrench, Users, FileText, Info, Truck } from 'lucide-react';
+import { ArrowLeft, Printer, Edit, MapPin, Calendar, Wrench, Users, FileText, Info, Truck, ClipboardCheck } from 'lucide-react';
 import { workPlanService } from '@/services/workPlanService';
 import { WorkPlan } from '@/types/work-plan';
 import { showError } from '@/utils/toast';
@@ -89,24 +89,31 @@ const WorkPlanDetail = () => {
                         <p className="font-medium">{loc.street}</p>
                         <p className="text-xs text-slate-500">Kel. {loc.villages.join(", ")}, Kec. {loc.sub_district}</p>
                         
-                        { !isGlobalSDM && (
-                          <div className="mt-3 grid grid-cols-2 gap-4 pt-3 border-t border-slate-200">
-                            <div className="flex items-center gap-2">
-                              <Users size={14} className="text-green-600" />
-                              <div>
-                                <p className="text-[10px] text-slate-400 uppercase font-bold">Koordinator</p>
-                                <p className="font-bold text-xs">{loc.coordinator}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Users size={14} className="text-green-600" />
-                              <div>
-                                <p className="text-[10px] text-slate-400 uppercase font-bold">Personil</p>
-                                <p className="font-bold text-xs">{loc.personnel} Orang</p>
-                              </div>
-                            </div>
+                        <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <ClipboardCheck size={14} />
+                            <p className="text-xs font-bold">Dasar: {loc.basis}</p>
                           </div>
-                        )}
+                          
+                          { !isGlobalSDM && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex items-center gap-2">
+                                <Users size={14} className="text-green-600" />
+                                <div>
+                                  <p className="text-[10px] text-slate-400 uppercase font-bold">Koordinator</p>
+                                  <p className="font-bold text-xs">{loc.coordinator}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Users size={14} className="text-green-600" />
+                                <div>
+                                  <p className="text-[10px] text-slate-400 uppercase font-bold">Personil</p>
+                                  <p className="font-bold text-xs">{loc.personnel} Orang</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       {loc.equipment?.length > 0 && (
@@ -140,10 +147,6 @@ const WorkPlanDetail = () => {
               </>
             )}
 
-            <div className="grid grid-cols-3 border-b pb-2">
-              <span className="font-bold flex items-center gap-2"><Info size={14} /> Dasar Pengerjaan</span>
-              <span className="col-span-2 whitespace-pre-wrap">: {data.basis}</span>
-            </div>
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><FileText size={14} /> Keterangan</span>
               <span className="col-span-2">: {data.remarks || "-"}</span>

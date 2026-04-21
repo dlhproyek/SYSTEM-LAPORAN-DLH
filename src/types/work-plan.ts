@@ -13,8 +13,9 @@ export interface WorkPlanLocation {
   sub_district: string;
   villages: string[];
   equipment: WorkPlanEquipment[];
-  coordinator: string; // Sekarang per lokasi
-  personnel: number;   // Sekarang per lokasi
+  coordinator: string;
+  personnel: number;
+  basis: string; // Dasar pengerjaan sekarang per lokasi
 }
 
 export interface WorkPlan {
@@ -25,7 +26,7 @@ export interface WorkPlan {
   locations: WorkPlanLocation[];
   coordinator: string;
   personnel: number;
-  basis: string;
+  basis: string; // Tetap ada untuk kompatibilitas data lama
   remarks: string;
   created_at?: string;
   user_id?: string;

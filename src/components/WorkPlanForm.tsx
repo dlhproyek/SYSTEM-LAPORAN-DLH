@@ -70,6 +70,7 @@ const locationSchema = z.object({
   equipment: z.array(equipmentSchema).default([]),
   coordinator: z.string().optional().default(""),
   personnel: z.coerce.number().min(0).default(0),
+  basis: z.string().min(1, "Dasar pengerjaan wajib diisi"),
 });
 
 const formSchema = z.object({
@@ -78,7 +79,6 @@ const formSchema = z.object({
   locations: z.array(locationSchema).min(1, "Minimal satu lokasi"),
   coordinator: z.string().optional().default(""),
   personnel: z.coerce.number().min(0).default(0),
-  basis: z.array(z.object({ value: z.string().min(1, "Dasar wajib diisi") })).min(1, "Minimal satu dasar pengerjaan"),
   remarks: z.string().optional().default(""),
 });
 
@@ -95,15 +95,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dailyPlans, setDailyPlans] = useState<WorkPlan[]>([]);
   const [loadingDaily, setLoadingDaily] = useState(false);
-  const [baseVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
-
-  const processInitialBasis = (basisStr: string) => {
-    if (!basisStr) return [{ value: "Laporan Masyarakat / Rutin" }];
-    if (basisStr.includes('• ')) {
-      return basisStr.split('\n').map(s => ({ value: s.replace('• ', '').trim() }));
-    }
-    return [{ value: basisStr }];
-  };
+  const [existingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -116,6 +108,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         equipment: loc.equipment || [],
         coordinator: loc.coordinator || "",
         personnel: loc.personnel || 0,
+        basis: loc.basis || initialData.basis || "Laporan Masyarakat / Rutin",
       })) || [{ 
         description: initialData.description || "",
         street: initialData.street || "", 
@@ -124,37 +117,26 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         equipment: initialData.equipment || [],
         coordinator: "",
         personnel: 0,
+        basis: initialData.basis || "Laporan Masyarakat / Rutin",
       }],
       coordinator: initialData.coordinator || "",
       personnel: initialData.personnel || 0,
-      basis: processInitialBasis(initialData.basis),
       remarks: initialData.remarks || "",
     } : {
       date: urlDate || new Date().toISOString().split('T')[0],
       category: "",
-      locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0 }],
+      locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0, basis: "Laporan Masyarakat / Rutin" }],
       coordinator: "",
       personnel: 0,
-      basis: [{ value: "Laporan Masyarakat / Rutin" }],
       remarks: "",
     },
   });
 
   const { fields: locationFields, append: appendLocation, remove: removeLocation } = useFieldArray({ control: form.control, name: "locations" });
-  const { fields: basisFields, append: appendBasis, remove: removeBasis } = useFieldArray({ control: form.control, name: "basis" });
 
   const selectedDate = form.watch("date");
   const selectedCategory = form.watch("category");
   const isGlobalSDM = ["Tim Pohon", "Tim Babat"].includes(selectedCategory);
-
-  // Mengumpulkan semua Plat Nomor yang sedang diinput di form ini untuk saran real-time
-  const currentLocations = form.watch("locations");
-  const dynamicVehicleList = new Set(baseVehicles);
-  currentLocations?.forEach(loc => {
-    loc.equipment?.forEach(eq => {
-      if (eq.vehicle) dynamicVehicleList.add(eq.vehicle.toUpperCase());
-    });
-  });
 
   const loadDailyPlans = async (date: string) => {
     if (!date) return;
@@ -171,19 +153,17 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   useEffect(() => {
     if (selectedCategory && !isEditing) {
       const defaultCoordinator = coordinatorMapping[selectedCategory] || "";
+      const defaultBasis = basisMapping[selectedCategory] || "Laporan Masyarakat / Rutin";
       
       if (isGlobalSDM) {
         form.setValue("coordinator", defaultCoordinator);
         const locations = form.getValues("locations");
-        form.setValue("locations", locations.map(loc => ({ ...loc, coordinator: "", personnel: 0 })));
+        form.setValue("locations", locations.map(loc => ({ ...loc, coordinator: "", personnel: 0, basis: defaultBasis })));
       } else {
         form.setValue("coordinator", "");
         const locations = form.getValues("locations");
-        form.setValue("locations", locations.map(loc => ({ ...loc, coordinator: loc.coordinator || defaultCoordinator })));
+        form.setValue("locations", locations.map(loc => ({ ...loc, coordinator: loc.coordinator || defaultCoordinator, basis: loc.basis || defaultBasis })));
       }
-      
-      const defaultBasis = basisMapping[selectedCategory] || "Laporan Masyarakat / Rutin";
-      form.setValue("basis", [{ value: defaultBasis }]);
     }
   }, [selectedCategory, form, isEditing, isGlobalSDM]);
 
@@ -191,10 +171,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     setIsSubmitting(true);
     try {
       const firstLoc = values.locations[0];
-      const basisString = values.basis.length > 1 
-        ? values.basis.map(b => `• ${b.value}`).join('\n')
-        : values.basis[0].value;
-
+      
       let finalCoordinator = values.coordinator || "";
       let finalPersonnel = values.personnel || 0;
 
@@ -214,7 +191,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         locations: values.locations,
         coordinator: finalCoordinator,
         personnel: finalPersonnel,
-        basis: basisString,
+        basis: firstLoc.basis, // Simpan basis pertama ke root untuk kompatibilitas
         remarks: values.remarks,
       };
 
@@ -231,10 +208,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           form.reset({
             date: currentDate,
             category: "",
-            locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0 }],
+            locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0, basis: "Laporan Masyarakat / Rutin" }],
             coordinator: "",
             personnel: 0,
-            basis: [{ value: "Laporan Masyarakat / Rutin" }],
             remarks: "",
           });
           loadDailyPlans(currentDate);
@@ -252,7 +228,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       <Form {...form}>
         <form className="space-y-6">
           <datalist id="vehicle-list">
-            {Array.from(dynamicVehicleList).map(v => <option key={v} value={v} />)}
+            {existingVehicles.map(v => <option key={v} value={v} />)}
           </datalist>
           
           <datalist id="equipment-suggestions">
@@ -292,8 +268,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold flex items-center gap-2"><MapPinned className="text-red-500" /> Lokasi Pengerjaan { !isGlobalSDM && "& SDM" }</h2>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: isGlobalSDM ? "" : (coordinatorMapping[selectedCategory] || ""), personnel: 0 })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50"><Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain</Button>
+              <h2 className="text-lg font-bold flex items-center gap-2"><MapPinned className="text-red-500" /> Lokasi Pengerjaan</h2>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: isGlobalSDM ? "" : (coordinatorMapping[selectedCategory] || ""), personnel: 0, basis: basisMapping[selectedCategory] || "Laporan Masyarakat / Rutin" })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50"><Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain</Button>
             </div>
             {locationFields.map((locField, locIndex) => (
               <Card key={locField.id} className="shadow-sm border-l-4 border-l-red-400">
@@ -335,6 +311,13 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     </div>
                   </div>
 
+                  {/* Dasar Pengerjaan per Lokasi */}
+                  <div className="pt-6 border-t border-slate-100 space-y-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck size={14} /> Dasar Pengerjaan Lokasi #{locIndex + 1}</h3>
+                    <FormField control={form.control} name={`locations.${locIndex}.basis`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Contoh: Laporan Masyarakat / Rutin" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+
+                  {/* SDM per Lokasi (Hanya untuk tim non-global) */}
                   { !isGlobalSDM && (
                     <div className="pt-6 border-t border-slate-100 space-y-4">
                       <h3 className="text-sm font-bold flex items-center gap-2 text-green-600"><Users size={14} /> Sumber Daya Manusia Lokasi #{locIndex + 1}</h3>
@@ -345,6 +328,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     </div>
                   )}
 
+                  {/* Alat Operasional per Lokasi */}
                   <div className="pt-6 border-t border-slate-100 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold flex items-center gap-2 text-orange-600"><Wrench size={14} /> Alat Operasional Lokasi #{locIndex + 1}</h3>
@@ -418,6 +402,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
             ))}
           </div>
 
+          {/* SDM Global (Hanya untuk Tim Pohon & Tim Babat) */}
           { isGlobalSDM && (
             <Card className="shadow-sm border-l-4 border-l-green-500">
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600" /> Sumber Daya Manusia (Tim)</CardTitle></CardHeader>
@@ -427,21 +412,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
               </CardContent>
             </Card>
           )}
-
-          <Card className="shadow-sm">
-            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-blue-500" /> Dasar Pengerjaan</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {basisFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <FormField control={form.control} name={`basis.${index}.value`} render={({ field }) => (<FormItem><FormLabel className={index > 0 ? "hidden" : ""}>Dasar Pengerjaan</FormLabel><FormControl><Input placeholder="Contoh: Laporan Masyarakat" {...field} /></FormControl></FormItem>)} />
-                  </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeBasis(index)} className={cn("text-red-500", basisFields.length === 1 && "hidden")}><Trash2 size={18} /></Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => appendBasis({ value: "" })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Dasar Lain</Button>
-            </CardContent>
-          </Card>
 
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg">Keterangan</CardTitle></CardHeader>
