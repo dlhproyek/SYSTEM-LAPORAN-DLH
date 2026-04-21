@@ -30,13 +30,16 @@ const coordinatorMapping: Record<string, string> = {
   "Tim Pohon": "Ardiansyah Siregar"
 };
 
-// Mapping otomatis kegunaan alat
+/**
+ * Fungsi untuk mendeteksi kegunaan alat secara otomatis.
+ * Menggunakan .includes() agar tetap terdeteksi meskipun ada tambahan Plat BK atau teks lain.
+ */
 const getAutoPurpose = (name: string): string => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("chainsaw")) return "Alat Pemotong Pohon dan Ranting.";
   if (lowerName.includes("mobil tangga")) return "Alat Bantu Untuk Menjangkau Ranting Yang Tinggi";
   if (lowerName.includes("dump truck")) return "Pengangkut Sampah Pemangkasan Pohon";
-  if (lowerName.includes("truk siram")) return "Penyiraman Tanaman Median Jalan";
+  if (lowerName.includes("truk siram") || lowerName.includes("truck siram")) return "Penyiraman Tanaman Median Jalan";
   return "";
 };
 
@@ -289,7 +292,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                           <FormLabel>Nama Alat</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="Contoh: Chainsaw" 
+                              placeholder="Contoh: Chainsaw BK 1234 AB" 
                               {...field} 
                               onChange={(e) => {
                                 field.onChange(e);
