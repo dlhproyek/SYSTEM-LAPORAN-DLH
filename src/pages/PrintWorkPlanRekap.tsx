@@ -109,7 +109,7 @@ const PrintWorkPlanRekap = () => {
           </thead>
           <tbody>
             {plans.length > 0 ? plans.map((plan, idx) => {
-              // Hitung total baris yang dibutuhkan untuk plan ini
+              const isGlobalSDM = ["Tim Pohon", "Tim Babat"].includes(plan.category);
               const totalRows = plan.locations?.reduce((acc, loc) => acc + Math.max(1, loc.equipment?.length || 0), 0) || 1;
               
               return (
@@ -135,8 +135,20 @@ const PrintWorkPlanRekap = () => {
                           <td className="border-2 border-black p-2 text-center align-middle">{loc.equipment?.[0]?.quantity || "-"}</td>
                           <td className="border-2 border-black p-2 align-middle">{loc.equipment?.[0]?.purpose || "-"}</td>
 
-                          <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.coordinator}</td>
-                          <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.personnel}</td>
+                          {/* Koordinator & Personil: Global vs Per Lokasi */}
+                          { isGlobalSDM ? (
+                            locIdx === 0 ? (
+                              <>
+                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.coordinator}</td>
+                                <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.personnel}</td>
+                              </>
+                            ) : null
+                          ) : (
+                            <>
+                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.coordinator}</td>
+                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.personnel}</td>
+                            </>
+                          )}
 
                           {locIdx === 0 && (
                             <>

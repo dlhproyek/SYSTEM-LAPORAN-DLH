@@ -42,6 +42,8 @@ const WorkPlanDetail = () => {
   if (loading) return <div className="p-20 text-center">Memuat data...</div>;
   if (!data) return null;
 
+  const isGlobalSDM = ["Tim Pohon", "Tim Babat"].includes(data.category);
+
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8">
       <div className="max-w-[900px] mx-auto space-y-6">
@@ -87,22 +89,24 @@ const WorkPlanDetail = () => {
                         <p className="font-medium">{loc.street}</p>
                         <p className="text-xs text-slate-500">Kel. {loc.villages.join(", ")}, Kec. {loc.sub_district}</p>
                         
-                        <div className="mt-3 grid grid-cols-2 gap-4 pt-3 border-t border-slate-200">
-                          <div className="flex items-center gap-2">
-                            <Users size={14} className="text-green-600" />
-                            <div>
-                              <p className="text-[10px] text-slate-400 uppercase font-bold">Koordinator</p>
-                              <p className="font-bold text-xs">{loc.coordinator}</p>
+                        { !isGlobalSDM && (
+                          <div className="mt-3 grid grid-cols-2 gap-4 pt-3 border-t border-slate-200">
+                            <div className="flex items-center gap-2">
+                              <Users size={14} className="text-green-600" />
+                              <div>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold">Koordinator</p>
+                                <p className="font-bold text-xs">{loc.coordinator}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users size={14} className="text-green-600" />
+                              <div>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold">Personil</p>
+                                <p className="font-bold text-xs">{loc.personnel} Orang</p>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Users size={14} className="text-green-600" />
-                            <div>
-                              <p className="text-[10px] text-slate-400 uppercase font-bold">Personil</p>
-                              <p className="font-bold text-xs">{loc.personnel} Orang</p>
-                            </div>
-                          </div>
-                        </div>
+                        )}
                       </div>
                       
                       {loc.equipment?.length > 0 && (
@@ -122,6 +126,19 @@ const WorkPlanDetail = () => {
                 ))}
               </div>
             </div>
+
+            { isGlobalSDM && (
+              <>
+                <div className="grid grid-cols-3 border-b pb-2">
+                  <span className="font-bold flex items-center gap-2"><Users size={14} /> Koordinator Tim</span>
+                  <span className="col-span-2">: {data.coordinator}</span>
+                </div>
+                <div className="grid grid-cols-3 border-b pb-2">
+                  <span className="font-bold flex items-center gap-2"><Users size={14} /> Total Personil</span>
+                  <span className="col-span-2">: {data.personnel} Orang</span>
+                </div>
+              </>
+            )}
 
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><Info size={14} /> Dasar Pengerjaan</span>
