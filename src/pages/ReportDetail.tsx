@@ -51,16 +51,25 @@ const ReportDetail = () => {
           
           {isLoggedIn ? (
             <div className="flex gap-2 items-center">
-              {isPimpinan ? (
-                <Badge className="bg-amber-100 text-amber-700 border-amber-200 h-9 px-4">
-                  <ShieldCheck className="h-4 w-4 mr-2" /> Mode Pantau Pimpinan
+              {isPimpinan && (
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200 h-9 px-4 mr-2">
+                  <ShieldCheck className="h-4 w-4 mr-2" /> Mode Pantau
                 </Badge>
-              ) : (
-                <>
-                  <Button variant="outline" onClick={() => navigate(`/edit/${report.id}`)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
-                  <Button variant="destructive" onClick={async () => { if(confirm("Hapus?")) { await reportService.deleteReport(report.id); navigate('/'); } }}><Trash2 className="mr-2 h-4 w-4" /> Hapus</Button>
-                </>
               )}
+              <Button 
+                variant="outline" 
+                disabled={isPimpinan}
+                onClick={() => navigate(`/edit/${report.id}`)}
+              >
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Button>
+              <Button 
+                variant="destructive" 
+                disabled={isPimpinan}
+                onClick={async () => { if(confirm("Hapus?")) { await reportService.deleteReport(report.id); navigate('/'); } }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Hapus
+              </Button>
             </div>
           ) : (
             <Button variant="outline" onClick={() => navigate('/login')} className="text-blue-600 border-blue-600">

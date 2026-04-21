@@ -197,11 +197,15 @@ const Index = () => {
                   <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-5 w-5" /></Button>
                 </div>
 
-                {!isPimpinan && (
-                  <Button onClick={() => navigate('/create')} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3 md:px-4 ml-1">
-                    <Plus className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Laporan Baru</span>
-                  </Button>
-                )}
+                <Button 
+                  onClick={() => navigate('/create')} 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700 h-9 px-3 md:px-4 ml-1"
+                  disabled={isPimpinan}
+                >
+                  <Plus className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Laporan Baru</span>
+                </Button>
+                
                 {isPimpinan && (
                   <Badge className="bg-amber-100 text-amber-700 border-amber-200 ml-2 hidden md:flex">
                     <ShieldCheck className="h-3 w-3 mr-1" /> Mode Pantau
@@ -296,12 +300,24 @@ const Index = () => {
                       <Badge variant="outline" className="w-fit text-[9px] py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">{report.category}</Badge>
                     </div>
                     
-                    {isLoggedIn && !isPimpinan && (
+                    {isLoggedIn && (
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigate(`/edit/${report.id}`); }}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600" 
+                          disabled={isPimpinan}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/edit/${report.id}`); }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={(e) => handleDelete(e, report.id)}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-red-500" 
+                          disabled={isPimpinan}
+                          onClick={(e) => handleDelete(e, report.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
