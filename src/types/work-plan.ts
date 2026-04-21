@@ -9,6 +9,7 @@ export interface WorkPlanLocation {
 export interface WorkPlanEquipment {
   name: string;
   quantity: number;
+  purpose?: string; // Menambahkan kegunaan alat
 }
 
 export interface WorkPlan {
@@ -16,7 +17,7 @@ export interface WorkPlan {
   date: string;
   category: string;
   description: string;
-  locations: WorkPlanLocation[]; // Mendukung banyak lokasi
+  locations: WorkPlanLocation[];
   equipment: WorkPlanEquipment[];
   coordinator: string;
   personnel: number;
@@ -24,7 +25,6 @@ export interface WorkPlan {
   remarks: string;
   created_at?: string;
   user_id?: string;
-  // Kolom lama tetap ada untuk kompatibilitas sementara
   street?: string;
   sub_district?: string;
   villages?: string[];

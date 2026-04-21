@@ -33,7 +33,6 @@ const PrintWorkPlanRekap = () => {
       setLoading(true);
       const allPlans = await workPlanService.getAllWorkPlans();
       const filtered = allPlans.filter(p => p.date === date);
-      // Urutkan berdasarkan kategori agar rapi
       filtered.sort((a, b) => a.category.localeCompare(b.category));
       setPlans(filtered);
     } catch (error) {
@@ -47,7 +46,7 @@ const PrintWorkPlanRekap = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
-      <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4">
+      <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4">
         <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
           <Button variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
@@ -62,7 +61,7 @@ const PrintWorkPlanRekap = () => {
         </div>
       </div>
 
-      <div className="print-area bg-white p-10 mx-auto shadow-none border-none w-full max-w-[1200px]">
+      <div className="print-area bg-white p-10 mx-auto shadow-none border-none w-full max-w-[1400px]">
         {/* Header Kop Surat */}
         <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
           <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
@@ -83,54 +82,68 @@ const PrintWorkPlanRekap = () => {
           <p className="font-bold">TANGGAL: {date ? new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase() : '-'}</p>
         </div>
 
-        <table className="w-full border-collapse border-2 border-black text-[11px]">
+        <table className="w-full border-collapse border-2 border-black text-[10px]">
           <thead>
-            <tr className="bg-slate-100">
-              <th className="border-2 border-black p-2 w-[40px]">No</th>
-              <th className="border-2 border-black p-2 w-[120px]">Kategori</th>
-              <th className="border-2 border-black p-2">Uraian Kegiatan</th>
-              <th className="border-2 border-black p-2">Lokasi</th>
-              <th className="border-2 border-black p-2 w-[150px]">Alat Operasional</th>
-              <th className="border-2 border-black p-2 w-[60px]">Pers</th>
-              <th className="border-2 border-black p-2 w-[120px]">Koordinator</th>
-              <th className="border-2 border-black p-2 w-[120px]">Dasar</th>
+            <tr className="bg-[#FFFF00]">
+              <th className="border-2 border-black p-2 w-[30px] text-center">No</th>
+              <th className="border-2 border-black p-2 w-[100px] text-center">Tim/ Kecamatan</th>
+              <th className="border-2 border-black p-2 w-[180px] text-center">Detail Kegiatan</th>
+              <th className="border-2 border-black p-2 w-[200px] text-center">Lokasi</th>
+              <th className="border-2 border-black p-2 w-[120px] text-center">Alat Operasional</th>
+              <th className="border-2 border-black p-2 w-[40px] text-center">(Unit)</th>
+              <th className="border-2 border-black p-2 w-[150px] text-center">Kegunaan</th>
+              <th className="border-2 border-black p-2 w-[100px] text-center">Koordinator Lapangan</th>
+              <th className="border-2 border-black p-2 w-[60px] text-center">Personil (Jlh. Org)</th>
+              <th className="border-2 border-black p-2 w-[150px] text-center">Dasar Pengerjaan</th>
+              <th className="border-2 border-black p-2 w-[100px] text-center">Keterangan</th>
             </tr>
           </thead>
           <tbody>
-            {plans.length > 0 ? plans.map((plan, idx) => (
-              <tr key={plan.id}>
-                <td className="border-2 border-black p-2 text-center font-bold">{idx + 1}</td>
-                <td className="border-2 border-black p-2 font-bold">{plan.category}</td>
-                <td className="border-2 border-black p-2">{plan.description}</td>
-                <td className="border-2 border-black p-2">
-                  {plan.locations?.length > 0 ? (
-                    <div className="space-y-2">
-                      {plan.locations.map((loc, i) => (
-                        <div key={i} className="border-b border-slate-200 last:border-0 pb-1 mb-1">
-                          <p className="font-bold">{loc.street}</p>
-                          <p className="text-[9px] text-slate-600">Kel. {loc.villages.join(", ")}, Kec. {loc.sub_district}</p>
+            {plans.length > 0 ? plans.map((plan, idx) => {
+              const eqCount = plan.equipment?.length || 1;
+              return (
+                <React.Fragment key={plan.id}>
+                  {/* Baris Pertama untuk setiap rencana kerja */}
+                  <tr>
+                    <td className="border-2 border-black p-2 text-center align-middle" rowSpan={eqCount}>{idx + 1}</td>
+                    <td className="border-2 border-black p-2 text-center align-middle" rowSpan={eqCount}>{plan.category}</td>
+                    <td className="border-2 border-black p-2 align-middle" rowSpan={eqCount}>{plan.description}</td>
+                    <td className="border-2 border-black p-2 align-middle" rowSpan={eqCount}>
+                      {plan.locations?.length > 0 ? (
+                        <div className="space-y-1">
+                          {plan.locations.map((loc, i) => (
+                            <div key={i}>{i + 1}. {loc.street}</div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="font-bold">{plan.street}</p>
-                      <p className="text-[9px] text-slate-600">Kel. {plan.villages?.join(", ")}, Kec. {plan.sub_district}</p>
-                    </div>
-                  )}
-                </td>
-                <td className="border-2 border-black p-2">
-                  {plan.equipment.map((eq, i) => (
-                    <div key={i}>• {eq.name} ({eq.quantity})</div>
+                      ) : (
+                        <div>1. {plan.street}</div>
+                      )}
+                    </td>
+                    
+                    {/* Kolom Alat Operasional (Baris Pertama) */}
+                    <td className="border-2 border-black p-2 text-center align-middle">{plan.equipment?.[0]?.name || "-"}</td>
+                    <td className="border-2 border-black p-2 text-center align-middle">{plan.equipment?.[0]?.quantity || "-"}</td>
+                    <td className="border-2 border-black p-2 align-middle">{plan.equipment?.[0]?.purpose || "-"}</td>
+
+                    <td className="border-2 border-black p-2 text-center align-middle" rowSpan={eqCount}>{plan.coordinator}</td>
+                    <td className="border-2 border-black p-2 text-center align-middle" rowSpan={eqCount}>{plan.personnel}</td>
+                    <td className="border-2 border-black p-2 align-middle whitespace-pre-wrap" rowSpan={eqCount}>{plan.basis}</td>
+                    <td className="border-2 border-black p-2 align-middle" rowSpan={eqCount}>{plan.remarks || ""}</td>
+                  </tr>
+
+                  {/* Baris Tambahan jika ada lebih dari 1 alat */}
+                  {plan.equipment?.slice(1).map((eq, eqIdx) => (
+                    <tr key={`${plan.id}-eq-${eqIdx}`}>
+                      <td className="border-2 border-black p-2 text-center align-middle">{eq.name}</td>
+                      <td className="border-2 border-black p-2 text-center align-middle">{eq.quantity}</td>
+                      <td className="border-2 border-black p-2 align-middle">{eq.purpose}</td>
+                    </tr>
                   ))}
-                </td>
-                <td className="border-2 border-black p-2 text-center">{plan.personnel}</td>
-                <td className="border-2 border-black p-2 text-center">{plan.coordinator}</td>
-                <td className="border-2 border-black p-2 whitespace-pre-wrap">{plan.basis}</td>
-              </tr>
-            )) : (
+                </React.Fragment>
+              );
+            }) : (
               <tr>
-                <td colSpan={8} className="border-2 border-black p-10 text-center italic text-slate-400">
+                <td colSpan={11} className="border-2 border-black p-10 text-center italic text-slate-400">
                   Tidak ada data rencana kerja untuk tanggal ini
                 </td>
               </tr>
@@ -178,10 +191,12 @@ const PrintWorkPlanRekap = () => {
         @media print {
           body { background: white !important; }
           .no-print { display: none !important; }
-          .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
-          @page { size: landscape; margin: 1cm; }
-          table { page-break-inside: auto; }
+          .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+          @page { size: landscape; margin: 0.5cm; }
+          table { page-break-inside: auto; width: 100% !important; }
           tr { page-break-inside: avoid; page-break-after: auto; }
+          thead { display: table-header-group; }
+          .bg-[#FFFF00] { background-color: #FFFF00 !important; -webkit-print-color-adjust: exact; }
         }
       `}} />
     </div>

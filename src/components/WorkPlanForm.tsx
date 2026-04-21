@@ -43,7 +43,8 @@ const formSchema = z.object({
   locations: z.array(locationSchema).min(1, "Minimal satu lokasi"),
   equipment: z.array(z.object({
     name: z.string().min(1, "Nama alat wajib diisi"),
-    quantity: z.coerce.number().min(1, "Minimal 1 unit")
+    quantity: z.coerce.number().min(1, "Minimal 1 unit"),
+    purpose: z.string().optional().default(""),
   })).default([]),
   coordinator: z.string().min(1, "Koordinator wajib diisi"),
   personnel: z.coerce.number().min(0),
@@ -65,10 +66,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const [dailyPlans, setDailyPlans] = useState<WorkPlan[]>([]);
   const [loadingDaily, setLoadingDaily] = useState(false);
 
-  // Helper untuk memproses data basis dari string ke array object
   const processInitialBasis = (basisStr: string) => {
     if (!basisStr) return [{ value: "Laporan Masyarakat / Rutin" }];
-    // Jika mengandung poin-poin, pecah kembali
     if (basisStr.includes('• ')) {
       return basisStr.split('\n').map(s => ({ value: s.replace('• ', '').trim() }));
     }
@@ -104,20 +103,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     },
   });
 
-  const { fields: locationFields, append: appendLocation, remove: removeLocation } = useFieldArray({
-    control: form.control,
-    name: "locations"
-  });
-
-  const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({
-    control: form.control,
-    name: "equipment"
-  });
-
-  const { fields: basisFields, append: appendBasis, remove: removeBasis } = useFieldArray({
-    control: form.control,
-    name: "basis"
-  });
+  const { fields: locationFields, append: appendLocation, remove: removeLocation } = useFieldArray({ control: form.control, name: "locations" });
+  const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({ control: form.control, name: "equipment" });
+  const { fields: basisFields, append: appendBasis, remove: removeBasis } = useFieldArray({ control: form.control, name: "basis" });
 
   const selectedDate = form.watch("date");
   const selectedCategory = form.watch("category");
@@ -129,16 +117,10 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       const allPlans = await workPlanService.getAllWorkPlans();
       const filtered = allPlans.filter(p => p.date === date);
       setDailyPlans(filtered);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingDaily(false);
-    }
+    } catch (error) { console.error(error); } finally { setLoadingDaily(false); }
   };
 
-  useEffect(() => {
-    loadDailyPlans(selectedDate);
-  }, [selectedDate]);
+  useEffect(() => { loadDailyPlans(selectedDate); }, [selectedDate]);
 
   useEffect(() => {
     if (selectedCategory && !isEditing) {
@@ -150,8 +132,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     setIsSubmitting(true);
     try {
       const firstLoc = values.locations[0];
-      
-      // Gabungkan basis menjadi string dengan poin-poin jika lebih dari satu
       const basisString = values.basis.length > 1 
         ? values.basis.map(b => `• ${b.value}`).join('\n')
         : values.basis[0].value;
@@ -174,16 +154,11 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       if (isEditing && initialData) {
         await workPlanService.updateWorkPlan(initialData.id, payload as any);
         showSuccess("Rencana kerja diperbarui");
-        
-        if (shouldAddAnother) {
-          navigate(`/work-plans/create?date=${values.date}`);
-        } else {
-          navigate('/work-plans');
-        }
+        if (shouldAddAnother) navigate(`/work-plans/create?date=${values.date}`);
+        else navigate('/work-plans');
       } else {
         await workPlanService.createWorkPlan(payload as any);
         showSuccess("Rencana kerja berhasil disimpan");
-        
         if (shouldAddAnother) {
           const currentDate = values.date;
           form.reset({
@@ -199,16 +174,12 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           });
           loadDailyPlans(currentDate);
           window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          navigate('/work-plans');
-        }
+        } else { navigate('/work-plans'); }
       }
     } catch (error: any) {
       console.error("Submit error:", error);
       showError(error.message || "Gagal menyimpan data.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   }
 
   return (
@@ -221,24 +192,11 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
             </Button>
             <h1 className="text-xl font-bold">{isEditing ? "Edit Rencana Kerja" : "Buat Rencana Kerja"}</h1>
             <div className="flex gap-2">
-              <Button 
-                type="button" 
-                variant="outline"
-                disabled={isSubmitting} 
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 font-bold"
-                onClick={form.handleSubmit((data) => onSubmit(data, true))}
-              >
-                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Plus className="mr-2 h-4 w-4" />}
-                Simpan & Tambah Tim Lain
+              <Button type="button" variant="outline" disabled={isSubmitting} className="border-blue-600 text-blue-600 hover:bg-blue-50 font-bold" onClick={form.handleSubmit((data) => onSubmit(data, true))}>
+                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Plus className="mr-2 h-4 w-4" />} Simpan & Tambah Tim Lain
               </Button>
-              <Button 
-                type="button"
-                disabled={isSubmitting} 
-                className="bg-blue-600 font-bold"
-                onClick={form.handleSubmit((data) => onSubmit(data, false))}
-              >
-                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                {isEditing ? "Perbarui & Selesai" : "Simpan & Selesai"}
+              <Button type="button" disabled={isSubmitting} className="bg-blue-600 font-bold" onClick={form.handleSubmit((data) => onSubmit(data, false))}>
+                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="mr-2 h-4 w-4" />} {isEditing ? "Perbarui & Selesai" : "Simpan & Selesai"}
               </Button>
             </div>
           </div>
@@ -246,9 +204,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           <Card className="border-t-4 border-t-blue-500 shadow-sm">
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileText className="h-5 w-5 text-blue-600" /> Informasi Utama</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="date" render={({ field }) => (
-                <FormItem><FormLabel>Tanggal Rencana</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField control={form.control} name="date" render={({ field }) => (<FormItem><FormLabel>Tanggal Rencana</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="category" render={({ field }) => (
                 <FormItem><FormLabel>Kategori</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
@@ -259,9 +215,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                 </FormItem>
               )} />
               <div className="md:col-span-2">
-                <FormField control={form.control} name="description" render={({ field }) => (
-                  <FormItem><FormLabel>Uraian Kegiatan</FormLabel><FormControl><Input placeholder="Contoh: Pemangkasan pohon rawan tumbang" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Uraian Kegiatan</FormLabel><FormControl><Input placeholder="Contoh: Pemangkasan pohon rawan tumbang" {...field} /></FormControl><FormMessage /></FormItem>)} />
               </div>
             </CardContent>
           </Card>
@@ -269,25 +223,16 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold flex items-center gap-2"><MapPinned className="text-red-500" /> Lokasi Pengerjaan</h2>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ street: "", sub_district: "", villages: [""] })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50">
-                <Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain
-              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ street: "", sub_district: "", villages: [""] })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50"><Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain</Button>
             </div>
-
             {locationFields.map((locField, locIndex) => (
               <Card key={locField.id} className="shadow-sm border-l-4 border-l-red-400">
                 <CardHeader className="py-3 px-4 flex flex-row items-center justify-between bg-slate-50/50">
                   <Badge variant="secondary" className="bg-red-100 text-red-700">Lokasi #{locIndex + 1}</Badge>
-                  {locationFields.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeLocation(locIndex)} className="text-red-500 h-8 hover:bg-red-50">
-                      <Trash2 size={14} className="mr-1" /> Hapus Lokasi
-                    </Button>
-                  )}
+                  {locationFields.length > 1 && (<Button type="button" variant="ghost" size="sm" onClick={() => removeLocation(locIndex)} className="text-red-500 h-8 hover:bg-red-50"><Trash2 size={14} className="mr-1" /> Hapus Lokasi</Button>)}
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
-                  <FormField control={form.control} name={`locations.${locIndex}.street`} render={({ field }) => (
-                    <FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input placeholder="Jl. Contoh No. 123" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField control={form.control} name={`locations.${locIndex}.street`} render={({ field }) => (<FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input placeholder="Jl. Contoh No. 123" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name={`locations.${locIndex}.sub_district`} render={({ field }) => (
                       <FormItem><FormLabel>Kecamatan</FormLabel>
@@ -306,24 +251,14 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                             <FormItem className="flex-1">
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Pilih kelurahan" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  {form.watch(`locations.${locIndex}.sub_district`) && medanDistricts[form.watch(`locations.${locIndex}.sub_district`)]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                                </SelectContent>
+                                <SelectContent>{form.watch(`locations.${locIndex}.sub_district`) && medanDistricts[form.watch(`locations.${locIndex}.sub_district`)]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                               </Select>
                             </FormItem>
                           )} />
-                          {form.watch(`locations.${locIndex}.villages`).length > 1 && (
-                            <Button type="button" variant="ghost" size="icon" onClick={() => {
-                              const current = form.getValues(`locations.${locIndex}.villages`);
-                              form.setValue(`locations.${locIndex}.villages`, current.filter((_, i) => i !== vIdx));
-                            }} className="text-red-500"><Trash2 size={16} /></Button>
-                          )}
+                          {form.watch(`locations.${locIndex}.villages`).length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => { const current = form.getValues(`locations.${locIndex}.villages`); form.setValue(`locations.${locIndex}.villages`, current.filter((_, i) => i !== vIdx)); }} className="text-red-500"><Trash2 size={16} /></Button>)}
                         </div>
                       ))}
-                      <Button type="button" variant="outline" size="sm" onClick={() => {
-                        const current = form.getValues(`locations.${locIndex}.villages`);
-                        form.setValue(`locations.${locIndex}.villages`, [...current, ""]);
-                      }} className="w-full border-dashed text-[10px] h-7"><Plus size={12} className="mr-1" /> Tambah Kelurahan</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { const current = form.getValues(`locations.${locIndex}.villages`); form.setValue(`locations.${locIndex}.villages`, [...current, ""]); }} className="w-full border-dashed text-[10px] h-7"><Plus size={12} className="mr-1" /> Tambah Kelurahan</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -334,41 +269,32 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Wrench className="h-5 w-5 text-orange-500" /> Alat Operasional</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {equipmentFields.length === 0 && (
-                <div className="text-center py-4 text-slate-400 text-sm italic border rounded-lg border-dashed">
-                  Tidak ada alat operasional yang ditambahkan
-                </div>
-              )}
+              {equipmentFields.length === 0 && (<div className="text-center py-4 text-slate-400 text-sm italic border rounded-lg border-dashed">Tidak ada alat operasional yang ditambahkan</div>)}
               {equipmentFields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                  <div className="md:col-span-7">
-                    <FormField control={form.control} name={`equipment.${index}.name`} render={({ field }) => (
-                      <FormItem><FormLabel>Nama Alat</FormLabel><FormControl><Input placeholder="Contoh: Chainsaw" {...field} /></FormControl></FormItem>
-                    )} />
+                <div key={field.id} className="p-4 border rounded-lg bg-slate-50 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="md:col-span-7">
+                      <FormField control={form.control} name={`equipment.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Nama Alat</FormLabel><FormControl><Input placeholder="Contoh: Chainsaw" {...field} /></FormControl></FormItem>)} />
+                    </div>
+                    <div className="md:col-span-3">
+                      <FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeEquipment(index)} className="text-red-500"><Trash2 size={18} /></Button>
+                    </div>
                   </div>
-                  <div className="md:col-span-3">
-                    <FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (
-                      <FormItem><FormLabel>Unit</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-                    )} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeEquipment(index)} className="text-red-500"><Trash2 size={18} /></Button>
-                  </div>
+                  <FormField control={form.control} name={`equipment.${index}.purpose`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Kegunaan Alat</FormLabel><FormControl><Input placeholder="Contoh: Alat Pemotong Pohon dan Ranting" {...field} /></FormControl></FormItem>)} />
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => appendEquipment({ name: "", quantity: 1 })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Alat</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendEquipment({ name: "", quantity: 1, purpose: "" })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Alat</Button>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600" /> Sumber Daya Manusia</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="coordinator" render={({ field }) => (
-                <FormItem><FormLabel>Koordinator Lapangan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="personnel" render={({ field }) => (
-                <FormItem><FormLabel>Jumlah Personil</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField control={form.control} name="coordinator" render={({ field }) => (<FormItem><FormLabel>Koordinator Lapangan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="personnel" render={({ field }) => (<FormItem><FormLabel>Jumlah Personil</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </CardContent>
           </Card>
 
@@ -378,19 +304,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
               {basisFields.map((field, index) => (
                 <div key={field.id} className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <FormField control={form.control} name={`basis.${index}.value`} render={({ field }) => (
-                      <FormItem><FormLabel className={index > 0 ? "hidden" : ""}>Dasar Pengerjaan</FormLabel><FormControl><Input placeholder="Contoh: Laporan Masyarakat" {...field} /></FormControl></FormItem>
-                    )} />
+                    <FormField control={form.control} name={`basis.${index}.value`} render={({ field }) => (<FormItem><FormLabel className={index > 0 ? "hidden" : ""}>Dasar Pengerjaan</FormLabel><FormControl><Input placeholder="Contoh: Laporan Masyarakat" {...field} /></FormControl></FormItem>)} />
                   </div>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => removeBasis(index)} 
-                    className={cn("text-red-500", basisFields.length === 1 && "hidden")}
-                  >
-                    <Trash2 size={18} />
-                  </Button>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeBasis(index)} className={cn("text-red-500", basisFields.length === 1 && "hidden")}><Trash2 size={18} /></Button>
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={() => appendBasis({ value: "" })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Dasar Lain</Button>
@@ -399,84 +315,35 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
 
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg">Keterangan</CardTitle></CardHeader>
-            <CardContent>
-              <FormField control={form.control} name="remarks" render={({ field }) => (
-                <FormItem><FormLabel>Catatan Tambahan</FormLabel><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-            </CardContent>
+            <CardContent><FormField control={form.control} name="remarks" render={({ field }) => (<FormItem><FormLabel>Catatan Tambahan</FormLabel><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent>
           </Card>
         </form>
       </Form>
 
-      {/* Tabel Rekap Harian */}
       <Card className="border-t-4 border-t-green-500 shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <RefreshCw className={cn("h-5 w-5 text-green-600", loadingDaily && "animate-spin")} /> 
-              Rekap Rencana Kerja: {new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </CardTitle>
-          </div>
+          <div><CardTitle className="text-lg flex items-center gap-2"><RefreshCw className={cn("h-5 w-5 text-green-600", loadingDaily && "animate-spin")} /> Rekap Rencana Kerja: {new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</CardTitle></div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-blue-50 text-blue-700 border-blue-200"
-              onClick={() => navigate(`/work-plans/print-rekap?date=${selectedDate}`)}
-              disabled={dailyPlans.length === 0}
-            >
-              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap Tabel
-            </Button>
+            <Button variant="outline" size="sm" className="bg-blue-50 text-blue-700 border-blue-200" onClick={() => navigate(`/work-plans/print-rekap?date=${selectedDate}`)} disabled={dailyPlans.length === 0}><Printer className="mr-2 h-4 w-4" /> Cetak Rekap Tabel</Button>
             <Button variant="outline" size="sm" onClick={() => loadDailyPlans(selectedDate)}>Segarkan</Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead className="w-[50px] text-center">No</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Uraian Kegiatan</TableHead>
-                  <TableHead>Lokasi</TableHead>
-                  <TableHead className="text-center">Personil</TableHead>
-                  <TableHead>Koordinator</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow className="bg-slate-50"><TableHead className="w-[50px] text-center">No</TableHead><TableHead>Kategori</TableHead><TableHead>Uraian Kegiatan</TableHead><TableHead>Lokasi</TableHead><TableHead className="text-center">Personil</TableHead><TableHead>Koordinator</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
               <TableBody>
-                {loadingDaily ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-10">Memuat data rekap...</TableCell></TableRow>
-                ) : dailyPlans.length > 0 ? (
-                  dailyPlans.map((plan, idx) => (
-                    <TableRow key={plan.id}>
-                      <TableCell className="text-center font-medium">{idx + 1}</TableCell>
-                      <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{plan.category}</Badge></TableCell>
-                      <TableCell className="max-w-[200px] truncate">{plan.description}</TableCell>
-                      <TableCell className="max-w-[200px]">
-                        {plan.locations?.length > 0 ? (
-                          <div className="space-y-1">
-                            {plan.locations.map((loc, i) => (
-                              <div key={i} className="text-[10px] leading-tight">• {loc.street}</div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="truncate">{plan.street}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">{plan.personnel} Orang</TableCell>
-                      <TableCell>{plan.coordinator}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => navigate(`/work-plans/${plan.id}`)}><Eye size={14} /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => navigate(`/work-plans/edit/${plan.id}`)}><Edit size={14} /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-slate-400 italic">Belum ada rencana kerja untuk tanggal ini</TableCell></TableRow>
-                )}
+                {loadingDaily ? (<TableRow><TableCell colSpan={7} className="text-center py-10">Memuat data rekap...</TableCell></TableRow>) : dailyPlans.length > 0 ? (dailyPlans.map((plan, idx) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="text-center font-medium">{idx + 1}</TableCell>
+                    <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{plan.category}</Badge></TableCell>
+                    <TableCell className="max-w-[200px] truncate">{plan.description}</TableCell>
+                    <TableCell className="max-w-[200px]">{plan.locations?.length > 0 ? (<div className="space-y-1">{plan.locations.map((loc, i) => (<div key={i} className="text-[10px] leading-tight">• {loc.street}</div>))}</div>) : (<span className="truncate">{plan.street}</span>)}</TableCell>
+                    <TableCell className="text-center">{plan.personnel} Orang</TableCell>
+                    <TableCell>{plan.coordinator}</TableCell>
+                    <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => navigate(`/work-plans/${plan.id}`)}><Eye size={14} /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => navigate(`/work-plans/edit/${plan.id}`)}><Edit size={14} /></Button></div></TableCell>
+                  </TableRow>
+                ))) : (<TableRow><TableCell colSpan={7} className="text-center py-10 text-slate-400 italic">Belum ada rencana kerja untuk tanggal ini</TableCell></TableRow>)}
               </TableBody>
             </Table>
           </div>
