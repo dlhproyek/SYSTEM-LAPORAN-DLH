@@ -117,7 +117,7 @@ const WorkPlanDetail = () => {
             </div>
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><Info size={14} /> Dasar Pengerjaan</span>
-              <span className="col-span-2">: {data.basis}</span>
+              <span className="col-span-2 whitespace-pre-wrap">: {data.basis}</span>
             </div>
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><FileText size={14} /> Keterangan</span>

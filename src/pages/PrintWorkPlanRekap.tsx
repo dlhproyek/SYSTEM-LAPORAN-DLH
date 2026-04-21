@@ -126,7 +126,7 @@ const PrintWorkPlanRekap = () => {
                 </td>
                 <td className="border-2 border-black p-2 text-center">{plan.personnel}</td>
                 <td className="border-2 border-black p-2 text-center">{plan.coordinator}</td>
-                <td className="border-2 border-black p-2">{plan.basis}</td>
+                <td className="border-2 border-black p-2 whitespace-pre-wrap">{plan.basis}</td>
               </tr>
             )) : (
               <tr>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Wrench, Users, FileText, Eye, RefreshCw, Edit, Printer, MapPinned } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Wrench, Users, FileText, Eye, RefreshCw, Edit, Printer, MapPinned, ClipboardCheck } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { medanDistricts } from '@/data/medan-districts';
@@ -47,7 +47,7 @@ const formSchema = z.object({
   })).default([]),
   coordinator: z.string().min(1, "Koordinator wajib diisi"),
   personnel: z.coerce.number().min(0),
-  basis: z.string().min(1, "Dasar pengerjaan wajib diisi"),
+  basis: z.array(z.object({ value: z.string().min(1, "Dasar wajib diisi") })).min(1, "Minimal satu dasar pengerjaan"),
   remarks: z.string().optional().default(""),
 });
 
@@ -65,6 +65,16 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const [dailyPlans, setDailyPlans] = useState<WorkPlan[]>([]);
   const [loadingDaily, setLoadingDaily] = useState(false);
 
+  // Helper untuk memproses data basis dari string ke array object
+  const processInitialBasis = (basisStr: string) => {
+    if (!basisStr) return [{ value: "Laporan Masyarakat / Rutin" }];
+    // Jika mengandung poin-poin, pecah kembali
+    if (basisStr.includes('• ')) {
+      return basisStr.split('\n').map(s => ({ value: s.replace('• ', '').trim() }));
+    }
+    return [{ value: basisStr }];
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
@@ -79,7 +89,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       equipment: initialData.equipment || [],
       coordinator: initialData.coordinator,
       personnel: initialData.personnel,
-      basis: initialData.basis,
+      basis: processInitialBasis(initialData.basis),
       remarks: initialData.remarks || "",
     } : {
       date: urlDate || new Date().toISOString().split('T')[0],
@@ -89,7 +99,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       equipment: [],
       coordinator: "",
       personnel: 0,
-      basis: "Laporan Masyarakat / Rutin",
+      basis: [{ value: "Laporan Masyarakat / Rutin" }],
       remarks: "",
     },
   });
@@ -102,6 +112,11 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({
     control: form.control,
     name: "equipment"
+  });
+
+  const { fields: basisFields, append: appendBasis, remove: removeBasis } = useFieldArray({
+    control: form.control,
+    name: "basis"
   });
 
   const selectedDate = form.watch("date");
@@ -136,6 +151,11 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     try {
       const firstLoc = values.locations[0];
       
+      // Gabungkan basis menjadi string dengan poin-poin jika lebih dari satu
+      const basisString = values.basis.length > 1 
+        ? values.basis.map(b => `• ${b.value}`).join('\n')
+        : values.basis[0].value;
+
       const payload = {
         date: values.date,
         category: values.category,
@@ -147,7 +167,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         equipment: values.equipment,
         coordinator: values.coordinator,
         personnel: values.personnel,
-        basis: values.basis,
+        basis: basisString,
         remarks: values.remarks,
       };
 
@@ -156,7 +176,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         showSuccess("Rencana kerja diperbarui");
         
         if (shouldAddAnother) {
-          // Jika sedang edit dan ingin tambah lagi, arahkan ke halaman create dengan tanggal yang sama
           navigate(`/work-plans/create?date=${values.date}`);
         } else {
           navigate('/work-plans');
@@ -175,7 +194,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
             equipment: [],
             coordinator: "",
             personnel: 0,
-            basis: "Laporan Masyarakat / Rutin",
+            basis: [{ value: "Laporan Masyarakat / Rutin" }],
             remarks: "",
           });
           loadDailyPlans(currentDate);
@@ -354,13 +373,35 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           </Card>
 
           <Card className="shadow-sm">
-            <CardHeader><CardTitle className="text-lg">Lain-lain</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-blue-500" /> Dasar Pengerjaan</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <FormField control={form.control} name="basis" render={({ field }) => (
-                <FormItem><FormLabel>Dasar Pengerjaan</FormLabel><FormControl><Input placeholder="Contoh: Laporan Masyarakat" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              {basisFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <FormField control={form.control} name={`basis.${index}.value`} render={({ field }) => (
+                      <FormItem><FormLabel className={index > 0 ? "hidden" : ""}>Dasar Pengerjaan</FormLabel><FormControl><Input placeholder="Contoh: Laporan Masyarakat" {...field} /></FormControl></FormItem>
+                    )} />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => removeBasis(index)} 
+                    className={cn("text-red-500", basisFields.length === 1 && "hidden")}
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => appendBasis({ value: "" })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Dasar Lain</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader><CardTitle className="text-lg">Keterangan</CardTitle></CardHeader>
+            <CardContent>
               <FormField control={form.control} name="remarks" render={({ field }) => (
-                <FormItem><FormLabel>Keterangan</FormLabel><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Catatan Tambahan</FormLabel><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </CardContent>
           </Card>
