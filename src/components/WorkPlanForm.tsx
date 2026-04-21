@@ -96,10 +96,10 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
     setIsSubmitting(true);
     try {
       if (isEditing && initialData) {
-        await workPlanService.updateWorkPlan(initialData.id, values);
+        await workPlanService.updateWorkPlan(initialData.id, values as Partial<WorkPlan>);
         showSuccess("Rencana kerja diperbarui");
       } else {
-        await workPlanService.createWorkPlan(values);
+        await workPlanService.createWorkPlan(values as Omit<WorkPlan, 'id' | 'created_at'>);
         showSuccess("Rencana kerja berhasil dibuat");
       }
       navigate('/work-plans');
