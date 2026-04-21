@@ -60,7 +60,7 @@ const PrintWorkPlanRekap = () => {
           </h2>
         </div>
 
-        <table className="w-full border-collapse border-[1.5px] border-black text-[12px]">
+        <table className="w-full border-collapse border-[1.5px] border-black text-[12px] table-fixed">
           <thead>
             <tr className="bg-[#FFFF00]">
               <th className="border-[1.5px] border-black p-2 w-[40px] text-center font-bold" rowSpan={2}>No</th>
@@ -81,7 +81,7 @@ const PrintWorkPlanRekap = () => {
           </thead>
           <tbody>
             {plans.length > 0 ? plans.map((plan, idx) => (
-              <tr key={plan.id} className="align-middle">
+              <tr key={plan.id} className="align-top">
                 <td className="border-[1.5px] border-black p-3 text-center font-medium">{idx + 1}</td>
                 <td className="border-[1.5px] border-black p-3 text-center font-medium">{plan.category}</td>
                 <td className="border-[1.5px] border-black p-3 text-left leading-relaxed">{plan.description}</td>
@@ -91,13 +91,13 @@ const PrintWorkPlanRekap = () => {
                 
                 {/* Kolom Alat/Bahan (Nested Table Style) */}
                 <td className="border-[1.5px] border-black p-0" colSpan={3}>
-                  <table className="w-full h-full border-collapse">
+                  <table className="w-full border-collapse">
                     <tbody>
                       {plan.equipment.length > 0 ? plan.equipment.map((eq, i) => (
                         <tr key={i} className={i === plan.equipment.length - 1 ? "" : "border-b-[1.5px] border-black"}>
-                          <td className="p-3 w-[150px] text-center border-r-[1.5px] border-black">{eq.name}</td>
+                          <td className="p-3 w-[150px] text-center border-r-[1.5px] border-black break-words">{eq.name}</td>
                           <td className="p-3 w-[60px] text-center border-r-[1.5px] border-black">{eq.quantity}</td>
-                          <td className="p-3 w-[180px] text-center">{eq.usage || "-"}</td>
+                          <td className="p-3 w-[180px] text-center break-words">{eq.usage || "-"}</td>
                         </tr>
                       )) : (
                         <tr>
