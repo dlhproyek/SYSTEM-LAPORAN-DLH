@@ -465,7 +465,7 @@ const MonthlyRecap = () => {
         defaultFileName={`Rekap_${months[parseInt(selectedMonth)-1]}_${selectedYear}`}
       />
 
-      <div ref={printRef} className="print-area bg-white p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
+      <div ref={printRef} className="print-area bg-white p-4 md:p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
         <div className="pdf-header">
           <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_MEDAN_URL} className="max-h-full max-w-full object-contain" alt="Logo Medan" /></div>
@@ -485,7 +485,7 @@ const MonthlyRecap = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[35px]" rowSpan={2}><div className="flex items-center justify-center h-full">No</div></th>
