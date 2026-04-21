@@ -39,8 +39,7 @@ const formSchema = z.object({
   villages: z.array(z.string().min(1, "Kelurahan wajib diisi")).min(1),
   equipment: z.array(z.object({
     name: z.string().min(1, "Nama alat wajib diisi"),
-    quantity: z.coerce.number().min(1, "Minimal 1 unit"),
-    usage: z.string().default(""),
+    quantity: z.coerce.number().min(1, "Minimal 1 unit")
   })).default([]),
   coordinator: z.string().min(1, "Koordinator wajib diisi"),
   personnel: z.coerce.number().min(0),
@@ -263,28 +262,23 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                 </div>
               )}
               {equipmentFields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 last:border-0">
-                  <div className="md:col-span-4">
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-7">
                     <FormField control={form.control} name={`equipment.${index}.name`} render={({ field }) => (
                       <FormItem><FormLabel>Nama Alat</FormLabel><FormControl><Input placeholder="Contoh: Chainsaw" {...field} /></FormControl></FormItem>
                     )} />
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (
                       <FormItem><FormLabel>Unit</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
                     )} />
                   </div>
-                  <div className="md:col-span-5">
-                    <FormField control={form.control} name={`equipment.${index}.usage`} render={({ field }) => (
-                      <FormItem><FormLabel>Kegunaan</FormLabel><FormControl><Input placeholder="Contoh: Pemotong dahan" {...field} /></FormControl></FormItem>
-                    )} />
-                  </div>
-                  <div className="md:col-span-1">
+                  <div className="md:col-span-2">
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeEquipment(index)} className="text-red-500"><Trash2 size={18} /></Button>
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => appendEquipment({ name: "", quantity: 1, usage: "" })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Alat</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendEquipment({ name: "", quantity: 1 })} className="w-full border-dashed"><Plus size={14} className="mr-2" /> Tambah Alat</Button>
             </CardContent>
           </Card>
 
