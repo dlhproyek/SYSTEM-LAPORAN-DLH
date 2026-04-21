@@ -77,36 +77,19 @@ const WorkPlanDetail = () => {
             
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><MapPin size={14} /> Lokasi & Kegiatan</span>
-              <div className="col-span-2 space-y-8">
+              <div className="col-span-2 space-y-6">
                 {data.locations?.map((loc, i) => (
                   <div key={i} className="flex gap-2">
                     <span>:</span>
-                    <div className="space-y-3 flex-1">
-                      <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                        <p className="font-bold text-blue-700 text-base">{loc.description}</p>
+                    <div className="space-y-2 flex-1">
+                      <div>
+                        <p className="font-bold text-blue-700">{loc.description}</p>
                         <p className="font-medium">{loc.street}</p>
                         <p className="text-xs text-slate-500">Kel. {loc.villages.join(", ")}, Kec. {loc.sub_district}</p>
-                        
-                        <div className="mt-3 grid grid-cols-2 gap-4 pt-3 border-t border-slate-200">
-                          <div className="flex items-center gap-2">
-                            <Users size={14} className="text-green-600" />
-                            <div>
-                              <p className="text-[10px] text-slate-400 uppercase font-bold">Koordinator</p>
-                              <p className="font-bold text-xs">{loc.coordinator}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users size={14} className="text-green-600" />
-                            <div>
-                              <p className="text-[10px] text-slate-400 uppercase font-bold">Personil</p>
-                              <p className="font-bold text-xs">{loc.personnel} Orang</p>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                       
                       {loc.equipment?.length > 0 && (
-                        <div className="bg-white p-2 rounded border border-slate-200">
+                        <div className="bg-slate-50 p-2 rounded border border-slate-200">
                           <p className="text-[10px] font-bold text-orange-600 uppercase mb-1 flex items-center gap-1"><Wrench size={10} /> Alat Operasional Lokasi:</p>
                           <div className="space-y-1">
                             {loc.equipment.map((eq, eqIdx) => (
@@ -123,6 +106,14 @@ const WorkPlanDetail = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-3 border-b pb-2">
+              <span className="font-bold flex items-center gap-2"><Users size={14} /> Koordinator</span>
+              <span className="col-span-2">: {data.coordinator}</span>
+            </div>
+            <div className="grid grid-cols-3 border-b pb-2">
+              <span className="font-bold flex items-center gap-2"><Users size={14} /> Personil</span>
+              <span className="col-span-2">: {data.personnel} Orang</span>
+            </div>
             <div className="grid grid-cols-3 border-b pb-2">
               <span className="font-bold flex items-center gap-2"><Info size={14} /> Dasar Pengerjaan</span>
               <span className="col-span-2 whitespace-pre-wrap">: {data.basis}</span>

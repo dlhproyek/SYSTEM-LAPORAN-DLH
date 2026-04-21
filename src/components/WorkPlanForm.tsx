@@ -59,14 +59,14 @@ const locationSchema = z.object({
   sub_district: z.string().min(1, "Kecamatan wajib diisi"),
   villages: z.array(z.string().min(1, "Kelurahan wajib diisi")).min(1),
   equipment: z.array(equipmentSchema).default([]),
-  coordinator: z.string().min(1, "Koordinator wajib diisi"),
-  personnel: z.coerce.number().min(0),
 });
 
 const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   category: z.string().min(1, "Kategori wajib dipilih"),
   locations: z.array(locationSchema).min(1, "Minimal satu lokasi"),
+  coordinator: z.string().min(1, "Koordinator wajib diisi"),
+  personnel: z.coerce.number().min(0),
   basis: z.array(z.object({ value: z.string().min(1, "Dasar wajib diisi") })).min(1, "Minimal satu dasar pengerjaan"),
   remarks: z.string().optional().default(""),
 });
@@ -102,24 +102,24 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       locations: initialData.locations?.map(loc => ({
         ...loc,
         villages: Array.isArray(loc.villages) ? loc.villages : [""],
-        equipment: loc.equipment || [],
-        coordinator: loc.coordinator || initialData.coordinator || "",
-        personnel: loc.personnel || initialData.personnel || 0,
+        equipment: loc.equipment || []
       })) || [{ 
         description: initialData.description || "",
         street: initialData.street || "", 
         sub_district: initialData.sub_district || "", 
         villages: Array.isArray(initialData.villages) ? initialData.villages : [""],
-        equipment: initialData.equipment || [],
-        coordinator: initialData.coordinator || "",
-        personnel: initialData.personnel || 0,
+        equipment: initialData.equipment || []
       }],
+      coordinator: initialData.coordinator || "",
+      personnel: initialData.personnel || 0,
       basis: processInitialBasis(initialData.basis),
       remarks: initialData.remarks || "",
     } : {
       date: urlDate || new Date().toISOString().split('T')[0],
       category: "",
-      locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0 }],
+      locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [] }],
+      coordinator: "",
+      personnel: 0,
       basis: [{ value: "Laporan Masyarakat / Rutin" }],
       remarks: "",
     },
@@ -145,14 +145,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
 
   useEffect(() => {
     if (selectedCategory && !isEditing) {
-      const defaultCoordinator = coordinatorMapping[selectedCategory] || "";
-      const locations = form.getValues("locations");
-      const updatedLocations = locations.map(loc => ({
-        ...loc,
-        coordinator: loc.coordinator || defaultCoordinator
-      }));
-      form.setValue("locations", updatedLocations);
-      
+      form.setValue("coordinator", coordinatorMapping[selectedCategory] || "");
       const defaultBasis = basisMapping[selectedCategory] || "Laporan Masyarakat / Rutin";
       form.setValue("basis", [{ value: defaultBasis }]);
     }
@@ -166,9 +159,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         ? values.basis.map(b => `• ${b.value}`).join('\n')
         : values.basis[0].value;
 
-      // Hitung total personil untuk kolom utama
-      const totalPersonnel = values.locations.reduce((acc, loc) => acc + loc.personnel, 0);
-
       const payload = {
         date: values.date,
         category: values.category,
@@ -178,8 +168,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
         villages: firstLoc.villages,
         equipment: [], 
         locations: values.locations,
-        coordinator: firstLoc.coordinator, // Gunakan koordinator lokasi pertama sebagai utama
-        personnel: totalPersonnel,
+        coordinator: values.coordinator,
+        personnel: values.personnel,
         basis: basisString,
         remarks: values.remarks,
       };
@@ -197,7 +187,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           form.reset({
             date: currentDate,
             category: "",
-            locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: "", personnel: 0 }],
+            locations: [{ description: "", street: "", sub_district: "", villages: [""], equipment: [] }],
+            coordinator: "",
+            personnel: 0,
             basis: [{ value: "Laporan Masyarakat / Rutin" }],
             remarks: "",
           });
@@ -252,8 +244,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold flex items-center gap-2"><MapPinned className="text-red-500" /> Lokasi Pengerjaan & SDM</h2>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ description: "", street: "", sub_district: "", villages: [""], equipment: [], coordinator: coordinatorMapping[selectedCategory] || "", personnel: 0 })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50"><Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain</Button>
+              <h2 className="text-lg font-bold flex items-center gap-2"><MapPinned className="text-red-500" /> Lokasi Pengerjaan & Alat</h2>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendLocation({ description: "", street: "", sub_district: "", villages: [""], equipment: [] })} className="border-dashed border-red-200 text-red-600 hover:bg-red-50"><Plus className="h-4 w-4 mr-2" /> Tambah Lokasi Lain</Button>
             </div>
             {locationFields.map((locField, locIndex) => (
               <Card key={locField.id} className="shadow-sm border-l-4 border-l-red-400">
@@ -292,15 +284,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                         ))}
                         <Button type="button" variant="outline" size="sm" onClick={() => { const current = form.getValues(`locations.${locIndex}.villages`); form.setValue(`locations.${locIndex}.villages`, [...current, ""]); }} className="w-full border-dashed text-[10px] h-7"><Plus size={12} className="mr-1" /> Tambah Kelurahan</Button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* SDM per Lokasi */}
-                  <div className="pt-6 border-t border-slate-100 space-y-4">
-                    <h3 className="text-sm font-bold flex items-center gap-2 text-green-600"><Users size={14} /> Sumber Daya Manusia Lokasi #{locIndex + 1}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name={`locations.${locIndex}.coordinator`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Koordinator Lapangan</FormLabel><FormControl><Input className="h-9 text-sm" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name={`locations.${locIndex}.personnel`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Jumlah Personil (Orang)</FormLabel><FormControl><Input type="number" className="h-9 text-sm" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                   </div>
 
@@ -376,6 +359,14 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
               </Card>
             ))}
           </div>
+
+          <Card className="shadow-sm">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600" /> Sumber Daya Manusia</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="coordinator" render={({ field }) => (<FormItem><FormLabel>Koordinator Lapangan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="personnel" render={({ field }) => (<FormItem><FormLabel>Jumlah Personil (Orang)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </CardContent>
+          </Card>
 
           <Card className="shadow-sm">
             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-blue-500" /> Dasar Pengerjaan</CardTitle></CardHeader>

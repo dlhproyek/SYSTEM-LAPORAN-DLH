@@ -135,11 +135,10 @@ const PrintWorkPlanRekap = () => {
                           <td className="border-2 border-black p-2 text-center align-middle">{loc.equipment?.[0]?.quantity || "-"}</td>
                           <td className="border-2 border-black p-2 align-middle">{loc.equipment?.[0]?.purpose || "-"}</td>
 
-                          <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.coordinator}</td>
-                          <td className="border-2 border-black p-2 text-center align-middle" rowSpan={locRows}>{loc.personnel}</td>
-
                           {locIdx === 0 && (
                             <>
+                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.coordinator}</td>
+                              <td className="border-2 border-black p-2 text-center align-middle" rowSpan={totalRows}>{plan.personnel}</td>
                               <td className="border-2 border-black p-2 align-middle whitespace-pre-wrap" rowSpan={totalRows}>{plan.basis}</td>
                               <td className="border-2 border-black p-2 align-middle" rowSpan={totalRows}>{plan.remarks || ""}</td>
                             </>
