@@ -34,6 +34,15 @@ const basisMapping: Record<string, string> = {
   "Tim Babat": "Hasil Survey Lapangan",
 };
 
+const equipmentSuggestions = [
+  "Chainsaw",
+  "Mobil Tangga (BK 9044 J)",
+  "Dump Truck (BK8559 J)",
+  "Truk Siram (BK 8128 A)",
+  "Truk Siram (BK 9031 J)",
+  "Mesin Babat"
+];
+
 const vehicleKeywords = ["mobil", "motor", "truck", "truk", "pick up", "pickup"];
 
 const getAutoPurpose = (name: string): string => {
@@ -237,6 +246,10 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           <datalist id="vehicle-list">
             {existingVehicles.map(v => <option key={v} value={v} />)}
           </datalist>
+          
+          <datalist id="equipment-suggestions">
+            {equipmentSuggestions.map(item => <option key={item} value={item} />)}
+          </datalist>
 
           <div className="flex items-center justify-between">
             <Button type="button" variant="ghost" onClick={() => navigate('/work-plans')}>
@@ -354,6 +367,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                                       <Input 
                                         className="h-8 text-xs"
                                         placeholder="Contoh: Chainsaw" 
+                                        list="equipment-suggestions"
                                         {...field} 
                                         onChange={(e) => {
                                           field.onChange(e);
