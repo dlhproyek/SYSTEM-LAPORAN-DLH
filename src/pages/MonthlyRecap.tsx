@@ -568,7 +568,7 @@ const MonthlyRecap = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body { background: white !important; }
-          .no-print { display: none !important; }
+          .no-print, [data-radix-portal] { display: none !important; }
           .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
           @page { size: A3 landscape; margin: 1.5cm; }
           table { page-break-inside: auto; width: 100% !important; }
