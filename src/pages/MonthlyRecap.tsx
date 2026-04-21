@@ -73,7 +73,8 @@ const MonthlyRecap = () => {
 
   useEffect(() => {
     if (isLoggedIn && profile) {
-      if (profile.role !== 'admin' && profile.category) {
+      // Pimpinan dan Admin bisa melihat semua kategori
+      if (profile.role === 'user' && profile.category) {
         setSelectedCategories([profile.category]);
       } else {
         setSelectedCategories(['semua']);
@@ -101,9 +102,11 @@ const MonthlyRecap = () => {
         const matchYear = y === selectedYear;
         
         let matchCategory = false;
-        if (!isLoggedIn || profile?.role === 'admin') {
+        // Admin dan Pimpinan bisa filter semua atau kategori tertentu
+        if (!isLoggedIn || profile?.role === 'admin' || profile?.role === 'pimpinan') {
           matchCategory = selectedCategories.includes('semua') || selectedCategories.includes(r.category);
         } else {
+          // User biasa hanya bisa melihat kategorinya sendiri
           matchCategory = r.category === profile?.category;
         }
         
@@ -130,7 +133,6 @@ const MonthlyRecap = () => {
   };
 
   const handlePrint = () => {
-    // Berikan jeda 150ms agar menu dropdown tertutup sempurna sebelum dialog cetak muncul
     setTimeout(() => {
       window.print();
     }, 150);
@@ -375,7 +377,9 @@ const MonthlyRecap = () => {
     else { setSelectedCategories(newSelected); }
   };
 
-  const isUserRestricted = isLoggedIn && profile?.role !== 'admin';
+  const isUserRestricted = isLoggedIn && profile?.role === 'user';
+  const isPimpinan = isLoggedIn && profile?.role === 'pimpinan';
+  
   const showSignatory4 = selectedCategories.includes('semua') || selectedCategories.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
   const showSignatory5 = selectedCategories.includes('semua') || selectedCategories.includes("Tim Pohon");
 
