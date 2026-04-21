@@ -52,18 +52,17 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Filter States
-  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  // Filter States - Diubah ke "semua" agar langsung tampil semua
+  const [selectedMonth, setSelectedMonth] = useState("semua");
+  const [selectedYear, setSelectedYear] = useState("semua");
   const [selectedCategory, setSelectedCategory] = useState("semua");
   
   const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
 
   const isLoggedIn = !!session;
-  // Pimpinan tidak dibatasi kategorinya (sama seperti admin)
-  const isUserRestricted = isLoggedIn && profile?.role === 'user';
-  const isPimpinan = profile?.role === 'pimpinan';
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
 
   useEffect(() => {
     loadReports();
@@ -115,8 +114,8 @@ const Index = () => {
   };
 
   const resetFilters = () => {
-    setSelectedMonth((new Date().getMonth() + 1).toString());
-    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth("semua");
+    setSelectedYear("semua");
     setSelectedCategory(isUserRestricted ? (profile?.category || "semua") : "semua");
     setSearchQuery("");
   };
@@ -190,9 +189,9 @@ const Index = () => {
                 <div className="flex items-center gap-1 border-l pl-2 ml-1">
                   <div className="hidden sm:flex flex-col items-end mr-2">
                     <p className="text-[10px] font-bold text-slate-900 leading-none">
-                      {profile?.role === 'admin' ? 'Admin' : profile?.role === 'pimpinan' ? 'Pimpinan' : 'User'}
+                      {isPimpinan ? 'Pimpinan' : profile?.role === 'admin' ? 'Admin' : 'User'}
                     </p>
-                    <p className="text-[8px] text-slate-500">{profile?.category || 'Semua'}</p>
+                    <p className="text-[8px] text-slate-500">{isPimpinan ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-5 w-5" /></Button>
                 </div>
