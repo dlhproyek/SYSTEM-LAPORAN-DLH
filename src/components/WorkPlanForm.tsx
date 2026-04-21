@@ -30,6 +30,16 @@ const coordinatorMapping: Record<string, string> = {
   "Tim Pohon": "Ardiansyah Siregar"
 };
 
+// Mapping otomatis kegunaan alat
+const getAutoPurpose = (name: string): string => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes("chainsaw")) return "Alat Pemotong Pohon dan Ranting.";
+  if (lowerName.includes("mobil tangga")) return "Alat Bantu Untuk Menjangkau Ranting Yang Tinggi";
+  if (lowerName.includes("dump truck")) return "Pengangkut Sampah Pemangkasan Pohon";
+  if (lowerName.includes("truk siram")) return "Penyiraman Tanaman Median Jalan";
+  return "";
+};
+
 const locationSchema = z.object({
   street: z.string().min(1, "Nama jalan wajib diisi"),
   sub_district: z.string().min(1, "Kecamatan wajib diisi"),
@@ -274,7 +284,24 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                 <div key={field.id} className="p-4 border rounded-lg bg-slate-50 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     <div className="md:col-span-7">
-                      <FormField control={form.control} name={`equipment.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Nama Alat</FormLabel><FormControl><Input placeholder="Contoh: Chainsaw" {...field} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name={`equipment.${index}.name`} render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Alat</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Contoh: Chainsaw" 
+                              {...field} 
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const autoPurpose = getAutoPurpose(e.target.value);
+                                if (autoPurpose) {
+                                  form.setValue(`equipment.${index}.purpose`, autoPurpose);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )} />
                     </div>
                     <div className="md:col-span-3">
                       <FormField control={form.control} name={`equipment.${index}.quantity`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
