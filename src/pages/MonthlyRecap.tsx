@@ -528,8 +528,15 @@ const MonthlyRecap = () => {
                           <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
                           <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
-                            {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
-                            {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
+                            <div className="space-y-1">
+                              {task.remarks && <div>{task.remarks}</div>}
+                              {taskIdx === 0 && report.remarks && (
+                                <div className={cn("text-blue-700 font-medium", task.remarks && "border-t border-slate-200 pt-1")}>
+                                  Catatan: {report.remarks}
+                                </div>
+                              )}
+                              {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
+                            </div>
                           </td>
                         </tr>
                       );
