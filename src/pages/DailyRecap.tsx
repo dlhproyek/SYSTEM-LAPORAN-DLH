@@ -246,7 +246,7 @@ const DailyRecap = () => {
       const worksheet = workbook.addWorksheet('Rekap Harian');
       const columns: any[] = [
         { header: 'No', key: 'no', width: 5 },
-        { header: 'Kategori', key: 'cat', width: 15 },
+        { header: 'Tim/ Kecamatan', key: 'cat', width: 15 },
         { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
         { header: 'Lokasi', key: 'loc', width: 40 },
       ];
@@ -468,7 +468,7 @@ const DailyRecap = () => {
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[35px]" rowSpan={2}><div className="flex items-center justify-center h-full">No</div></th>
-                <th style={headerStyle} className="border-2 border-black p-2 w-[90px]" rowSpan={2}><div className="flex items-center justify-center h-full">Kategori</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[90px]" rowSpan={2}><div className="flex items-center justify-center h-full">Tim/ Kecamatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[110px]" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[150px]" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
                 {photoMode === "with-photo" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>)}
