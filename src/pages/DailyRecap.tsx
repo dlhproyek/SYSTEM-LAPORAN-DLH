@@ -62,7 +62,7 @@ const DailyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   const [photoMode, setPhotoMode] = useState<PhotoMode>("with-photo");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
@@ -113,7 +113,7 @@ const DailyRecap = () => {
       setLoading(true);
       let data = await reportService.getAllReports();
       data = data.filter(r => {
-        const matchDate = r.date === selectedDate;
+        const matchDate = selectedDate === "semua" || r.date === selectedDate;
         let matchCategory = false;
         if (!isLoggedIn || profile?.role === 'admin' || isPimpinan || isAdminHarian) {
           matchCategory = selectedCategories.includes('semua') || selectedCategories.includes(r.category);
@@ -122,7 +122,7 @@ const DailyRecap = () => {
         }
         return matchDate && matchCategory;
       });
-      data.sort((a, b) => a.category.localeCompare(b.category));
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
       setReports(data);
     } catch (error) {
       console.error(error);
@@ -386,14 +386,30 @@ const DailyRecap = () => {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px]" />
+            <div className="flex items-center gap-2">
+              <Select value={selectedDate === "semua" ? "semua" : "custom"} onValueChange={(v) => {
+                if (v === "semua") setSelectedDate("semua");
+                else setSelectedDate(new Date().toISOString().split('T')[0]);
+              }}>
+                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10">
+                  <SelectValue placeholder="Pilih Tanggal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Tanggal</SelectItem>
+                  <SelectItem value="custom">Pilih Tanggal...</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedDate !== "semua" && (
+                <div className="relative">
+                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px] h-10" />
+                </div>
+              )}
             </div>
             <div className="relative">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[220px] justify-between font-normal", isUserRestricted && "bg-slate-50 text-slate-500")}>
+                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[220px] justify-between font-normal h-10", isUserRestricted && "bg-slate-50 text-slate-500")}>
                     <span className="truncate">{selectedCategories.includes('semua') ? "Semua Kategori" : selectedCategories.length > 1 ? `${selectedCategories.length} Kategori Terpilih` : selectedCategories[0]}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -409,15 +425,15 @@ const DailyRecap = () => {
               {isUserRestricted && <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm"><Lock size={10} /></div>}
             </div>
             <Select value={photoMode} onValueChange={(v) => setPhotoMode(v as PhotoMode)}>
-              <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 text-slate-700 font-medium"><SelectValue placeholder="Mode Foto" /></SelectTrigger>
+              <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10 text-slate-700 font-medium"><SelectValue placeholder="Mode Foto" /></SelectTrigger>
               <SelectContent><SelectItem value="with-photo"><div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div></SelectItem><SelectItem value="without-photo"><div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div></SelectItem></SelectContent>
             </Select>
             <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
-              <SelectTrigger className="w-[180px] bg-blue-50 border-blue-200 text-blue-700 font-medium"><SelectValue placeholder="Mode Rekap" /></SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium"><SelectValue placeholder="Mode Rekap" /></SelectTrigger>
               <SelectContent><SelectItem value="with-fuel"><div className="flex items-center gap-2"><Fuel size={14} /> Rekap Dengan BBM</div></SelectItem><SelectItem value="without-fuel"><div className="flex items-center gap-2"><FileText size={14} /> Rekap Tanpa BBM</div></SelectItem></SelectContent>
             </Select>
             <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 text-amber-700 font-medium"><SelectValue placeholder="Tanda Tangan" /></SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium"><SelectValue placeholder="Tanda Tangan" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="with-signature"><div className="flex items-center gap-2"><PenTool size={14} /> Ada Tanda Tangan</div></SelectItem>
                 <SelectItem value="without-signature"><div className="flex items-center gap-2"><PenTool size={14} className="opacity-40" /> Tanpa Tanda Tangan</div></SelectItem>
@@ -426,13 +442,13 @@ const DailyRecap = () => {
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn && (
-              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 h-10">
                 <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700 h-10">
                   <Printer className="h-4 w-4 md:mr-2" /> 
                   <span className="hidden md:inline">Cetak</span>
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -472,7 +488,7 @@ const DailyRecap = () => {
           <div className="text-center mb-8 space-y-1">
             <h3 className="text-xl font-bold underline uppercase">LAPORAN HARIAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN</h3>
             <p className="text-xl font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
-            <p className="text-xl font-bold uppercase">Tanggal: {new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="text-xl font-bold uppercase">Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
         </div>
 
@@ -539,7 +555,14 @@ const DailyRecap = () => {
                           {taskIdx === 0 ? (
                             <>
                               <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
-                              <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={report.tasks.length}>{report.category}</td>
+                              <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={report.tasks.length}>
+                                <div className="flex flex-col gap-1">
+                                  <span>{report.category}</span>
+                                  {selectedDate === "semua" && (
+                                    <span className="text-[8px] text-slate-500 font-normal">{report.date}</span>
+                                  )}
+                                </div>
+                              </td>
                             </>
                           ) : null}
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
@@ -583,7 +606,7 @@ const DailyRecap = () => {
               </>
             ) : (
               <tbody>
-                <tr><td colSpan={totalCols} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk tanggal ini</td></tr>
+                <tr><td colSpan={totalCols} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td></tr>
               </tbody>
             )}
           </table>
@@ -591,7 +614,7 @@ const DailyRecap = () => {
 
         {signatureMode === "with-signature" && (
           <div className="pdf-footer mt-12">
-            <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+            <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
             <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
               <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
               <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
