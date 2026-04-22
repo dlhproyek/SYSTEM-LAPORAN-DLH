@@ -4,11 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Trash2, RefreshCw, ShieldAlert, CheckCircle2, FileWarning, Loader2, Database } from 'lucide-react';
+import { 
+  ArrowLeft, Trash2, RefreshCw, ShieldAlert, 
+  CheckCircle2, FileWarning, Loader2, Database, 
+  Eye, X 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Maintenance = () => {
   const navigate = useNavigate();
@@ -18,6 +28,10 @@ const Maintenance = () => {
   const [orphanedFiles, setOrphanedFiles] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalStorage: 0, usedInDb: 0, orphaned: 0 });
   const [isCleaned, setIsCleaned] = useState(false);
+  
+  // State untuk Preview
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState("");
 
   // Hanya Admin yang bisa akses
   const isAdmin = profile?.role === 'admin' || session?.user?.email === 'admin@gmail.com';
@@ -33,7 +47,6 @@ const Maintenance = () => {
     setAnalyzing(true);
     setIsCleaned(false);
     try {
-      // 1. Ambil semua foto yang ada di database (tabel reports)
       const { data: reports, error: dbError } = await supabase
         .from('reports')
         .select('tasks');
@@ -53,7 +66,6 @@ const Maintenance = () => {
         });
       });
 
-      // 2. Ambil semua file yang ada di Storage Bucket
       const { data: storageFiles, error: storageError } = await supabase
         .storage
         .from('report-photos')
@@ -61,7 +73,6 @@ const Maintenance = () => {
 
       if (storageError) throw storageError;
 
-      // 3. Bandingkan
       const orphaned = storageFiles?.filter(file => !usedFileNames.has(file.name)) || [];
       
       setOrphanedFiles(orphaned);
@@ -80,6 +91,12 @@ const Maintenance = () => {
     }
   };
 
+  const handlePreview = (fileName: string) => {
+    const { data } = supabase.storage.from('report-photos').getPublicUrl(fileName);
+    setPreviewUrl(data.publicUrl);
+    setPreviewName(fileName);
+  };
+
   const cleanStorage = async () => {
     if (orphanedFiles.length === 0) return;
     if (!confirm(`Apakah Anda yakin ingin menghapus ${orphanedFiles.length} file secara permanen? Tindakan ini tidak dapat dibatalkan.`)) return;
@@ -87,8 +104,6 @@ const Maintenance = () => {
     setLoading(true);
     try {
       const fileNamesToDelete = orphanedFiles.map(f => f.name);
-      
-      // Supabase storage remove menerima array nama file
       const { error } = await supabase
         .storage
         .from('report-photos')
@@ -185,12 +200,19 @@ const Maintenance = () => {
             {orphanedFiles.length > 0 && (
               <div className="space-y-3">
                 <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                  <FileWarning className="text-red-500 h-4 w-4" /> Daftar File Tidak Terpakai:
+                  <FileWarning className="text-red-500 h-4 w-4" /> Daftar File Tidak Terpakai (Klik nama untuk preview):
                 </h3>
-                <div className="max-h-[300px] overflow-y-auto border rounded-lg divide-y bg-slate-50">
+                <div className="max-h-[400px] overflow-y-auto border rounded-lg divide-y bg-slate-50">
                   {orphanedFiles.map((file, i) => (
-                    <div key={i} className="p-3 flex items-center justify-between text-xs">
-                      <span className="font-mono text-slate-600">{file.name}</span>
+                    <div 
+                      key={i} 
+                      className="p-3 flex items-center justify-between text-xs hover:bg-blue-50 cursor-pointer transition-colors group"
+                      onClick={() => handlePreview(file.name)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-3 w-3 text-slate-400 group-hover:text-blue-500" />
+                        <span className="font-mono text-slate-600 group-hover:text-blue-700 group-hover:font-bold">{file.name}</span>
+                      </div>
                       <Badge variant="outline" className="text-[10px]">{Math.round(file.metadata?.size / 1024)} KB</Badge>
                     </div>
                   ))}
@@ -200,6 +222,27 @@ const Maintenance = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog Preview Foto */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black">
+          <DialogHeader className="p-4 bg-white border-b">
+            <DialogTitle className="text-sm truncate pr-8">{previewName}</DialogTitle>
+          </DialogHeader>
+          <div className="relative aspect-[2.26/2.95] w-full flex items-center justify-center bg-slate-900">
+            {previewUrl && (
+              <img 
+                src={previewUrl} 
+                alt="Preview" 
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+          <div className="p-4 bg-white flex justify-end">
+            <Button variant="outline" onClick={() => setPreviewUrl(null)}>Tutup</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
