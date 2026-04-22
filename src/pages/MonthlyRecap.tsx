@@ -287,7 +287,11 @@ const MonthlyRecap = () => {
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
-      columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Keterangan', key: 'rem', width: 35 });
+      columns.push(
+        { header: 'Koordinator', key: 'coord', width: 20 }, 
+        { header: 'Anggota', key: 'members', width: 10 },
+        { header: 'Keterangan', key: 'rem', width: 35 }
+      );
       worksheet.columns = columns;
 
       const lastColLetter = String.fromCharCode(64 + columns.length);
@@ -326,6 +330,7 @@ const MonthlyRecap = () => {
             eq: task.equipment?.map(e => `${e.type} (${e.quantity})`).join("\n"),
             he: task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join("\n"),
             coord: task.personnel.coordinator,
+            members: task.personnel.members,
             rem: [task.remarks, i === 0 ? report.remarks : ""].filter(Boolean).join(" | ")
           };
           
@@ -518,7 +523,7 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Peralatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
                 {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>)}
-                <th style={headerStyle} className="border-2 border-black p-2 w-[100px]" rowSpan={2}><div className="flex items-center justify-center h-full">Koordinator</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[140px]" colSpan={2}>Personil</th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[170px]" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
               </tr>
               <tr style={{ height: '30px' }}>
@@ -526,6 +531,8 @@ const MonthlyRecap = () => {
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">50%</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">100%</th>
                 {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">S</th></>)}
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[100px]">Koordinator</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[40px]">Anggota</th>
               </tr>
             </thead>
             
@@ -559,6 +566,7 @@ const MonthlyRecap = () => {
                         </>
                       )}
                       <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
+                      <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
                       <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
                         {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
                         {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
@@ -569,7 +577,7 @@ const MonthlyRecap = () => {
               </tbody>
             )) : (
               <tbody>
-                <tr><td colSpan={recapMode === "with-fuel" ? 15 : 12} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td></tr>
+                <tr><td colSpan={recapMode === "with-fuel" ? 16 : 13} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td></tr>
               </tbody>
             )}
           </table>
