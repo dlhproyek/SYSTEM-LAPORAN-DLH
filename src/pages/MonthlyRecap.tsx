@@ -485,7 +485,7 @@ const MonthlyRecap = () => {
               <col style={{ width: '70px' }} />
               <col style={{ width: '75px' }} />
               <col style={{ width: '110px' }} />
-              <col style={{ width: '135px' }} />
+              <col style={{ width: '120px' }} />
               <col style={{ width: '155px' }} />
               <col style={{ width: '155px' }} />
               <col style={{ width: '155px' }} />
@@ -502,7 +502,7 @@ const MonthlyRecap = () => {
               )}
               <col style={{ width: '100px' }} />
               <col style={{ width: '50px' }} />
-              <col style={{ width: '200px' }} />
+              <col style={{ width: '185px' }} />
             </colgroup>
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
