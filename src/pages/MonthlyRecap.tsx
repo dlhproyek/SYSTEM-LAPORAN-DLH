@@ -490,9 +490,9 @@ const MonthlyRecap = () => {
               <col style={{ width: '170px' }} />
               <col style={{ width: '170px' }} />
               <col style={{ width: '65px' }} />
+              <col style={{ width: '105px' }} />
+              <col style={{ width: '25px' }} />
               <col style={{ width: '120px' }} />
-              <col style={{ width: '30px' }} />
-              <col style={{ width: '115px' }} />
               {recapMode === "with-fuel" && (
                 <>
                   <col style={{ width: '40px' }} />
@@ -501,8 +501,8 @@ const MonthlyRecap = () => {
                 </>
               )}
               <col style={{ width: '100px' }} />
-              <col style={{ width: '40px' }} />
-              <col style={{ width: '170px' }} />
+              <col style={{ width: '50px' }} />
+              <col style={{ width: '175px' }} />
             </colgroup>
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
