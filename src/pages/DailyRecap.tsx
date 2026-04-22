@@ -469,7 +469,7 @@ const DailyRecap = () => {
               <col style={{ width: '35px' }} />
               <col style={{ width: '85px' }} />
               <col style={{ width: '110px' }} />
-              <col style={{ width: '140px' }} />
+              <col style={{ width: '135px' }} />
               {photoMode === "with-photo" && (
                 <>
                   <col style={{ width: '155px' }} />
@@ -478,7 +478,7 @@ const DailyRecap = () => {
                 </>
               )}
               <col style={{ width: '65px' }} />
-              <col style={{ width: '105px' }} />
+              <col style={{ width: '100px' }} />
               <col style={{ width: '25px' }} />
               <col style={{ width: '120px' }} />
               {recapMode === "with-fuel" && (
@@ -490,7 +490,7 @@ const DailyRecap = () => {
               )}
               <col style={{ width: '100px' }} />
               <col style={{ width: '50px' }} />
-              <col style={{ width: '205px' }} />
+              <col style={{ width: '200px' }} />
             </colgroup>
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
