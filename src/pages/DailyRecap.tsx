@@ -61,7 +61,6 @@ const DailyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  // Filter States
   const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   const [photoMode, setPhotoMode] = useState<PhotoMode>("with-photo");
@@ -148,12 +147,10 @@ const DailyRecap = () => {
       let currentY = margin;
 
       const headerEl = document.querySelector('.pdf-header') as HTMLElement;
-      let headerImg = "";
-      let headerHeight = 0;
       if (headerEl) {
         const canvas = await html2canvas(headerEl, { scale: 2, useCORS: true });
-        headerImg = canvas.toDataURL('image/jpeg', 0.95);
-        headerHeight = (canvas.height * contentWidth) / canvas.width;
+        const headerImg = canvas.toDataURL('image/jpeg', 0.95);
+        const headerHeight = (canvas.height * contentWidth) / canvas.width;
         pdf.addImage(headerImg, 'JPEG', margin, currentY, contentWidth, headerHeight);
         currentY += headerHeight + 5;
       }
@@ -185,7 +182,6 @@ const DailyRecap = () => {
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const imgHeight = (canvas.height * contentWidth) / canvas.width;
         const isLastBlock = i === reportBlocks.length - 1;
-        
         if (isLastBlock) {
           if (currentY + imgHeight + footerHeight > pdfHeight - margin) {
             pdf.addPage('a3', 'landscape');
@@ -246,38 +242,21 @@ const DailyRecap = () => {
     try {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Harian');
-      
       const columns: any[] = [
         { header: 'No', key: 'no', width: 5 },
         { header: 'Kategori', key: 'cat', width: 15 },
         { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
         { header: 'Lokasi', key: 'loc', width: 40 },
       ];
-
       if (photoMode === "with-photo") {
-        columns.push(
-          { header: '0%', key: 'p0', width: 22 },
-          { header: '50%', key: 'p50', width: 22 },
-          { header: '100%', key: 'p100', width: 22 }
-        );
+        columns.push({ header: '0%', key: 'p0', width: 22 }, { header: '50%', key: 'p50', width: 22 }, { header: '100%', key: 'p100', width: 22 });
       }
-
-      columns.push(
-        { header: 'Vol', key: 'vol', width: 10 },
-        { header: 'Peralatan', key: 'eq', width: 25 },
-        { header: 'Alat Berat', key: 'he', width: 25 }
-      );
-
+      columns.push({ header: 'Vol', key: 'vol', width: 10 }, { header: 'Jenis Alat', key: 'eq_type', width: 20 }, { header: 'Jumlah Alat', key: 'eq_qty', width: 10 }, { header: 'Alat Berat', key: 'he', width: 25 });
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
-      columns.push(
-        { header: 'Koordinator', key: 'coord', width: 20 }, 
-        { header: 'Anggota', key: 'members', width: 10 },
-        { header: 'Keterangan', key: 'rem', width: 35 }
-      );
+      columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Anggota', key: 'members', width: 10 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
-
       const lastColLetter = String.fromCharCode(64 + columns.length);
       worksheet.mergeCells(`A1:${lastColLetter}1`);
       worksheet.getCell('A1').value = 'PEMERINTAH KOTA MEDAN';
@@ -288,7 +267,6 @@ const DailyRecap = () => {
       worksheet.getCell('A2').font = { bold: true, size: 16 };
       worksheet.getCell('A2').alignment = { horizontal: 'center' };
       worksheet.addRow([]);
-      
       const headerRow = worksheet.addRow(columns.map((c: any) => c.header));
       headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
@@ -296,7 +274,6 @@ const DailyRecap = () => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.font = { bold: true };
       });
-
       let displayIdx = 1;
       for (const report of reports) {
         for (let i = 0; i < report.tasks.length; i++) {
@@ -308,7 +285,8 @@ const DailyRecap = () => {
             desc: task.description,
             loc: `${task.location.street}, ${villages}`,
             vol: `${task.volume} ${getUnitByCategory(report.category)}`,
-            eq: task.equipment?.map(e => `${e.type} (${e.quantity})`).join("\n"),
+            eq_type: task.equipment?.map(e => e.type).join("\n"),
+            eq_qty: task.equipment?.map(e => e.quantity).join("\n"),
             he: task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join("\n"),
             coord: task.personnel.coordinator,
             members: task.personnel.members,
@@ -325,7 +303,6 @@ const DailyRecap = () => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
           });
-
           if (photoMode === "with-photo") {
             const addImageToCell = async (url: string, colIndex: number) => {
               if (!url) return;
@@ -370,6 +347,8 @@ const DailyRecap = () => {
   const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
   const subHeaderStyle = { backgroundColor: '#f8fafc', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
 
+  const totalCols = 11 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 3 : 0);
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -391,16 +370,10 @@ const DailyRecap = () => {
               </Button>
             )}
           </div>
-          
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input 
-                type="date" 
-                value={selectedDate} 
-                onChange={(e) => setSelectedDate(e.target.value)} 
-                className="pl-10 w-[180px]"
-              />
+              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px]" />
             </div>
             <div className="relative">
               <Popover>
@@ -420,34 +393,21 @@ const DailyRecap = () => {
               </Popover>
               {isUserRestricted && <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm"><Lock size={10} /></div>}
             </div>
-            
             <Select value={photoMode} onValueChange={(v) => setPhotoMode(v as PhotoMode)}>
-              <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 text-slate-700 font-medium">
-                <SelectValue placeholder="Mode Foto" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="with-photo">
-                  <div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div>
-                </SelectItem>
-                <SelectItem value="without-photo">
-                  <div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div>
-                </SelectItem>
-              </SelectContent>
+              <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 text-slate-700 font-medium"><SelectValue placeholder="Mode Foto" /></SelectTrigger>
+              <SelectContent><SelectItem value="with-photo"><div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div></SelectItem><SelectItem value="without-photo"><div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div></SelectItem></SelectContent>
             </Select>
-
             <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
               <SelectTrigger className="w-[180px] bg-blue-50 border-blue-200 text-blue-700 font-medium"><SelectValue placeholder="Mode Rekap" /></SelectTrigger>
               <SelectContent><SelectItem value="with-fuel"><div className="flex items-center gap-2"><Fuel size={14} /> Rekap Dengan BBM</div></SelectItem><SelectItem value="without-fuel"><div className="flex items-center gap-2"><FileText size={14} /> Rekap Tanpa BBM</div></SelectItem></SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center gap-2">
             {isLoggedIn && (
               <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
@@ -487,7 +447,6 @@ const DailyRecap = () => {
             </div>
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_DLH_URL} className="max-h-full max-w-full object-contain" alt="Logo DLH" /></div>
           </div>
-
           <div className="text-center mb-8 space-y-1">
             <h3 className="text-xl font-bold underline uppercase">LAPORAN HARIAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN</h3>
             <p className="text-xl font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
@@ -503,78 +462,72 @@ const DailyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2 w-[90px]" rowSpan={2}><div className="flex items-center justify-center h-full">Kategori</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[110px]" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[150px]" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
-                {photoMode === "with-photo" && (
-                  <th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
-                )}
+                {photoMode === "with-photo" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>)}
                 <th style={headerStyle} className="border-2 border-black p-2 w-[65px]" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
-                <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Peralatan</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[160px]" colSpan={2}>Peralatan</th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
                 {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>)}
                 <th style={headerStyle} className="border-2 border-black p-2 w-[140px]" colSpan={2}>Personil</th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[170px]" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
               </tr>
               <tr style={{ height: '30px' }}>
-                {photoMode === "with-photo" && (
-                  <>
-                    <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">0%</th>
-                    <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">50%</th>
-                    <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">100%</th>
-                  </>
-                )}
+                {photoMode === "with-photo" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">0%</th><th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">50%</th><th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">100%</th></>)}
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[120px]">Jenis Alat</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[40px]">Jml</th>
                 {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">S</th></>)}
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[100px]">Koordinator</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[40px]">Anggota</th>
               </tr>
             </thead>
-            
-            {reports.length > 0 ? reports.map((report, reportIdx) => (
-              <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
-                {report.tasks.map((task, taskIdx) => {
-                  const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
-                  return (
-                    <tr key={`${report.id}-${taskIdx}`}>
-                      {taskIdx === 0 ? (
-                        <>
-                          <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
-                          <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={report.tasks.length}>
-                            {report.category}
+            {reports.length > 0 ? (
+              <>
+                {reports.map((report, reportIdx) => (
+                  <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
+                    {report.tasks.map((task, taskIdx) => {
+                      const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
+                      return (
+                        <tr key={`${report.id}-${taskIdx}`}>
+                          {taskIdx === 0 ? (
+                            <>
+                              <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
+                              <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={report.tasks.length}>{report.category}</td>
+                            </>
+                          ) : null}
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
+                          {photoMode === "with-photo" && (
+                            <>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+                            </>
+                          )}
+                          <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
+                          {recapMode === "with-fuel" && (
+                            <>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
+                            </>
+                          )}
+                          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
+                          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
+                            {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
+                            {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
                           </td>
-                        </>
-                      ) : null}
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
-                      
-                      {photoMode === "with-photo" && (
-                        <>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
-                        </>
-                      )}
-
-                      <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
-                      <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type} ({e.quantity})</div>))}</td>
-                      <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
-                      {recapMode === "with-fuel" && (
-                        <>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
-                        </>
-                      )}
-                      <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
-                      <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
-                        {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
-                        {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            )) : (
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                ))}
+              </>
+            ) : (
               <tbody>
-                <tr><td colSpan={recapMode === "with-fuel" ? (photoMode === "with-photo" ? 16 : 13) : (photoMode === "with-photo" ? 13 : 10)} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk tanggal ini</td></tr>
+                <tr><td colSpan={totalCols} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk tanggal ini</td></tr>
               </tbody>
             )}
           </table>

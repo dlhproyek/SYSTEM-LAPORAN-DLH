@@ -64,7 +64,6 @@ const MonthlyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  // Filter States
   const [selectedMonth, setSelectedMonth] = useState("semua");
   const [selectedYear, setSelectedYear] = useState("semua");
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
@@ -73,13 +72,11 @@ const MonthlyRecap = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const isLoggedIn = !!session;
   
-  // Logika Peran
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
 
   useEffect(() => {
     if (isLoggedIn && profile) {
-      // Pimpinan dan Admin bisa melihat semua kategori secara default
       if (isUserRestricted && profile.category) {
         setSelectedCategories([profile.category]);
       } else {
@@ -104,19 +101,14 @@ const MonthlyRecap = () => {
         const reportDate = new Date(r.date);
         const m = (reportDate.getMonth() + 1).toString();
         const y = reportDate.getFullYear().toString();
-        
         const matchMonth = selectedMonth === "semua" || m === selectedMonth;
         const matchYear = selectedYear === "semua" || y === selectedYear;
-        
         let matchCategory = false;
-        // Admin dan Pimpinan bisa filter semua atau kategori tertentu
         if (!isLoggedIn || profile?.role === 'admin' || isPimpinan) {
           matchCategory = selectedCategories.includes('semua') || selectedCategories.includes(r.category);
         } else {
-          // User biasa hanya bisa melihat kategorinya sendiri
           matchCategory = r.category === profile?.category;
         }
-        
         return matchMonth && matchYear && matchCategory;
       });
       data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -147,32 +139,22 @@ const MonthlyRecap = () => {
 
   const handleDriveUpload = async (config: { fileName: string; folderId: string; accessToken: string }) => {
     if (!printRef.current) return;
-    
     const toastId = showLoading("Menyiapkan PDF A3...");
-    
     try {
       window.scrollTo(0, 0);
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a3'
-      });
-
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
       const contentWidth = pdfWidth - (margin * 2);
-      
       let currentY = margin;
 
       const headerEl = document.querySelector('.pdf-header') as HTMLElement;
-      let headerImg = "";
       let headerHeight = 0;
       if (headerEl) {
         const canvas = await html2canvas(headerEl, { scale: 2, useCORS: true });
-        headerImg = canvas.toDataURL('image/jpeg', 0.95);
+        const headerImg = canvas.toDataURL('image/jpeg', 0.95);
         headerHeight = (canvas.height * contentWidth) / canvas.width;
         pdf.addImage(headerImg, 'JPEG', margin, currentY, contentWidth, headerHeight);
         currentY += headerHeight + 5;
@@ -204,9 +186,7 @@ const MonthlyRecap = () => {
         const canvas = await html2canvas(block, { scale: 2, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const imgHeight = (canvas.height * contentWidth) / canvas.width;
-
         const isLastBlock = i === reportBlocks.length - 1;
-        
         if (isLastBlock) {
           if (currentY + imgHeight + footerHeight > pdfHeight - margin) {
             pdf.addPage('a3', 'landscape');
@@ -226,7 +206,6 @@ const MonthlyRecap = () => {
             }
           }
         }
-
         pdf.addImage(imgData, 'JPEG', margin, currentY, contentWidth, imgHeight);
         currentY += imgHeight;
       }
@@ -240,7 +219,6 @@ const MonthlyRecap = () => {
       }
       
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
-      
       const { data, error } = await supabase.functions.invoke('upload-to-drive', {
         body: { 
           pdfBase64, 
@@ -249,7 +227,6 @@ const MonthlyRecap = () => {
           userAccessToken: config.accessToken
         }
       });
-
       if (error) throw error;
       return data;
     } catch (error: any) {
@@ -270,7 +247,6 @@ const MonthlyRecap = () => {
     try {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Laporan');
-      
       const columns = [
         { header: 'No', key: 'no', width: 5 },
         { header: 'Hari / Tgl', key: 'date', width: 15 },
@@ -280,33 +256,25 @@ const MonthlyRecap = () => {
         { header: '50%', key: 'p50', width: 22 },
         { header: '100%', key: 'p100', width: 22 },
         { header: 'Vol', key: 'vol', width: 10 },
-        { header: 'Peralatan', key: 'eq', width: 25 },
+        { header: 'Jenis Alat', key: 'eq_type', width: 20 },
+        { header: 'Jumlah Alat', key: 'eq_qty', width: 10 },
         { header: 'Alat Berat', key: 'he', width: 25 },
       ];
-      
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
-      columns.push(
-        { header: 'Koordinator', key: 'coord', width: 20 }, 
-        { header: 'Anggota', key: 'members', width: 10 },
-        { header: 'Keterangan', key: 'rem', width: 35 }
-      );
+      columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Anggota', key: 'members', width: 10 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
-
       const lastColLetter = String.fromCharCode(64 + columns.length);
       worksheet.mergeCells(`A1:${lastColLetter}1`);
       worksheet.getCell('A1').value = 'PEMERINTAH KOTA MEDAN';
       worksheet.getCell('A1').font = { bold: true, size: 14 };
       worksheet.getCell('A1').alignment = { horizontal: 'center' };
-      
       worksheet.mergeCells(`A2:${lastColLetter}2`);
       worksheet.getCell('A2').value = 'DINAS LINGKUNGAN HIDUP';
       worksheet.getCell('A2').font = { bold: true, size: 16 };
       worksheet.getCell('A2').alignment = { horizontal: 'center' };
-
       worksheet.addRow([]);
-      
       const headerRow = worksheet.addRow(columns.map(c => c.header));
       headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
@@ -314,39 +282,35 @@ const MonthlyRecap = () => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.font = { bold: true };
       });
-
       let displayIdx = 1;
       for (const report of reports) {
         for (let i = 0; i < report.tasks.length; i++) {
           const task = report.tasks[i];
           const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
-          
           const rowData: any = {
             no: i === 0 ? displayIdx : '',
             date: i === 0 ? new Date(report.date).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' }) : '',
             desc: task.description,
             loc: `${task.location.street}, ${villages}`,
             vol: `${task.volume} ${getUnitByCategory(report.category)}`,
-            eq: task.equipment?.map(e => `${e.type} (${e.quantity})`).join("\n"),
+            eq_type: task.equipment?.map(e => e.type).join("\n"),
+            eq_qty: task.equipment?.map(e => e.quantity).join("\n"),
             he: task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join("\n"),
             coord: task.personnel.coordinator,
             members: task.personnel.members,
             rem: [task.remarks, i === 0 ? report.remarks : ""].filter(Boolean).join(" | ")
           };
-          
           if (recapMode === "with-fuel") {
             rowData.fp = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
             rowData.fd = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
             rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
           }
-          
           const row = worksheet.addRow(rowData);
           row.height = 100;
           row.eachCell(cell => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
           });
-
           const addImageToCell = async (url: string, colIndex: number) => {
             if (!url) return;
             try {
@@ -354,21 +318,15 @@ const MonthlyRecap = () => {
               const blob = await response.blob();
               const arrayBuffer = await blob.arrayBuffer();
               const imageId = workbook.addImage({ buffer: arrayBuffer, extension: 'jpeg' });
-              worksheet.addImage(imageId, { 
-                tl: { col: colIndex - 1, row: row.number - 1 }, 
-                ext: { width: 140, height: 130 }, 
-                editAs: 'oneCell' 
-              });
+              worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 140, height: 130 }, editAs: 'oneCell' });
             } catch (e) { console.error(e); }
           };
-          
           await addImageToCell(task.photos.zero, 5);
           await addImageToCell(task.photos.fifty, 6);
           await addImageToCell(task.photos.hundred, 7);
         }
         displayIdx++;
       }
-
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), `Rekap_DLH_${selectedMonth === 'semua' ? 'Semua' : months[parseInt(selectedMonth)-1]}_${selectedYear}.xlsx`);
       dismissToast(toastId);
@@ -395,6 +353,8 @@ const MonthlyRecap = () => {
   const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
   const subHeaderStyle = { backgroundColor: '#f8fafc', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
 
+  const totalCols = 14 + (recapMode === "with-fuel" ? 3 : 0);
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -416,7 +376,6 @@ const MonthlyRecap = () => {
               </Button>
             )}
           </div>
-          
           <div className="flex flex-wrap items-center gap-3">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-[140px]"><SelectValue placeholder="Bulan" /></SelectTrigger>
@@ -455,14 +414,12 @@ const MonthlyRecap = () => {
               <SelectContent><SelectItem value="with-fuel"><div className="flex items-center gap-2"><Fuel size={14} /> Rekap Dengan BBM</div></SelectItem><SelectItem value="without-fuel"><div className="flex items-center gap-2"><FileText size={14} /> Rekap Tanpa BBM</div></SelectItem></SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center gap-2">
             {isLoggedIn && (
               <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
@@ -502,7 +459,6 @@ const MonthlyRecap = () => {
             </div>
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_DLH_URL} className="max-h-full max-w-full object-contain" alt="Logo DLH" /></div>
           </div>
-
           <div className="text-center mb-8 space-y-1">
             <h3 className="text-xl font-bold underline uppercase">LAPORAN BULANAN PEKERJAAN TAMAN, PENGHIJAUAN, POHON DAN PEMBABATAN</h3>
             <p className="text-xl font-bold uppercase">WILAYAH 4 MEDAN KOTA</p>
@@ -520,7 +476,7 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2 w-[150px]" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[65px]" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
-                <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Peralatan</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2 w-[160px]" colSpan={2}>Peralatan</th>
                 <th style={headerStyle} className="border-2 border-black p-2 w-[115px]" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
                 {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-2 w-[120px]" colSpan={3}>BBM (Liter)</th>)}
                 <th style={headerStyle} className="border-2 border-black p-2 w-[140px]" colSpan={2}>Personil</th>
@@ -530,54 +486,60 @@ const MonthlyRecap = () => {
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">0%</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">50%</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[142px]">100%</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[120px]">Jenis Alat</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1 w-[40px]">Jml</th>
                 {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px] w-[40px]">S</th></>)}
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[100px]">Koordinator</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 w-[40px]">Anggota</th>
               </tr>
             </thead>
-            
-            {reports.length > 0 ? reports.map((report, reportIdx) => (
-              <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
-                {report.tasks.map((task, taskIdx) => {
-                  const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
-                  return (
-                    <tr key={`${report.id}-${taskIdx}`}>
-                      {taskIdx === 0 ? (
-                        <>
-                          <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
-                          <td className="border-2 border-black p-2 text-center align-top font-medium" rowSpan={report.tasks.length}>
-                            {new Date(report.date).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+            {reports.length > 0 ? (
+              <>
+                {reports.map((report, reportIdx) => (
+                  <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
+                    {report.tasks.map((task, taskIdx) => {
+                      const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
+                      return (
+                        <tr key={`${report.id}-${taskIdx}`}>
+                          {taskIdx === 0 ? (
+                            <>
+                              <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
+                              <td className="border-2 border-black p-2 text-center align-top font-medium" rowSpan={report.tasks.length}>
+                                {new Date(report.date).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              </td>
+                            </>
+                          ) : null}
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+                          <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
+                          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
+                          {recapMode === "with-fuel" && (
+                            <>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
+                              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
+                            </>
+                          )}
+                          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
+                          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
+                            {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
+                            {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
                           </td>
-                        </>
-                      ) : null}
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
-                      <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-                      <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-                      <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
-                      <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
-                      <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type} ({e.quantity})</div>))}</td>
-                      <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
-                      {recapMode === "with-fuel" && (
-                        <>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
-                          <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
-                        </>
-                      )}
-                      <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
-                      <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
-                      <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
-                        {taskIdx === 0 && report.remarks && (<div className="text-blue-700 font-medium border-t border-slate-200 mt-1 pt-1">Catatan: {report.remarks}</div>)}
-                        {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            )) : (
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                ))}
+              </>
+            ) : (
               <tbody>
-                <tr><td colSpan={recapMode === "with-fuel" ? 16 : 13} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td></tr>
+                <tr><td colSpan={totalCols} className="border-2 border-black p-12 text-center text-slate-400 italic text-lg">Tidak ada data laporan untuk periode ini</td></tr>
               </tbody>
             )}
           </table>
