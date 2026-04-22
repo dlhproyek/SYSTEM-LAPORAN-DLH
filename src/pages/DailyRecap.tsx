@@ -467,9 +467,9 @@ const DailyRecap = () => {
           <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
             <colgroup>
               <col style={{ width: '35px' }} />
-              <col style={{ width: '70px' }} />
+              <col style={{ width: '75px' }} />
+              <col style={{ width: '105px' }} />
               <col style={{ width: '110px' }} />
-              <col style={{ width: '115px' }} />
               {photoMode === "with-photo" && (
                 <>
                   <col style={{ width: '145px' }} />
