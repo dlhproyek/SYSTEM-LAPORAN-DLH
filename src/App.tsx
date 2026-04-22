@@ -10,6 +10,7 @@ import EditReport from "./pages/EditReport";
 import ReportDetail from "./pages/ReportDetail";
 import PrintRekap from "./pages/PrintRekap";
 import MonthlyRecap from "./pages/MonthlyRecap";
+import Maintenance from "./pages/Maintenance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
             <Route path="/print-rekap" element={<ProtectedRoute><PrintRekap /></ProtectedRoute>} />
+            <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
-  LogOut, LogIn, FilterX, ShieldCheck
+  LogOut, LogIn, FilterX, ShieldCheck, Database
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -62,6 +62,7 @@ const Index = () => {
 
   const isLoggedIn = !!session;
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
+  const isAdmin = profile?.role === 'admin' || (session?.user?.email === 'admin@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
 
   useEffect(() => {
@@ -155,6 +156,12 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/maintenance')} className="bg-amber-50 text-amber-700 border-amber-200">
+                <Database className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Maintenance</span>
+              </Button>
+            )}
+
             <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200">
               <FileBarChart className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rekap Bulanan</span>
             </Button>
@@ -189,7 +196,7 @@ const Index = () => {
                 <div className="flex items-center gap-1 border-l pl-2 ml-1">
                   <div className="hidden sm:flex flex-col items-end mr-2">
                     <p className="text-[10px] font-bold text-slate-900 leading-none">
-                      {isPimpinan ? 'Pimpinan' : profile?.role === 'admin' ? 'Admin' : 'User'}
+                      {isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}
                     </p>
                     <p className="text-[8px] text-slate-500">{isPimpinan ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
                   </div>
