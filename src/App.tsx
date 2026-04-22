@@ -18,7 +18,6 @@ import WorkPlans from "./pages/WorkPlans";
 import CreateWorkPlan from "./pages/CreateWorkPlan";
 import EditWorkPlan from "./pages/EditWorkPlan";
 import WorkPlanDetail from "./pages/WorkPlanDetail";
-import PrintWorkPlanRekap from "./pages/PrintWorkPlanRekap";
 
 const queryClient = new QueryClient();
 
@@ -49,7 +48,6 @@ const App = () => (
             <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/:id" element={<ProtectedRoute><WorkPlanDetail /></ProtectedRoute>} />
-            <Route path="/work-plans/print-rekap" element={<ProtectedRoute><PrintWorkPlanRekap /></ProtectedRoute>} />
             
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />

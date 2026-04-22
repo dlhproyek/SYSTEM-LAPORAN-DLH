@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { 
   Plus, Calendar, MapPin, Eye, 
   Trash2, Edit, ArrowLeft, Search, FilterX, 
-  Table as TableIcon, ClipboardList, User, Printer
+  Table as TableIcon, ClipboardList, User
 } from 'lucide-react';
 import { 
   Table, 
@@ -77,14 +77,6 @@ const WorkPlans = () => {
     setSearchQuery("");
   };
 
-  const handlePrintRekap = () => {
-    if (!selectedDate) {
-      showError("Silakan pilih tanggal terlebih dahulu pada filter untuk mencetak rekap tabel");
-      return;
-    }
-    navigate(`/work-plans/print-rekap?date=${selectedDate}`);
-  };
-
   const filteredPlans = workPlans.filter(plan => {
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
     const matchDate = !selectedDate || plan.date === selectedDate;
@@ -115,13 +107,6 @@ const WorkPlans = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handlePrintRekap} 
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 font-bold shadow-sm"
-            >
-              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap Tabel
-            </Button>
             <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600 hover:bg-blue-700 shadow-md font-bold">
               <Plus className="mr-2 h-4 w-4" /> Buat Rencana Baru
             </Button>
