@@ -73,7 +73,8 @@ const Index = () => {
   const isLoggedIn = !!session;
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
   const isAdmin = profile?.role === 'admin' || (session?.user?.email === 'admin@gmail.com');
-  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
+  const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
   useEffect(() => {
     loadReports();
@@ -256,9 +257,9 @@ const Index = () => {
                 <div className="flex items-center gap-1 border-l pl-2 ml-1">
                   <div className="hidden sm:flex flex-col items-end mr-2">
                     <p className="text-[10px] font-bold text-slate-900 leading-none">
-                      {isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}
+                      {isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}
                     </p>
-                    <p className="text-[8px] text-slate-500">{isPimpinan ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
+                    <p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-5 w-5" /></Button>
                 </div>

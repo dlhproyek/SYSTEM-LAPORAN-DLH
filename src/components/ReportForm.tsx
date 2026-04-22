@@ -101,7 +101,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const [existingVehicles, setExistingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
 
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
-  const isUserRestricted = profile?.role === 'user' && !isPimpinan;
+  const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
+  const isUserRestricted = profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
