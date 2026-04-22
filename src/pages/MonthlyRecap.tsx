@@ -79,6 +79,7 @@ const MonthlyRecap = () => {
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
   useEffect(() => {
+    // Blokir akses untuk Admin Harian
     if (isAdminHarian) {
       showError("Admin Harian tidak diizinkan mengakses Rekap Bulanan");
       navigate('/');
@@ -332,6 +333,7 @@ const MonthlyRecap = () => {
               worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 140, height: 130 }, editAs: 'oneCell' });
             } catch (e) { console.error(e); }
           };
+          // Kolom dokumentasi bergeser karena ada kolom Kategori
           await addImageToCell(task.photos.zero, 6);
           await addImageToCell(task.photos.fifty, 7);
           await addImageToCell(task.photos.hundred, 8);
@@ -624,15 +626,13 @@ const MonthlyRecap = () => {
             visibility: hidden !important;
             opacity: 0 !important;
           }
-          .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; background-color: white !important; }
+          .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
           @page { size: A3 landscape; margin: 1.5cm; }
-          table { page-break-inside: auto; width: 100% !important; background-color: white !important; }
+          table { page-break-inside: auto; width: 100% !important; }
           tr { page-break-inside: avoid; page-break-after: auto; }
-          th, td { background-color: white !important; }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }
-          .bg-slate-50, .bg-slate-100, .bg-slate-200 { background-color: white !important; }
         }
       `}} />
     </div>
