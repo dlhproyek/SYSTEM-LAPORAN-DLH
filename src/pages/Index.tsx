@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
-  LogOut, LogIn, FilterX, ShieldCheck, Database
+  LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronsUpDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -34,9 +34,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const categories: string[] = [
   "semua", "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
+];
+
+const allCategories = [
+  "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
 ];
 
 const months = [
@@ -57,8 +64,11 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState("semua");
   const [selectedCategory, setSelectedCategory] = useState("semua");
   
-  const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
+  // Print Dialog States
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [selectedPrintCategory, setSelectedPrintCategory] = useState("semua");
+  const [selectedRekapDate, setSelectedRekapDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedRekapCategories, setSelectedRekapCategories] = useState<string[]>(['semua']);
 
   const isLoggedIn = !!session;
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
@@ -70,6 +80,7 @@ const Index = () => {
     if (isUserRestricted && profile?.category) {
       setSelectedCategory(profile.category);
       setSelectedPrintCategory(profile.category);
+      setSelectedRekapCategories([profile.category]);
     }
   }, [profile, isLoggedIn]);
 
@@ -119,6 +130,15 @@ const Index = () => {
     setSelectedYear("semua");
     setSelectedCategory(isUserRestricted ? (profile?.category || "semua") : "semua");
     setSearchQuery("");
+  };
+
+  const toggleRekapCategory = (category: string) => {
+    if (category === 'semua') { setSelectedRekapCategories(['semua']); return; }
+    let newSelected = [...selectedRekapCategories].filter(c => c !== 'semua');
+    if (newSelected.includes(category)) { newSelected = newSelected.filter(c => c !== category); }
+    else { newSelected.push(category); }
+    if (newSelected.length === 0) { setSelectedRekapCategories(['semua']); }
+    else { setSelectedRekapCategories(newSelected); }
   };
 
   const filteredReports = reports.filter(report => {
@@ -175,20 +195,60 @@ const Index = () => {
                         <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Harian</span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-[450px]">
                       <DialogHeader>
-                        <DialogTitle>Cetak Rekap Laporan</DialogTitle>
-                        <DialogDescription>Pilih kategori laporan yang ingin dicetak.</DialogDescription>
+                        <DialogTitle>Opsi Cetak Laporan</DialogTitle>
+                        <DialogDescription>Pilih format cetak yang Anda inginkan.</DialogDescription>
                       </DialogHeader>
-                      <div className="py-4">
-                        <Select onValueChange={setSelectedPrintCategory} value={selectedPrintCategory} disabled={isUserRestricted}>
-                          <SelectTrigger><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
-                          <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={() => { setIsPrintDialogOpen(false); navigate(`/print-rekap?category=${selectedPrintCategory}`); }} className="w-full bg-blue-600">Buka Preview Cetak</Button>
-                      </DialogFooter>
+                      
+                      <Tabs defaultValue="cetak" className="w-full mt-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="cetak">Cetak Harian</TabsTrigger>
+                          <TabsTrigger value="rekap">Rekap Harian</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="cetak" className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase text-slate-500">Pilih Kategori</label>
+                            <Select onValueChange={setSelectedPrintCategory} value={selectedPrintCategory} disabled={isUserRestricted}>
+                              <SelectTrigger><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
+                              <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <Button onClick={() => { setIsPrintDialogOpen(false); navigate(`/print-rekap?category=${selectedPrintCategory}`); }} className="w-full bg-blue-600">Buka Preview Cetak</Button>
+                        </TabsContent>
+                        
+                        <TabsContent value="rekap" className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase text-slate-500">Pilih Tanggal</label>
+                            <Input 
+                              type="date" 
+                              value={selectedRekapDate} 
+                              onChange={(e) => setSelectedRekapDate(e.target.value)} 
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase text-slate-500">Pilih Kategori (Multi)</label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" role="combobox" disabled={isUserRestricted} className="w-full justify-between font-normal">
+                                  <span className="truncate">{selectedRekapCategories.includes('semua') ? "Semua Kategori" : selectedRekapCategories.length > 1 ? `${selectedRekapCategories.length} Kategori` : selectedRekapCategories[0]}</span>
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[300px] p-0" align="start">
+                                <div className="p-2 space-y-1">
+                                  <div className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-md cursor-pointer" onClick={() => toggleRekapCategory('semua')}><Checkbox checked={selectedRekapCategories.includes('semua')} /><label className="text-sm font-medium leading-none cursor-pointer">Semua Kategori</label></div>
+                                  <div className="h-px bg-slate-200 my-1" />
+                                  {allCategories.map((cat) => (<div key={cat} className="flex items-center space-x-2 p-2 hover:bg-slate-100 rounded-md cursor-pointer" onClick={() => toggleRekapCategory(cat)}><Checkbox checked={selectedRekapCategories.includes(cat)} /><label className="text-sm font-medium leading-none cursor-pointer">{cat}</label></div>))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <Button onClick={() => { setIsPrintDialogOpen(false); navigate(`/daily-rekap?date=${selectedRekapDate}&categories=${selectedRekapCategories.join(',')}`); }} className="w-full bg-blue-600">Buka Rekap Harian</Button>
+                        </TabsContent>
+                      </Tabs>
                     </DialogContent>
                   </Dialog>
                 </div>
