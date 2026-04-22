@@ -472,9 +472,9 @@ const DailyRecap = () => {
               <col style={{ width: '150px' }} />
               {photoMode === "with-photo" && (
                 <>
-                  <col style={{ width: '170px' }} />
-                  <col style={{ width: '170px' }} />
-                  <col style={{ width: '170px' }} />
+                  <col style={{ width: '160px' }} />
+                  <col style={{ width: '160px' }} />
+                  <col style={{ width: '160px' }} />
                 </>
               )}
               <col style={{ width: '65px' }} />
@@ -490,7 +490,7 @@ const DailyRecap = () => {
               )}
               <col style={{ width: '100px' }} />
               <col style={{ width: '50px' }} />
-              <col style={{ width: '175px' }} />
+              <col style={{ width: '205px' }} />
             </colgroup>
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
