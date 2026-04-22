@@ -67,12 +67,25 @@ const DailyRecap = () => {
   const [photoMode, setPhotoMode] = useState<PhotoMode>("with-photo");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [hasSetDefaults, setHasSetDefaults] = useState(false);
   
   const printRef = useRef<HTMLDivElement>(null);
   const isLoggedIn = !!session;
   
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
-  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan;
+  const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
+
+  // Set default values based on role
+  useEffect(() => {
+    if (profile && !hasSetDefaults) {
+      if (isAdminHarian) {
+        setPhotoMode("without-photo");
+        setSignatureMode("without-signature");
+      }
+      setHasSetDefaults(true);
+    }
+  }, [profile, isAdminHarian, hasSetDefaults]);
 
   useEffect(() => {
     const catsParam = searchParams.get('categories');
@@ -102,7 +115,7 @@ const DailyRecap = () => {
       data = data.filter(r => {
         const matchDate = r.date === selectedDate;
         let matchCategory = false;
-        if (!isLoggedIn || profile?.role === 'admin' || isPimpinan) {
+        if (!isLoggedIn || profile?.role === 'admin' || isPimpinan || isAdminHarian) {
           matchCategory = selectedCategories.includes('semua') || selectedCategories.includes(r.category);
         } else {
           matchCategory = r.category === profile?.category;
