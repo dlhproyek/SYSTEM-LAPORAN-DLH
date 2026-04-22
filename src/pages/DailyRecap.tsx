@@ -246,7 +246,7 @@ const DailyRecap = () => {
       const worksheet = workbook.addWorksheet('Rekap Harian');
       const columns: any[] = [
         { header: 'No', key: 'no', width: 5 },
-        { header: 'Tim/ Kecamatan', key: 'cat', width: 15 },
+        { header: 'Tim/Kec.', key: 'cat', width: 15 },
         { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
         { header: 'Lokasi', key: 'loc', width: 40 },
       ];
@@ -467,7 +467,7 @@ const DailyRecap = () => {
           <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
             <colgroup>
               <col style={{ width: '35px' }} />
-              <col style={{ width: '85px' }} />
+              <col style={{ width: '75px' }} />
               <col style={{ width: '110px' }} />
               <col style={{ width: '120px' }} />
               {photoMode === "with-photo" && (
@@ -495,7 +495,7 @@ const DailyRecap = () => {
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">No</div></th>
-                <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Tim/ Kecamatan</div></th>
+                <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Tim/Kec.</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
                 {photoMode === "with-photo" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>)}
