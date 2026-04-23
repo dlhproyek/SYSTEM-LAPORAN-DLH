@@ -6,6 +6,7 @@ import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Printer, Calendar as CalendarIcon, FileText, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
@@ -24,7 +25,7 @@ const WorkPlanDailyRecap = () => {
   const [searchParams] = useSearchParams();
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
   
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -36,8 +37,8 @@ const WorkPlanDailyRecap = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
-      const filtered = data.filter(p => p.date === selectedDate);
-      filtered.sort((a, b) => a.category.localeCompare(b.category));
+      const filtered = data.filter(p => selectedDate === "semua" || p.date === selectedDate);
+      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -52,9 +53,26 @@ const WorkPlanDailyRecap = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/work-plans')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
-            <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[200px]" />
+            
+            <div className="flex items-center gap-2">
+              <Select value={selectedDate === "semua" ? "semua" : "custom"} onValueChange={(v) => {
+                if (v === "semua") setSelectedDate("semua");
+                else setSelectedDate(new Date().toISOString().split('T')[0]);
+              }}>
+                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10">
+                  <SelectValue placeholder="Pilih Tanggal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Tanggal</SelectItem>
+                  <SelectItem value="custom">Pilih Tanggal...</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedDate !== "semua" && (
+                <div className="relative">
+                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px] h-10" />
+                </div>
+              )}
             </div>
           </div>
           <Button onClick={() => window.print()} className="bg-blue-600">
@@ -76,7 +94,9 @@ const WorkPlanDailyRecap = () => {
 
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold underline uppercase">REKAP RENCANA KERJA HARIAN</h3>
-          <p className="text-lg font-bold">Tanggal: {format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}</p>
+          <p className="text-lg font-bold">
+            Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}
+          </p>
         </div>
 
         <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">
@@ -131,7 +151,7 @@ const WorkPlanDailyRecap = () => {
                 ))
               )
             ) : (
-              <tr><td colSpan={11} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada rencana kerja untuk tanggal ini</td></tr>
+              <tr><td colSpan={11} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada rencana kerja untuk periode ini</td></tr>
             )}
           </tbody>
         </table>
