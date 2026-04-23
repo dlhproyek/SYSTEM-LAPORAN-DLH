@@ -63,72 +63,6 @@ const MonthlyRecap = () => {
   const { session, profile, signOut } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDriveDialogOpen<dyad-write path="src/pages/MonthlyRecap.tsx" description="Complete MonthlyRecap with conditional signature rendering for single-category (yatim) case">
-"use client";
-
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Report } from '@/types/report';
-import { reportService } from '@/services/reportService';
-import { getUnitByCategory } from '@/utils/report-helpers';
-import { 
-  ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
-  Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, 
-  Loader2, Lock, ChevronDown, PenTool 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from '@/context/AuthContext';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
-import { supabase } from '@/lib/supabase';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import DriveUploadDialog from '@/components/DriveUploadDialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-const months = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-];
-
-const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-
-const allCategories = [
-  "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
-];
-
-const getLogoUrl = (fileName: string) => {
-  const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
-  return data.publicUrl;
-};
-
-const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
-const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
-
-type RecapMode = "with-fuel" | "without-fuel";
-type SignatureMode = "with-signature" | "without-signature";
-
-const MonthlyRecap = () => {
-  const navigate = useNavigate();
-  const { session, profile, signOut } = useAuth();
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
   const [selectedMonth, setSelectedMonth] = useState("semua");
@@ -136,30 +70,22 @@ const MonthlyRecap = () => {
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [hasSetDefaults, setHasSetDefaults] = useState(false);
-    const printRef = useRef<HTMLDivElement>(null);
+  
+  const printRef = useRef<HTMLDivElement>(null);
   const isLoggedIn = !!session;
   
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
   const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
-  // Set default values based on role
   useEffect(() => {
-    if (profile && !hasSetDefaults) {
-      if (isAdminHarian) {
-        setPhotoMode("without-photo");
-        setSignatureMode("without-signature");
-      }
-      setHasSetDefaults(true);
+    if (isAdminHarian) {
+      showError("Admin Harian tidak diizinkan mengakses Rekap Bulanan");
+      navigate('/');
+      return;
     }
-  }, [profile, isAdminHarian, hasSetDefaults]);
 
-  useEffect(() => {
-    const catsParam = searchParams.get('categories');
-    if (catsParam) {
-      setSelectedCategories(catsParam.split(','));
-    } else if (isLoggedIn && profile) {
+    if (isLoggedIn && profile) {
       if (isUserRestricted && profile.category) {
         setSelectedCategories([profile.category]);
       } else {
@@ -168,13 +94,13 @@ const MonthlyRecap = () => {
     } else {
       setSelectedCategories(['semua']);
     }
-  }, [profile, isLoggedIn, isUserRestricted, searchParams]);
+  }, [profile, isLoggedIn, isUserRestricted, isAdminHarian, navigate]);
 
   useEffect(() => {
     if (selectedCategories.length > 0 && !isAdminHarian) {
       loadData();
     }
-  }, [selectedDate, selectedCategories]);
+  }, [selectedMonth, selectedYear, selectedCategories, isAdminHarian]);
 
   const loadData = async () => {
     try {
@@ -268,7 +194,8 @@ const MonthlyRecap = () => {
         const canvas = await html2canvas(block, { scale: 2, useCORS: true });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const imgHeight = (canvas.height * contentWidth) / canvas.width;
-                if (currentY + imgHeight > pdfHeight - margin - 20) {
+        
+        if (currentY + imgHeight > pdfHeight - margin - 20) {
           pdf.addPage('a3', 'landscape');
           currentY = margin;
           if (tableHeaderImg) {
@@ -318,23 +245,27 @@ const MonthlyRecap = () => {
     try {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Laporan');
-      const columns: any[] = [
+      const columns = [
         { header: 'No', key: 'no', width: 5 },
         { header: 'Hari / Tgl', key: 'date', width: 15 },
         { header: 'Tim/Kec.', key: 'category', width: 15 },
         { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
         { header: 'Lokasi', key: 'loc', width: 40 },
+        { header: '0%', key: 'p0', width: 22 },
+        { header: '50%', key: 'p50', width: 22 },
+        { header: '100%', key: 'p100', width: 22 },
+        { header: 'Vol', key: 'vol', width: 10 },
+        { header: 'Jenis Alat', key: 'eq_type', width: 20 },
+        { header: 'Jumlah Alat', key: 'eq_qty', width: 10 },
+        { header: 'Alat Berat', key: 'he', width: 25 },
       ];
-      if (photoMode === "with-photo") {
-        columns.push({ header: '0%', key: 'p0', width: 22 }, { header: '50%', key: 'p50', width: 22 }, { header: '100%', key: 'p100', width: 22 });
-      }
-      columns.push({ header: 'Vol', key: 'vol', width: 10 }, { header: 'Jenis Alat', key: 'eq_type', width: 20 }, { header: 'Jumlah Alat', key: 'eq_qty', width: 10 }, { header: 'Alat Berat', key: 'he', width: 25 });
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
       columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Anggota', key: 'members', width: 10 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
-            const lastColLetter = String.fromCharCode(64 + columns.length);
+      
+      const lastColLetter = String.fromCharCode(64 + columns.length);
       worksheet.mergeCells(`A1:${lastColLetter}1`);
       worksheet.getCell('A1').value = 'PEMERINTAH KOTA MEDAN';
       worksheet.getCell('A1').font = { bold: true, size: 14 };
@@ -378,27 +309,11 @@ const MonthlyRecap = () => {
             rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
           }
           const row = worksheet.addRow(rowData);
-          if (photoMode === "with-photo") row.height = 100;
+          row.height = 100;
           row.eachCell(cell => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
           });
-          if (photoMode === "with-photo") {
-            const addImageToCell = async (url: string, colIndex: number) => {
-              if (!url) return;
-              try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                const imageId = workbook.addImage({ buffer: arrayBuffer, extension: 'jpeg' });
-                worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 140, height: 130 }, editAs: 'oneCell' });
-              } catch (e) { console.error(e); }
-            };
-            // Kolom dokumentasi bergeser karena ada kolom Tanggal
-            await addImageToCell(task.photos.zero, 6);
-            await addImageToCell(task.photos.fifty, 7);
-            await addImageToCell(task.photos.hundred, 8);
-          }
         }
         displayIdx++;
       }
@@ -471,7 +386,7 @@ const MonthlyRecap = () => {
             <div className="relative">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[220px] justify-between font-normal h-10", isUserRestricted && "bg-slate-50 text-slate-500")}>
+                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[220px] justify-between font-normal", isUserRestricted && "bg-slate-50 text-slate-500")}>
                     <span className="truncate">{selectedCategories.includes('semua') ? "Semua Kategori" : selectedCategories.length > 1 ? `${selectedCategories.length} Kategori Terpilih` : selectedCategories[0]}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -500,14 +415,15 @@ const MonthlyRecap = () => {
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn && (
-              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 h-10">
+              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 h-10">
-                  <Printer className="h-4 w-4 md:mr-2" />                   <span className="hidden md:inline">Cetak</span>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Printer className="h-4 w-4 md:mr-2" /> 
+                  <span className="hidden md:inline">Cetak</span>
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -537,7 +453,7 @@ const MonthlyRecap = () => {
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_MEDAN_URL} className="max-h-full max-w-full object-contain" alt="Logo Medan" /></div>
             <div className="text-center px-4">
               <h1 className="text-2xl font-bold uppercase">Pemerintah Kota Medan</h1>
-              <h2 className="text-3xl font-black uppercase">Dinas Lingkungan Hidup</h2>
+              <h2 className="text-3xl font-black uppercase">Dinas LIngkungan Hidup</h2>
               <p className="text-sm italic">Jl. Pinang Baris, Lalang Kec. Medan Sunggal, Kota Medan, Sumatera Utara</p>
             </div>
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_DLH_URL} className="max-h-full max-w-full object-contain" alt="Logo DLH" /></div>
@@ -582,7 +498,7 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Tim/Kec.</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
-                {photoMode === "with-photo" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>)}
+                <th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" colSpan={2}>Peralatan</th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
@@ -591,7 +507,9 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
               </tr>
               <tr style={{ height: '30px' }}>
-                {photoMode === "with-photo" && (<th style={subHeaderStyle} className="border-2 border-black p-1">0%</th><th style={subHeaderStyle} className="border-2 border-black p-1">50%</th><th style={subHeaderStyle} className="border-2 border-black p-1">100%</th></>)}
+                <th style={subHeaderStyle} className="border-2 border-black p-1">0%</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1">50%</th>
+                <th style={subHeaderStyle} className="border-2 border-black p-1">100%</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1">Jenis Alat</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 px-0">Jml</th>
                 {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">S</th></>)}
@@ -620,13 +538,9 @@ const MonthlyRecap = () => {
                           ) : null}
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
-                          {photoMode === "with-photo" && (
-                            <>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
-                            </>
-                          )}
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
                           <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
                           <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
                           <td className="border-2 border-black p-1.5 px-0 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
@@ -665,123 +579,23 @@ const MonthlyRecap = () => {
           </table>
         </div>
 
-        {/* Signature block */}
         {signatureMode === "with-signature" && (
           <div className="pdf-footer mt-12">
             <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
             <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
-              {/* Signatory 1 */}
-              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4">
-                <div>
-                  <p>Mengetahui :</p>
-                  <p className="font-bold">Kabid Tata Lingkungan</p>
-                  <p>Dinas Lingkungan Hidup</p>
-                  <p>Kota Medan</p>
-                </div>
-                <div>
-                  <p className="font-bold underline">Heni Rustati, ST, M.Si</p>
-                  <p>NIP. 19720223 200604 2 002</p>
-                </div>
-              </div>
-              {/* Signatory 2 */}
-              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4">
-                <div>
-                  <p>Diketahui :</p>
-                  <p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p>
-                  <p>Dinas Lingkungan Hidup</p>
-                  <p>Kota Medan</p>
-                </div>
-                <div>
-                  <p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p>
-                  <p>NIP. 19811128 201001 2 011</p>
-                </div>
-              </div>
-              {/* Signatory 3 */}
-              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4">
-                <div>
-                  <p>Diketahui :</p>
-                  <p className="font-bold">Pengawas Taman Penghijauan</p>
-                  <p>Dinas Lingkungan Hidup</p>
-                  <p>Kota Medan</p>
-                </div>
-                <div>
-                  <p className="font-bold underline">Jhosua Sibarani, S.T</p>
-                  <p>NIP. 19740907 200903 1 002</p>
-                </div>
-              </div>
-              {/* Signatory 4 / 5 conditional rendering */}
-              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4">
-                <div>
-                  <p>Diketahui :</p>
-                  {showSignatory4 && !showSignatory5 && (
-                    <>
-                      <p className="font-bold">Kepala Koordinator Taman</p>
-                      <p>Dinas Lingkungan Hidup</p>
-                      <p>Kota Medan</p>
-                    </>
-                  )}
-                  {showSignatory5 && !showSignatory4 && (
-                    <>
-                      <p className="font-bold">Kepala Koordinator Tim Pohon</p>
-                      <p>Dinas Lingkungan Hidup</p>
-                      <p>Kota Medan</p>
-                    </>
-                  )}
-                  {showSignatory4 && showSignatory5 && (
-                    <>
-                      <div className="flex justify-around gap-2">
-                        <div>
-                          <p className="font-bold">Kepala Koordinator Taman</p>
-                          <p>Dinas Lingkungan Hidup</p>
-                          <p>Kota Medan</p>
-                        </div>
-                        <div>
-                          <p className="font-bold">Kepala Koordinator Tim Pohon</p>
-                          <p>Dinas Lingkungan Hidup</p>
-                          <p>Kota Medan</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div>
-                  {showSignatory4 && !showSignatory5 && (
-                    <>
-                      <p className="font-bold underline">Tiurmaida Silitonga</p>
-                      <p>NIP. 19690507 200701 2 042</p>
-                    </>
-                  )}
-                  {showSignatory5 && !showSignatory4 && (
-                    <>
-                      <p className="font-bold underline">Ardiansyah Siregar</p>
-                      <p>NIP. 19860404 201001 1 015</p>
-                    </>
-                  )}
-                  {showSignatory4 && showSignatory5 && (
-                    <>
-                      <div className="flex justify-around gap-2">
-                        <div>
-                          <p className="font-bold underline">Tiurmaida Silitonga</p>
-                          <p className="text-[9px]">NIP. 19690507 200701 2 042</p>
-                        </div>
-                        <div>
-                          <p className="font-bold underline">Ardiansyah Siregar</p>
-                          <p className="text-[9px]">NIP. 19860404 201001 1 015</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p>{showSignatory4 && !showSignatory5 && (<><p className="font-bold">Kepala Koordinator Taman</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold">Kepala Koordinator Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory4 && showSignatory5 && (<><p className="font-bold">Koordinator Taman & Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}</div><div>{showSignatory4 && !showSignatory5 && (<><p className="font-bold underline">Tiurmaida Silitonga</p><p>NIP. 19690507 200701 2 042</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold underline">Ardiansyah Siregar</p><p>NIP. 19860404 201001 1 015</p></>)}{showSignatory4 && showSignatory5 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}</div></div>
             </div>
           </div>
         )}
-
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body {             background: white !important; 
+          body { 
+            background: white !important; 
             margin: 0 !important; 
             padding: 0 !important; 
           }
@@ -789,7 +603,8 @@ const MonthlyRecap = () => {
           [data-radix-portal], 
           [role="menu"], 
           [data-radix-popper-content-wrapper] { 
-            display: none !important;           }
+            display: none !important; 
+          }
           .print-area { 
             box-shadow: none !important; 
             border: none !important; 
@@ -817,7 +632,8 @@ const MonthlyRecap = () => {
             border: 2px solid black !important;
             box-sizing: border-box !important;
           }
-          tr {             page-break-inside: avoid; 
+          tr { 
+            page-break-inside: avoid; 
             page-break-after: auto; 
           }
           thead { display: table-header-group; }
