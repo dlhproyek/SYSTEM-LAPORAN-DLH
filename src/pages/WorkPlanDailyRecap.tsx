@@ -152,9 +152,9 @@ const WorkPlanDailyRecap = () => {
                       <table className="w-full border-collapse border-none">
                         <tbody>
                           {item.tools.map((t, tIdx) => (
-                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b border-black" : ""}>
-                              <td className="p-1 w-[100px] border-r border-black align-top break-words">• {t.name}</td>
-                              <td className="p-1 w-[30px] border-r border-black text-center align-top">{t.unit}</td>
+                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b-2 border-black" : ""}>
+                              <td className="p-1 w-[100px] border-r-2 border-black align-top break-words">• {t.name}</td>
+                              <td className="p-1 w-[30px] border-r-2 border-black text-center align-top">{t.unit}</td>
                               <td className="p-1 w-[100px] align-top break-words">{t.usage}</td>
                             </tr>
                           ))}

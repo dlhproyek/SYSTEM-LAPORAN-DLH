@@ -45,7 +45,7 @@ const WorkPlanWeeklyRecap = () => {
         const pDate = parseISO(p.date);
         return isWithinInterval(pDate, { start: weekStart, end: weekEnd });
       });
-      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.category.localeCompare(b.category));
+      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -143,9 +143,9 @@ const WorkPlanWeeklyRecap = () => {
                       <table className="w-full border-collapse border-none">
                         <tbody>
                           {item.tools.map((t, tIdx) => (
-                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b border-black" : ""}>
-                              <td className="p-1 w-[90px] border-r border-black align-top break-words">• {t.name}</td>
-                              <td className="p-1 w-[25px] border-r border-black text-center align-top">{t.unit}</td>
+                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b-2 border-black" : ""}>
+                              <td className="p-1 w-[90px] border-r-2 border-black align-top break-words">• {t.name}</td>
+                              <td className="p-1 w-[25px] border-r-2 border-black text-center align-top">{t.unit}</td>
                               <td className="p-1 w-[90px] align-top break-words">{t.usage}</td>
                             </tr>
                           ))}

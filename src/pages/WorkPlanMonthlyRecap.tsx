@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ const WorkPlanMonthlyRecap = () => {
         return (pDate.getMonth() + 1).toString() === selectedMonth && 
                pDate.getFullYear().toString() === selectedYear;
       });
-      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.category.localeCompare(b.category));
+      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -148,9 +148,9 @@ const WorkPlanMonthlyRecap = () => {
                       <table className="w-full border-collapse border-none">
                         <tbody>
                           {item.tools.map((t, tIdx) => (
-                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b border-black" : ""}>
-                              <td className="p-1 w-[90px] border-r border-black align-top break-words">• {t.name}</td>
-                              <td className="p-1 w-[25px] border-r border-black text-center align-top">{t.unit}</td>
+                            <tr key={tIdx} className={tIdx !== item.tools.length - 1 ? "border-b-2 border-black" : ""}>
+                              <td className="p-1 w-[90px] border-r-2 border-black align-top break-words">• {t.name}</td>
+                              <td className="p-1 w-[25px] border-r-2 border-black text-center align-top">{t.unit}</td>
                               <td className="p-1 w-[90px] align-top break-words">{t.usage}</td>
                             </tr>
                           ))}

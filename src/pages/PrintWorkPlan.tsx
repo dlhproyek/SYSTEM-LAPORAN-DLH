@@ -98,14 +98,13 @@ const PrintWorkPlan = () => {
                   {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                 </td>
                 
-                {/* Kolom Alat, Unit, Kegunaan yang disatukan dalam sub-tabel agar sejajar */}
                 <td colSpan={3} className="border-2 border-black p-0 align-top">
                   <table className="w-full border-collapse border-none">
                     <tbody>
                       {item.tools.map((t, i) => (
-                        <tr key={i} className={i !== item.tools.length - 1 ? "border-b border-black" : ""}>
-                          <td className="p-1 w-[100px] border-r border-black align-top break-words">• {t.name}</td>
-                          <td className="p-1 w-[40px] border-r border-black text-center align-top">{t.unit}</td>
+                        <tr key={i} className={i !== item.tools.length - 1 ? "border-b-2 border-black" : ""}>
+                          <td className="p-1 w-[100px] border-r-2 border-black align-top break-words">• {t.name}</td>
+                          <td className="p-1 w-[40px] border-r-2 border-black text-center align-top">{t.unit}</td>
                           <td className="p-1 w-[100px] align-top break-words">{t.usage}</td>
                         </tr>
                       ))}
