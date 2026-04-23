@@ -120,7 +120,7 @@ const WorkPlanMonthlyRecap = () => {
             <tr className="bg-slate-100">
               <th className="border-2 border-black p-1 w-[25px]">No</th>
               <th className="border-2 border-black p-1 w-[60px]">Hari / Tgl</th>
-              <th className="border-2 border-black p-1 w-[85px]">Tim/ Kec</th>
+              <th className="border-2 border-black p-1 w-[70px]">Tim/ Kec</th>
               <th className="border-2 border-black p-1 w-[110px]">Detail Kegiatan</th>
               <th className="border-2 border-black p-1 w-[120px]">Lokasi</th>
               <th className="border-2 border-black p-1 w-[100px]">Alat Operasional</th>

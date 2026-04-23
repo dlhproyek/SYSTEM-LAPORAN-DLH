@@ -115,7 +115,7 @@ const WorkPlanWeeklyRecap = () => {
             <tr className="bg-slate-100">
               <th className="border-2 border-black p-1 w-[25px]">No</th>
               <th className="border-2 border-black p-1 w-[60px]">Hari / Tgl</th>
-              <th className="border-2 border-black p-1 w-[90px]">Tim/ Kec</th>
+              <th className="border-2 border-black p-1 w-[70px]">Tim/ Kec</th>
               <th className="border-2 border-black p-1 w-[110px]">Detail Kegiatan</th>
               <th className="border-2 border-black p-1 w-[130px]">Lokasi</th>
               <th className="border-2 border-black p-1 w-[120px]">Alat Operasional</th>
