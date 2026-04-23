@@ -626,7 +626,8 @@ const WeeklyRecap = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { background: white !important; }
+          * { box-sizing: border-box !important; -webkit-print-color-adjust: exact; }
+          body { background: white !important; margin: 0 !important; padding: 0 !important; }
           .no-print, 
           [data-radix-portal], 
           [role="menu"], 
@@ -638,18 +639,25 @@ const WeeklyRecap = () => {
           .print-area { 
             box-shadow: none !important; 
             border: none !important; 
-            padding: 0 !important; 
+            padding: 0.5cm !important; 
             margin: 0 !important; 
             width: 100% !important; 
             max-width: none !important; 
             background-color: white !important;
+            display: block !important;
           }
-          @page { size: A3 landscape; margin: 1.5cm; }
-          table { page-break-inside: auto; width: 100% !important; }
+          @page { size: A3 landscape; margin: 1cm; }
+          table { 
+            page-break-inside: auto; 
+            width: 100% !important; 
+            border-collapse: collapse !important;
+            border: 2px solid black !important;
+          }
           tr { page-break-inside: avoid; page-break-after: auto; }
+          td, th { border: 1px solid black !important; }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
-          .pdf-report-block { page-break-inside: avoid; }
+          .pdf-report-block { page-break-inside: avoid; border-bottom: 2px solid black !important; }
           .bg-slate-50, .bg-slate-100 { background-color: white !important; }
         }
       `}} />
