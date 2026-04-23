@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 
 const categories = ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"];
 
+const optionalLocationCategories = ["Tim Siram", "Taman Kota", "Taman Amplas", "Taman Area"];
+
 const toolSchema = z.object({
   name: z.string().min(1, "Nama alat wajib diisi"),
   unit: z.coerce.number().min(1, "Jumlah minimal 1"),
@@ -48,17 +50,16 @@ const formSchema = z.object({
   category: z.string().min(1, "Kategori wajib dipilih"),
   items: z.array(itemSchema).min(1),
 }).superRefine((data, ctx) => {
-  // Validasi kondisional: Jika bukan Tim Siram, Kecamatan dan Kelurahan wajib diisi
-  if (data.category !== "Tim Siram") {
+  if (!optionalLocationCategories.includes(data.category)) {
     data.items.forEach((item, index) => {
-      if (!item.location.subDistrict) {
+      if (!item.location.subDistrict || item.location.subDistrict === " ") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Kecamatan wajib diisi",
           path: ['items', index, 'location', 'subDistrict']
         });
       }
-      if (!item.location.village[0]) {
+      if (!item.location.village[0] || item.location.village[0] === " ") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Kelurahan wajib diisi",
@@ -106,6 +107,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   });
 
   const selectedCategory = form.watch("category");
+  const isLocationOptional = optionalLocationCategories.includes(selectedCategory);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -191,9 +193,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     )} />
                     <FormField control={form.control} name={`items.${index}.location.subDistrict`} render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kecamatan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>}</FormLabel>
+                        <FormLabel>Kecamatan {isLocationOptional && <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder={selectedCategory === "Tim Siram" ? "Boleh Kosong" : "Pilih..."} /></SelectTrigger></FormControl>
+                          <FormControl><SelectTrigger><SelectValue placeholder={isLocationOptional ? "Boleh Kosong" : "Pilih..."} /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value=" ">Abaikan / Kosong</SelectItem>
                             {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -204,9 +206,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                     )} />
                     <FormField control={form.control} name={`items.${index}.location.village.0`} render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kelurahan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>}</FormLabel>
+                        <FormLabel>Kelurahan {isLocationOptional && <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span>}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder={selectedCategory === "Tim Siram" ? "Boleh Kosong" : "Pilih..."} /></SelectTrigger></FormControl>
+                          <FormControl><SelectTrigger><SelectValue placeholder={isLocationOptional ? "Boleh Kosong" : "Pilih..."} /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value=" ">Abaikan / Kosong</SelectItem>
                             {form.watch(`items.${index}.location.subDistrict`) && form.watch(`items.${index}.location.subDistrict`) !== " " &&
