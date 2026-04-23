@@ -7,6 +7,7 @@ import { workPlanService } from '@/services/workPlanService';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -91,25 +92,44 @@ const PrintWorkPlan = () => {
           <tbody>
             {plan.items.map((item, idx) => (
               <tr key={idx}>
-                <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
-                <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>
-                <td className="border-2 border-black p-1">{item.description}</td>
-                <td className="border-2 border-black p-1">
+                <td className="border-2 border-black p-1 text-center align-top">{idx + 1}</td>
+                <td className="border-2 border-black p-1 text-center font-bold align-top">{plan.category}</td>
+                <td className="border-2 border-black p-1 align-top">{item.description}</td>
+                <td className="border-2 border-black p-1 align-top">
                   {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                 </td>
-                <td className="border-2 border-black p-1">
-                  {item.tools.map((t, i) => <div key={i}>• {t.name}</div>)}
+                
+                {/* Kolom Alat Operasional dengan pembatas baris */}
+                <td className="border-2 border-black p-0 align-top">
+                  {item.tools.map((t, i) => (
+                    <div key={i} className={cn("p-1", i < item.tools.length - 1 && "border-b border-black")}>
+                      • {t.name}
+                    </div>
+                  ))}
                 </td>
-                <td className="border-2 border-black p-1 text-center">
-                  {item.tools.map((t, i) => <div key={i}>{t.unit}</div>)}
+                
+                {/* Kolom Unit dengan pembatas baris */}
+                <td className="border-2 border-black p-0 text-center align-top">
+                  {item.tools.map((t, i) => (
+                    <div key={i} className={cn("p-1", i < item.tools.length - 1 && "border-b border-black")}>
+                      {t.unit}
+                    </div>
+                  ))}
                 </td>
-                <td className="border-2 border-black p-1">
-                  {item.tools.map((t, i) => <div key={i}>{t.usage}</div>)}
+                
+                {/* Kolom Kegunaan dengan pembatas baris */}
+                <td className="border-2 border-black p-0 align-top">
+                  {item.tools.map((t, i) => (
+                    <div key={i} className={cn("p-1", i < item.tools.length - 1 && "border-b border-black")}>
+                      {t.usage}
+                    </div>
+                  ))}
                 </td>
-                <td className="border-2 border-black p-1 text-center">{item.coordinator}</td>
-                <td className="border-2 border-black p-1 text-center">{item.personnel.members} Org</td>
-                <td className="border-2 border-black p-1">{item.basis}</td>
-                <td className="border-2 border-black p-1 italic">{item.remarks || "-"}</td>
+
+                <td className="border-2 border-black p-1 text-center align-top">{item.coordinator}</td>
+                <td className="border-2 border-black p-1 text-center align-top">{item.personnel.members} Org</td>
+                <td className="border-2 border-black p-1 align-top">{item.basis}</td>
+                <td className="border-2 border-black p-1 italic align-top">{item.remarks || "-"}</td>
               </tr>
             ))}
           </tbody>
