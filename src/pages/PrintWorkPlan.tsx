@@ -76,7 +76,7 @@ const PrintWorkPlan = () => {
           <thead>
             <tr className="bg-slate-100">
               <th className="border-2 border-black p-1 w-[30px]">No</th>
-              <th className="border-2 border-black p-1 w-[80px]">Kategori</th>
+              <th className="border-2 border-black p-1 w-[80px]">Tim/ Kec</th>
               <th className="border-2 border-black p-1 w-[120px]">Detail Kegiatan</th>
               <th className="border-2 border-black p-1 w-[150px]">Lokasi (Jalan + Kel + Kec)</th>
               <th className="border-2 border-black p-1 w-[100px]">Alat Operasional</th>
