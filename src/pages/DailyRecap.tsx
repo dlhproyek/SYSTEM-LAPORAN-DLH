@@ -496,7 +496,7 @@ const DailyRecap = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
+          <table className="w-full border-collapse border-2 border-black text-[11px]">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
@@ -630,14 +630,16 @@ const DailyRecap = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { background: white !important; }
+          body { 
+            background: white !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+          }
           .no-print, 
           [data-radix-portal], 
           [role="menu"], 
           [data-radix-popper-content-wrapper] { 
             display: none !important; 
-            visibility: hidden !important;
-            opacity: 0 !important;
           }
           .print-area { 
             box-shadow: none !important; 
@@ -647,10 +649,29 @@ const DailyRecap = () => {
             width: 100% !important; 
             max-width: none !important; 
             background-color: white !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
           }
-          @page { size: A3 landscape; margin: 1.5cm; }
-          table { page-break-inside: auto; width: 100% !important; }
-          tr { page-break-inside: avoid; page-break-after: auto; }
+          @page { 
+            size: A3 landscape; 
+            margin: 1cm; 
+          }
+          table { 
+            width: 100% !important; 
+            table-layout: auto !important;
+            border-collapse: collapse !important;
+            border: 2px solid black !important;
+            page-break-inside: auto;
+            box-sizing: border-box !important;
+          }
+          th, td {
+            border: 2px solid black !important;
+            box-sizing: border-box !important;
+          }
+          tr { 
+            page-break-inside: avoid; 
+            page-break-after: auto; 
+          }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }
