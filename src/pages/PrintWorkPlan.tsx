@@ -50,25 +50,31 @@ const PrintWorkPlan = () => {
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
+      // Hitung total baris (berdasarkan jumlah alat) untuk item saat ini
       let totalRows = Math.max(items[i].tools.length, 1);
+      
       while (j < items.length && items[i].description === items[j].description) {
         totalRows += Math.max(items[j].tools.length, 1);
         j++;
       }
+      
       const count = j - i;
-      for (let k = 0; k < count; k++) { spans.push(k === 0 ? totalRows : 0); }
+      for (let k = 0; k < count; k++) {
+        spans.push(k === 0 ? totalRows : 0);
+      }
       i = j;
     }
     return spans;
   };
 
-  // Fungsi untuk menghitung rowSpan Sumber Daya (Alat, Unit, Kegunaan, Koordinator, dll)
+  // Fungsi untuk menghitung rowSpan Alat & Koordinator (Merge jika data sama persis)
   const calculateResourceSpans = (items: WorkPlanItem[]) => {
     const spans: number[] = [];
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
       let totalRows = Math.max(items[i].tools.length, 1);
+      
       while (j < items.length && 
              JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
              items[i].coordinator === items[j].coordinator &&
@@ -78,7 +84,9 @@ const PrintWorkPlan = () => {
         j++;
       }
       const count = j - i;
-      for (let k = 0; k < count; k++) { spans.push(k === 0 ? totalRows : 0); }
+      for (let k = 0; k < count; k++) {
+        spans.push(k === 0 ? totalRows : 0);
+      }
       i = j;
     }
     return spans;

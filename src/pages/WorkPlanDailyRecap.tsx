@@ -55,6 +55,7 @@ const WorkPlanDailyRecap = () => {
   const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
   const showSignatory5 = categoriesInPlans.some(c => c === "Tim Pohon");
 
+  // Hitung total baris per kategori untuk RowSpan Tim/Kec
   const categoryRowSpans: Record<string, number> = {};
   plans.forEach(plan => {
     const isTimPohon = plan.category === "Tim Pohon";
@@ -69,6 +70,7 @@ const WorkPlanDailyRecap = () => {
 
   const renderedCategories = new Set<string>();
 
+  // Fungsi untuk menghitung rowSpan Detail Kegiatan (Merge jika deskripsi sama)
   const calculateDescriptionSpans = (items: WorkPlanItem[]) => {
     const spans: number[] = [];
     let i = 0;
@@ -86,6 +88,7 @@ const WorkPlanDailyRecap = () => {
     return spans;
   };
 
+  // Fungsi untuk menghitung rowSpan Alat & Koordinator
   const calculateResourceSpans = (items: WorkPlanItem[]) => {
     const spans: number[] = [];
     let i = 0;
