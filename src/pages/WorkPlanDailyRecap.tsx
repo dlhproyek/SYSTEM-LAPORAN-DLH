@@ -169,6 +169,9 @@ const WorkPlanDailyRecap = () => {
                 if (isFirstOfCategory) renderedCategories.add(plan.category);
                 
                 const descSpans = getSpans(plan.items, (it) => it.description);
+                const resourceSpans = getSpans(plan.items, (it) => 
+                  JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
+                );
 
                 if (isTimPohon) {
                   const allTools = plan.items[0].tools;
@@ -234,6 +237,7 @@ const WorkPlanDailyRecap = () => {
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
                     const dSpan = descSpans[iIdx];
+                    const rSpan = resourceSpans[iIdx];
 
                     return toolsToRender.map((tool, tIdx) => (
                       <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
@@ -253,33 +257,50 @@ const WorkPlanDailyRecap = () => {
                         )}
 
                         {tIdx === 0 && (
-                          <td className="border-2 border-black p-1 align-top break-words">
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={Math.max(item.tools.length, 1)}>
                             {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                           </td>
                         )}
 
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-
-                        {tIdx === 0 && (
+                        {rSpan > 0 && tIdx === 0 ? (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={Math.max(item.tools.length, 1)}>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.tools.map((t, ti) => (
+                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.name ? `• ${t.name}` : "-"}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.tools.map((t, ti) => (
+                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.unit || "-"}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.tools.map((t, ti) => (
+                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.usage || "-"}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                               {item.coordinator}
                             </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={Math.max(item.tools.length, 1)}>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                               {item.personnel.members}
                             </td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={Math.max(item.tools.length, 1)}>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                               {item.basis}
                             </td>
                             {hasRemarks && (
-                              <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={Math.max(item.tools.length, 1)}>
+                              <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                                 {item.remarks || "-"}
                               </td>
                             )}
                           </>
-                        )}
+                        ) : null}
                       </tr>
                     ));
                   });
