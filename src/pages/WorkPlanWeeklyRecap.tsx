@@ -135,36 +135,36 @@ const WorkPlanWeeklyRecap = () => {
                 if (isTimPohon) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
-                  const totalRows = Math.max(1, allTools.length);
+                  const maxRows = Math.max(allItems.length, allTools.length);
 
-                  const combinedDesc = allItems.map((it, idx) => `${idx + 1}. ${it.description}`).join("\n\n");
-                  const combinedLoc = allItems.map((it) => `${it.location.street}, ${Array.isArray(it.location.village) ? it.location.village.join(", ") : it.location.village}, ${it.location.subDistrict}`).join("\n\n");
-
-                  return Array.from({ length: totalRows }).map((_, rowIndex) => {
+                  return Array.from({ length: maxRows }).map((_, rowIndex) => {
+                    const item = allItems[rowIndex];
                     const tool = allTools[rowIndex];
 
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={maxRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
                               {format(parseISO(plan.date), 'eee, dd MMM', { locale: localeId })}
                             </td>
-                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={totalRows}>{plan.category}</td>
-                            <td className="border-2 border-black p-1 align-top whitespace-pre-line" rowSpan={totalRows}>{combinedDesc}</td>
-                            <td className="border-2 border-black p-1 align-top whitespace-pre-line" rowSpan={totalRows}>{combinedLoc}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={maxRows}>{plan.category}</td>
                           </>
                         )}
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">
+                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
+                        </td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={totalRows}>{plan.items[0].basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={totalRows}>{plan.items[0].remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
                           </>
                         )}
                       </tr>
@@ -190,7 +190,7 @@ const WorkPlanWeeklyRecap = () => {
                         {tIdx === 0 && (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words">
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
