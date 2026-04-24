@@ -62,7 +62,8 @@ const DailyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
+  // Default ke tanggal hari ini jika tidak ada di URL
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
   const [photoMode, setPhotoMode] = useState<PhotoMode>("with-photo");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
@@ -76,7 +77,6 @@ const DailyRecap = () => {
   const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
-  // Set default values based on role
   useEffect(() => {
     if (profile && !hasSetDefaults) {
       if (isAdminHarian) {
@@ -123,11 +123,9 @@ const DailyRecap = () => {
         return matchDate && matchCategory;
       });
       
-      // Sort: Date (desc) then Category (Tim Pohon first)
       data.sort((a, b) => {
         const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
         if (dateDiff !== 0) return dateDiff;
-        
         if (a.category === "Tim Pohon" && b.category !== "Tim Pohon") return -1;
         if (a.category !== "Tim Pohon" && b.category === "Tim Pohon") return 1;
         return a.category.localeCompare(b.category);
@@ -341,7 +339,6 @@ const DailyRecap = () => {
                 worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 140, height: 130 }, editAs: 'oneCell' });
               } catch (e) { console.error(e); }
             };
-            // Kolom dokumentasi bergeser karena ada kolom Tanggal
             await addImageToCell(task.photos.zero, 6);
             await addImageToCell(task.photos.fifty, 7);
             await addImageToCell(task.photos.hundred, 8);

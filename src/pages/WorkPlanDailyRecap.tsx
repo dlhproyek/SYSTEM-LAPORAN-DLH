@@ -36,7 +36,9 @@ const WorkPlanDailyRecap = () => {
   const [searchParams] = useSearchParams();
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
+  
+  // Default ke tanggal hari ini jika tidak ada di URL
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   
   const printRef = useRef<HTMLDivElement>(null);
