@@ -25,5 +25,5 @@ export interface WorkPlan {
   date: string;
   category: string;
   items: WorkPlanItem[];
-  createdAt: string;
+  created_at: string;
 }

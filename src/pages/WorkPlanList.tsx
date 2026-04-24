@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, FileText, Trash2, Edit, 
   Printer, Search, FilterX, ArrowLeft, ChevronDown,
-  Table, CalendarDays
+  Table, CalendarDays, Clock
 } from 'lucide-react';
 import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
@@ -23,7 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO, format } from 'date-fns';
+import { id as localeId } from 'date-fns/locale';
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -264,11 +265,17 @@ const WorkPlanList = () => {
                 <CardHeader className="p-4 pb-2">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center text-xs text-slate-500">
+                      <div className="flex items-center text-xs text-slate-500 font-medium">
                         <Calendar className="h-3 w-3 mr-1" />
                         {new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </div>
-                      <Badge variant="outline" className="w-fit text-[10px] bg-blue-50 text-blue-700">{plan.category}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="w-fit text-[10px] bg-blue-50 text-blue-700">{plan.category}</Badge>
+                        <div className="flex items-center text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                          <Clock className="h-2.5 w-2.5 mr-1" />
+                          {format(parseISO(plan.created_at), 'HH:mm')}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/work-plans/edit/${plan.id}`); }}>

@@ -6,7 +6,8 @@ export const workPlanService = {
     let query = supabase
       .from('work_plans')
       .select('*')
-      .order('date', { ascending: false });
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false });
     
     if (categoryFilter && categoryFilter !== 'semua') {
       query = query.eq('category', categoryFilter);
@@ -29,7 +30,7 @@ export const workPlanService = {
     return data as WorkPlan;
   },
 
-  async createWorkPlan(plan: Omit<WorkPlan, 'id' | 'createdAt'>) {
+  async createWorkPlan(plan: Omit<WorkPlan, 'id' | 'created_at'>) {
     const { data, error } = await supabase
       .from('work_plans')
       .insert([plan])
