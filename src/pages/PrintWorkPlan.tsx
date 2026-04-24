@@ -64,9 +64,9 @@ const PrintWorkPlan = () => {
   // Hitung span untuk Detail Kegiatan
   const descSpans = getSpans(plan.items, (it) => it.description);
   
-  // Hitung span untuk Alat, Koordinator, Dasar (Resource Group)
+  // Hitung span untuk Koordinator, Dasar (Resource Group)
   const resourceSpans = getSpans(plan.items, (it) => 
-    JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
+    it.coordinator + it.basis + it.personnel.members
   );
 
   return (
@@ -120,36 +120,44 @@ const PrintWorkPlan = () => {
               (() => {
                 const allTools = plan.items[0].tools;
                 const allItems = plan.items;
-                const maxRows = Math.max(allItems.length, allTools.length);
-                return Array.from({ length: maxRows }).map((_, rowIndex) => {
-                  const item = allItems[rowIndex];
-                  const tool = allTools[rowIndex];
-                  return (
-                    <tr key={`global-${rowIndex}`}>
-                      {rowIndex === 0 && (
-                        <>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>1</td>
-                          <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={maxRows}>{plan.category}</td>
-                        </>
-                      )}
-                      <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                      <td className="border-2 border-black p-1 align-top break-words">
-                        {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                      </td>
-                      <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                      <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                      <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
-                      {rowIndex === 0 && (
-                        <>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members} Org</td>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
-                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
-                        </>
-                      )}
-                    </tr>
-                  );
-                });
+                const maxRows = allItems.length;
+                return allItems.map((item, rowIndex) => (
+                  <tr key={`global-${rowIndex}`}>
+                    {rowIndex === 0 && (
+                      <>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>1</td>
+                        <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={maxRows}>{plan.category}</td>
+                      </>
+                    )}
+                    <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
+                    <td className="border-2 border-black p-1 align-top break-words">
+                      {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                    </td>
+                    {rowIndex === 0 && (
+                      <>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                          {allTools.map((t, i) => (
+                            <div key={i} className="mb-1">• {t.name}</div>
+                          ))}
+                        </td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
+                          {allTools.map((t, i) => (
+                            <div key={i} className="mb-1">{t.unit}</div>
+                          ))}
+                        </td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                          {allTools.map((t, i) => (
+                            <div key={i} className="mb-1">{t.usage}</div>
+                          ))}
+                        </td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members} Org</td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
+                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
+                      </>
+                    )}
+                  </tr>
+                ));
               })()
             ) : (
               plan.items.map((item, itemIdx) => {

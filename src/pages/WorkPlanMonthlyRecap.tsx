@@ -63,10 +63,10 @@ const WorkPlanMonthlyRecap = () => {
   const groupRowSpans: Record<string, number> = {};
   plans.forEach(plan => {
     const key = `${plan.date}-${plan.category}`;
-    const isTimPohon = plan.category === "Tim Pohon";
+    const isGlobalStyle = ["Tim Pohon", "Tim Babat", "Tim Siram"].includes(plan.category);
     let planRows = 0;
-    if (isTimPohon) {
-      planRows = Math.max(plan.items.length, plan.items[0].tools.length);
+    if (isGlobalStyle) {
+      planRows = plan.items.length;
     } else {
       planRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
     }
@@ -154,54 +154,62 @@ const WorkPlanMonthlyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isTimPohon = plan.category === "Tim Pohon";
+                const isGlobalStyle = ["Tim Pohon", "Tim Babat", "Tim Siram"].includes(plan.category);
                 const groupKey = `${plan.date}-${plan.category}`;
                 const isFirstOfGroup = !renderedGroups.has(groupKey);
                 if (isFirstOfGroup) renderedGroups.add(groupKey);
                 
                 const descSpans = getSpans(plan.items, (it) => it.description);
                 const resourceSpans = getSpans(plan.items, (it) => 
-                  JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
+                  it.coordinator + it.basis + it.personnel.members
                 );
 
-                if (isTimPohon) {
+                if (isGlobalStyle) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
-                  const maxRows = Math.max(allItems.length, allTools.length);
-                  return Array.from({ length: maxRows }).map((_, rowIndex) => {
-                    const item = allItems[rowIndex];
-                    const tool = allTools[rowIndex];
-                    return (
-                      <tr key={`${plan.id}-${rowIndex}`}>
-                        {rowIndex === 0 && (
-                          <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={maxRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
-                              {format(parseISO(plan.date), 'dd/MM/yy')}
-                            </td>
-                            {isFirstOfGroup && (
-                              <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={groupRowSpans[groupKey]}>{plan.category}</td>
-                            )}
-                          </>
-                        )}
-                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">
-                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                        </td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
-                        {rowIndex === 0 && (
-                          <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
-                          </>
-                        )}
-                      </tr>
-                    );
-                  });
+                  const maxRows = allItems.length;
+                  return allItems.map((item, rowIndex) => (
+                    <tr key={`${plan.id}-${rowIndex}`}>
+                      {rowIndex === 0 && (
+                        <>
+                          <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={maxRows}>{pIdx + 1}</td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
+                            {format(parseISO(plan.date), 'dd/MM/yy')}
+                          </td>
+                          {isFirstOfGroup && (
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={groupRowSpans[groupKey]}>{plan.category}</td>
+                          )}
+                        </>
+                      )}
+                      <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
+                      <td className="border-2 border-black p-1 align-top break-words">
+                        {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                      </td>
+                      {rowIndex === 0 && (
+                        <>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                            {allTools.map((t, i) => (
+                              <div key={i} className="mb-1">• {t.name}</div>
+                            ))}
+                          </td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
+                            {allTools.map((t, i) => (
+                              <div key={i} className="mb-1">{t.unit}</div>
+                            ))}
+                          </td>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                            {allTools.map((t, i) => (
+                              <div key={i} className="mb-1">{t.usage}</div>
+                            ))}
+                          </td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
+                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
+                        </>
+                      )}
+                    </tr>
+                  ));
                 } else {
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
