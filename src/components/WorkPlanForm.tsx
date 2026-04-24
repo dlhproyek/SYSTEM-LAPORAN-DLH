@@ -29,6 +29,15 @@ import {
 
 const categories = ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"];
 
+const toolUsageMapping: Record<string, string> = {
+  "Mobil Tangga (BK 9044 J)": "Alat Bantu Untuk Menjangkau Ranting Yang Tinggi",
+  "Dump Truck (BK8559 J)": "Pengangkut Sampah Pemangkasan Pohon",
+  "Chainsaw": "Alat Pemotong Pohon dan Ranting",
+  "Truk Siram (BK 8128 A)": "Penyiraman Tanaman Median Jalan",
+  "Truk Siram (BK 9031 J)": "Penyiraman Tanaman Median Jalan",
+  "Mesin Babat": "Memotong Rumput"
+};
+
 const toolSchema = z.object({
   name: z.string().optional().default(""),
   unit: z.coerce.number().default(0),
@@ -214,6 +223,10 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl mx-auto pb-20">
+        <datalist id="workplan-tools">
+          {Object.keys(toolUsageMapping).map(tool => <option key={tool} value={tool} />)}
+        </datalist>
+
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <h1 className="text-2xl font-bold text-primary">{isEditing ? "Edit Rencana Kerja" : "Buat Rencana Kerja Baru"}</h1>
@@ -255,7 +268,25 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
                 </div>
                 {form.watch("globalTools")?.map((_, toolIdx) => (
                   <div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-white p-3 rounded-lg border border-orange-100">
-                    <div className="md:col-span-5"><FormField control={form.control} name={`globalTools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl><FormMessage /></FormItem>)} /></div>
+                    <div className="md:col-span-5">
+                      <FormField control={form.control} name={`globalTools.${toolIdx}.name`} render={({ field }) => (
+                        <FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel>
+                          <FormControl>
+                            <Input 
+                              className="h-9" 
+                              {...field} 
+                              list="workplan-tools"
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const usage = toolUsageMapping[e.target.value];
+                                if (usage) form.setValue(`globalTools.${toolIdx}.usage`, usage);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
                     <div className="md:col-span-2"><FormField control={form.control} name={`globalTools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div>
                     <div className="md:col-span-4"><FormField control={form.control} name={`globalTools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div>
                     <div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues("globalTools") || []; form.setValue("globalTools", current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div>
@@ -328,7 +359,25 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
                         </div>
                         {form.watch(`items.${index}.tools`)?.map((_, toolIdx) => (
                           <div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 p-3 rounded-lg border">
-                            <div className="md:col-span-5"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl><FormMessage /></FormItem>)} /></div>
+                            <div className="md:col-span-5">
+                              <FormField control={form.control} name={`items.${index}.tools.${toolIdx}.name`} render={({ field }) => (
+                                <FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      className="h-9" 
+                                      {...field} 
+                                      list="workplan-tools"
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        const usage = toolUsageMapping[e.target.value];
+                                        if (usage) form.setValue(`items.${index}.tools.${toolIdx}.usage`, usage);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )} />
+                            </div>
                             <div className="md:col-span-2"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div>
                             <div className="md:col-span-4"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div>
                             <div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues(`items.${index}.tools`); form.setValue(`items.${index}.tools`, current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div>
