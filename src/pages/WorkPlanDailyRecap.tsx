@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { WorkPlan } from '@/types/workPlan';
+import { WorkPlan, WorkPlanItem } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -51,10 +51,28 @@ const WorkPlanDailyRecap = () => {
   };
 
   const hasRemarks = plans.some(plan => plan.items.some(item => item.remarks && item.remarks.trim() !== ""));
-  
   const categoriesInPlans = Array.from(new Set(plans.map(p => p.category)));
-  const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
-  const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
+  const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
+  const showSignatory5 = categoriesInPlans.some(c => c === "Tim Pohon");
+
+  const calculateSpans = (items: WorkPlanItem[]) => {
+    const spans: any[] = [];
+    let i = 0;
+    while (i < items.length) {
+      let j = i + 1;
+      while (j < items.length && 
+             JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
+             items[i].coordinator === items[j].coordinator &&
+             items[i].basis === items[j].basis &&
+             items[i].personnel.members === items[j].personnel.members) {
+        j++;
+      }
+      const count = j - i;
+      for (let k = 0; k < count; k++) { spans.push(k === 0 ? count : 0); }
+      i = j;
+    }
+    return spans;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -62,19 +80,13 @@ const WorkPlanDailyRecap = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/work-plans')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
-            
             <div className="flex items-center gap-2">
               <Select value={selectedDate === "semua" ? "semua" : "custom"} onValueChange={(v) => {
                 if (v === "semua") setSelectedDate("semua");
                 else setSelectedDate(new Date().toISOString().split('T')[0]);
               }}>
-                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10">
-                  <SelectValue placeholder="Pilih Tanggal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semua">Semua Tanggal</SelectItem>
-                  <SelectItem value="custom">Pilih Tanggal...</SelectItem>
-                </SelectContent>
+                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Tanggal" /></SelectTrigger>
+                <SelectContent><SelectItem value="semua">Semua Tanggal</SelectItem><SelectItem value="custom">Pilih Tanggal...</SelectItem></SelectContent>
               </Select>
               {selectedDate !== "semua" && (
                 <div className="relative">
@@ -83,11 +95,8 @@ const WorkPlanDailyRecap = () => {
                 </div>
               )}
             </div>
-
             <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium">
-                <SelectValue placeholder="Tanda Tangan" />
-              </SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium"><SelectValue placeholder="Tanda Tangan" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="with-signature"><div className="flex items-center gap-2"><PenTool size={14} /> Ada Tanda Tangan</div></SelectItem>
                 <SelectItem value="without-signature"><div className="flex items-center gap-2"><PenTool size={14} className="opacity-40" /> Tanpa Tanda Tangan</div></SelectItem>
@@ -95,12 +104,8 @@ const WorkPlanDailyRecap = () => {
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-              <Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru
-            </Button>
-            <Button onClick={() => window.print()} className="bg-blue-600">
-              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
-            </Button>
+            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50"><Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru</Button>
+            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap</Button>
           </div>
         </div>
       </div>
@@ -115,14 +120,10 @@ const WorkPlanDailyRecap = () => {
           </div>
           <img src={LOGO_DLH_URL} className="h-20 w-20 object-contain" alt="Logo DLH" />
         </div>
-
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold underline uppercase">RENCANA KERJA WILAYAH 4 DLH MEDAN KOTA</h3>
-          <p className="text-lg font-bold">
-            Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}
-          </p>
+          <p className="text-lg font-bold">Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}</p>
         </div>
-
         <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">
           <thead>
             <tr className="bg-slate-100">
@@ -142,23 +143,19 @@ const WorkPlanDailyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Siram";
+                const isTimPohon = plan.category === "Tim Pohon";
+                const itemSpans = calculateSpans(plan.items);
                 
-                if (isGlobalStyle) {
+                if (isTimPohon) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
                   const maxRows = Math.max(allItems.length, allTools.length);
                   const planTotalRows = maxRows;
-
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
                     const item = allItems[rowIndex];
                     const tool = allTools[rowIndex];
-
                     let itemRowSpan = 0;
-                    if (rowIndex < allItems.length) {
-                      itemRowSpan = (rowIndex === allItems.length - 1) ? (maxRows - rowIndex) : 1;
-                    }
-
+                    if (rowIndex < allItems.length) { itemRowSpan = (rowIndex === allItems.length - 1) ? (maxRows - rowIndex) : 1; }
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
@@ -167,7 +164,6 @@ const WorkPlanDailyRecap = () => {
                             <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
                           </>
                         )}
-                        
                         {itemRowSpan > 0 && (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>{item?.description || ""}</td>
@@ -176,11 +172,9 @@ const WorkPlanDailyRecap = () => {
                             </td>
                           </>
                         )}
-
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                         <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
-                        
                         {rowIndex === 0 && (
                           <>
                             <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
@@ -193,38 +187,47 @@ const WorkPlanDailyRecap = () => {
                     );
                   });
                 } else {
-                  const planTotalRows = plan.items.reduce((acc, item) => acc + Math.max(item.tools.length, 1), 0);
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-                    const itemRowCount = toolsToRender.length;
-                    
+                    const toolRowCount = toolsToRender.length;
+                    const span = itemSpans[iIdx];
                     return toolsToRender.map((tool, tIdx) => (
                       <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
                         {iIdx === 0 && tIdx === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>{plan.category}</td>
                           </>
                         )}
                         {tIdx === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
                             <td className="border-2 border-black p-1 align-top break-words">
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
                         )}
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-                        {tIdx === 0 && (
+                        {span > 0 ? (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={itemRowCount}>{item.remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{tool.unit || "-"}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.usage || "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{item.basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={span * toolRowCount}>{item.remarks || "-"}</td>}
                           </>
-                        )}
+                        ) : (span === 0 ? null : (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top">{item.coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top">{item.personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{item.basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{item.remarks || "-"}</td>}
+                          </>
+                        ))}
                       </tr>
                     ));
                   });
@@ -235,7 +238,6 @@ const WorkPlanDailyRecap = () => {
             )}
           </tbody>
         </table>
-
         {signatureMode === "with-signature" && (
           <div className="pdf-footer mt-12">
             <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
@@ -248,22 +250,7 @@ const WorkPlanDailyRecap = () => {
           </div>
         )}
       </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body { background: white !important; }
-          .no-print { display: none !important; }
-          .print-area { 
-            box-shadow: none !important; 
-            border: none !important; 
-            padding: 0 !important; 
-            margin: 0 !important; 
-            width: 100% !important; 
-            max-width: none !important;
-          }
-          @page { size: landscape; margin: 1cm; }
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: `@media print { body { background: white !important; } .no-print { display: none !important; } .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; } @page { size: landscape; margin: 1cm; } }`}} />
     </div>
   );
 };
