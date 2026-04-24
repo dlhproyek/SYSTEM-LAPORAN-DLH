@@ -71,7 +71,7 @@ const formSchema = z.object({
   }
 
   data.items.forEach((item, index) => {
-    if (data.category !== "Tim Siram") {
+    if (data.category !== "Tim Siram" && data.category !== "Tim Babat") {
       if (!item.location.subDistrict || item.location.subDistrict.trim() === "") {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Kecamatan wajib diisi", path: ['items', index, 'location', 'subDistrict'] });
       }
@@ -89,8 +89,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State untuk Wizard Tim Siram
-  const [showSiramWizard, setShowSiramWizard] = useState(false);
+  // State untuk Wizard (Tim Siram & Tim Babat)
+  const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1); // 1: Tanya Alat, 2: Tanya Kegiatan
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -129,11 +129,12 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   const selectedCategory = form.watch("category");
   const isGlobalStyle = selectedCategory === "Tim Pohon";
   const isToolsOptional = ["Taman Kota", "Taman Amplas", "Taman Area"].includes(selectedCategory);
+  const useWizard = selectedCategory === "Tim Siram" || selectedCategory === "Tim Babat";
 
   const handleAddClick = () => {
-    if (selectedCategory === "Tim Siram") {
+    if (useWizard) {
       setWizardStep(1);
-      setShowSiramWizard(true);
+      setShowWizard(true);
     } else {
       performAppend('full');
     }
@@ -148,8 +149,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         description: "",
         location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" },
         tools: isGlobalStyle ? [] : [{ name: "", unit: 1, usage: "" }],
-        coordinator: isGlobalStyle ? form.getValues("globalCoordinator") : "",
-        personnel: { members: isGlobalStyle ? form.getValues("globalMembers") : 0 },
+        coordinator: isGlobalStyle ? form.getValues("globalCoordinator") : lastItem?.coordinator || "",
+        personnel: { members: isGlobalStyle ? form.getValues("globalMembers") : lastItem?.personnel.members || 0 },
         basis: lastItem?.basis || "",
         remarks: "",
         uiMode: 'full'
@@ -177,7 +178,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         uiMode: 'location_only'
       });
     }
-    setShowSiramWizard(false);
+    setShowWizard(false);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -295,7 +296,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                   {uiMode !== 'location_only' && (
-                    <FormField control={form.control} name={`items.${index}.description`} render={({ field }) => (<FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Penyiraman taman..." /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name={`items.${index}.description`} render={({ field }) => (<FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pembabatan rumput..." /></FormControl><FormMessage /></FormItem>)} />
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -360,8 +361,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         </div>
       </form>
 
-      {/* Wizard Dialog Tim Siram */}
-      <Dialog open={showSiramWizard} onOpenChange={setShowSiramWizard}>
+      {/* Wizard Dialog (Tim Siram & Tim Babat) */}
+      <Dialog open={showWizard} onOpenChange={setShowWizard}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -396,7 +397,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
             )}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowSiramWizard(false)}>Batal</Button>
+            <Button variant="ghost" onClick={() => setShowWizard(false)}>Batal</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
