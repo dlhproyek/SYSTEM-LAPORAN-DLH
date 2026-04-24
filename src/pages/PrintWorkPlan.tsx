@@ -44,43 +44,30 @@ const PrintWorkPlan = () => {
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
   const isTimPohon = plan.category === "Tim Pohon";
 
-  // Fungsi hitung span untuk Item (Deskripsi)
-  const calculateItemSpans = (items: WorkPlanItem[]) => {
-    const spans: number[] = [];
+  // Fungsi untuk menghitung rowSpan cerdas (Smart Merging)
+  const calculateSpans = (items: WorkPlanItem[]) => {
+    const spans: any[] = [];
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
-      while (j < items.length && items[i].description === items[j].description) {
-        j++;
-      }
-      const count = j - i;
-      for (let k = 0; k < count; k++) spans.push(k === 0 ? count : 0);
-      i = j;
-    }
-    return spans;
-  };
-
-  // Fungsi hitung span untuk Tools (Alat/Kegunaan)
-  const calculateToolSpans = (items: WorkPlanItem[]) => {
-    const spans: number[] = [];
-    let i = 0;
-    while (i < items.length) {
-      let j = i + 1;
+      // Cek baris berikutnya yang memiliki Alat, Koordinator, dan Dasar yang sama persis
       while (j < items.length && 
              JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
              items[i].coordinator === items[j].coordinator &&
-             items[i].basis === items[j].basis) {
+             items[i].basis === items[j].basis &&
+             items[i].personnel.members === items[j].personnel.members) {
         j++;
       }
       const count = j - i;
-      for (let k = 0; k < count; k++) spans.push(k === 0 ? count : 0);
+      for (let k = 0; k < count; k++) {
+        spans.push(k === 0 ? count : 0);
+      }
       i = j;
     }
     return spans;
   };
 
-  const itemSpans = calculateItemSpans(plan.items);
-  const toolSpans = calculateToolSpans(plan.items);
+  const itemSpans = calculateSpans(plan.items);
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -175,8 +162,7 @@ const PrintWorkPlan = () => {
               plan.items.map((item, itemIdx) => {
                 const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
                 const toolRowCount = toolsToRender.length;
-                const iSpan = itemSpans[itemIdx];
-                const tSpan = toolSpans[itemIdx];
+                const span = itemSpans[itemIdx];
 
                 return toolsToRender.map((tool, toolIdx) => (
                   <tr key={`${itemIdx}-${toolIdx}`}>
@@ -184,30 +170,35 @@ const PrintWorkPlan = () => {
                       <>
                         <td className="border-2 border-black p-1 text-center align-top">{itemIdx + 1}</td>
                         <td className="border-2 border-black p-1 text-center font-bold align-top">{plan.category}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">
+                          {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                        </td>
                       </>
                     )}
                     
-                    {iSpan > 0 && toolIdx === 0 && (
-                      <td className="border-2 border-black p-1 align-top break-words" rowSpan={iSpan * toolRowCount}>{item.description}</td>
-                    )}
-                    
-                    {toolIdx === 0 && (
-                      <td className="border-2 border-black p-1 align-top break-words">
-                        {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                      </td>
-                    )}
-                    
-                    {tSpan > 0 ? (
+                    {/* Kolom Alat, Koordinator, dll yang di-merge jika datanya sama */}
+                    {span > 0 ? (
                       <>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={tSpan * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={tSpan * toolRowCount}>{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={tSpan * toolRowCount}>{tool.usage || "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={tSpan * toolRowCount}>{item.coordinator}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={tSpan * toolRowCount}>{item.personnel.members} Org</td>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={tSpan * toolRowCount}>{item.basis}</td>
-                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={tSpan * toolRowCount}>{item.remarks || "-"}</td>}
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{tool.unit || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.usage || "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.coordinator}</td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.personnel.members} Org</td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{item.basis}</td>
+                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={span * toolRowCount}>{item.remarks || "-"}</td>}
                       </>
-                    ) : null}
+                    ) : (span === 0 ? null : (
+                      <>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{item.coordinator}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{item.personnel.members} Org</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{item.basis}</td>
+                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{item.remarks || "-"}</td>}
+                      </>
+                    ))}
                   </tr>
                 ));
               })

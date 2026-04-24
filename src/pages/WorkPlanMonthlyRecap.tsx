@@ -38,7 +38,7 @@ const WorkPlanMonthlyRecap = () => {
 
   useEffect(() => {
     loadData();
-  }, [selectedMonth, setSelectedYear]);
+  }, [selectedMonth, selectedYear]);
 
   const loadData = async () => {
     try {
@@ -86,7 +86,8 @@ const WorkPlanMonthlyRecap = () => {
       while (j < items.length && 
              JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
              items[i].coordinator === items[j].coordinator &&
-             items[i].basis === items[j].basis) {
+             items[i].basis === items[j].basis &&
+             items[i].personnel.members === items[j].personnel.members) {
         j++;
       }
       const count = j - i;
@@ -231,8 +232,8 @@ const WorkPlanMonthlyRecap = () => {
                         )}
                         {tIdx === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words">
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
