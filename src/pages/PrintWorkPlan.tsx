@@ -42,7 +42,7 @@ const PrintWorkPlan = () => {
   if (!plan) return null;
 
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
-  const isTimPohon = plan.category === "Tim Pohon";
+  const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Siram";
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -92,8 +92,8 @@ const PrintWorkPlan = () => {
             </tr>
           </thead>
           <tbody>
-            {isTimPohon ? (
-              // Logika khusus Tim Pohon
+            {isGlobalStyle ? (
+              // Logika khusus Tim Pohon & Tim Siram
               (() => {
                 const allTools = plan.items[0].tools;
                 const allItems = plan.items;
@@ -110,7 +110,7 @@ const PrintWorkPlan = () => {
                   }
 
                   return (
-                    <tr key={`pohon-${rowIndex}`}>
+                    <tr key={`global-${rowIndex}`}>
                       {rowIndex === 0 && (
                         <>
                           <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>1</td>

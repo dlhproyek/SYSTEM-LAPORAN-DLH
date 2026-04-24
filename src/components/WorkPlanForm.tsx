@@ -47,17 +47,17 @@ const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   category: z.string().min(1, "Kategori wajib dipilih"),
   items: z.array(itemSchema).min(1),
-  // Global fields for Tim Pohon
+  // Global fields for Tim Pohon & Tim Siram
   globalTools: z.array(toolSchema).optional().default([{ name: "", unit: 1, usage: "" }]),
   globalCoordinator: z.string().optional().default(""),
   globalMembers: z.coerce.number().optional().default(0),
 }).superRefine((data, ctx) => {
-  const isTimPohon = data.category === "Tim Pohon";
+  const isGlobalStyle = data.category === "Tim Pohon" || data.category === "Tim Siram";
   const optionalToolsCategories = ["Taman Kota", "Taman Amplas", "Taman Area"];
   const isToolsOptional = optionalToolsCategories.includes(data.category);
 
-  // Validasi Global untuk Tim Pohon
-  if (isTimPohon) {
+  // Validasi Global untuk Tim Pohon & Tim Siram
+  if (isGlobalStyle) {
     if (!data.globalCoordinator || data.globalCoordinator.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -75,7 +75,8 @@ const formSchema = z.object({
   }
 
   data.items.forEach((item, index) => {
-    // Validasi Kecamatan & Kelurahan (Opsional hanya untuk Tim Siram)
+    // Validasi Kecamatan & Kelurahan (Opsional hanya untuk Tim Siram - tapi sekarang Siram jadi Global)
+    // Tetap biarkan opsional untuk Siram jika diinginkan, tapi biasanya lokasi tetap butuh Kec/Kel
     if (data.category !== "Tim Siram") {
       if (!item.location.subDistrict || item.location.subDistrict.trim() === "") {
         ctx.addIssue({
@@ -93,8 +94,8 @@ const formSchema = z.object({
       }
     }
 
-    // Validasi Alat Operasional (Hanya jika bukan Tim Pohon dan bukan kategori opsional)
-    if (!isTimPohon && !isToolsOptional) {
+    // Validasi Alat Operasional (Hanya jika bukan kategori Global dan bukan kategori opsional)
+    if (!isGlobalStyle && !isToolsOptional) {
       if (item.tools.length === 0 || !item.tools[0].name || item.tools[0].name.trim() === "") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -104,8 +105,8 @@ const formSchema = z.object({
       }
     }
     
-    // Validasi Koordinator (Hanya jika bukan Tim Pohon)
-    if (!isTimPohon && (!item.coordinator || item.coordinator.trim() === "")) {
+    // Validasi Koordinator (Hanya jika bukan kategori Global)
+    if (!isGlobalStyle && (!item.coordinator || item.coordinator.trim() === "")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Koordinator wajib diisi",
@@ -125,7 +126,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isInitialTimPohon = initialData?.category === "Tim Pohon";
+  const isInitialGlobal = initialData?.category === "Tim Pohon" || initialData?.category === "Tim Siram";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -133,9 +134,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
       date: initialData.date,
       category: initialData.category,
       items: initialData.items,
-      globalTools: isInitialTimPohon ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
-      globalCoordinator: isInitialTimPohon ? initialData.items[0].coordinator : "",
-      globalMembers: isInitialTimPohon ? initialData.items[0].personnel.members : 0,
+      globalTools: isInitialGlobal ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
+      globalCoordinator: isInitialGlobal ? initialData.items[0].coordinator : "",
+      globalMembers: isInitialGlobal ? initialData.items[0].personnel.members : 0,
     } : {
       date: new Date().toISOString().split('T')[0],
       category: profile?.role === 'user' ? (profile?.category || "") : "",
@@ -160,18 +161,16 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
   });
 
   const selectedCategory = form.watch("category");
-  const isTimPohon = selectedCategory === "Tim Pohon";
+  const isGlobalStyle = selectedCategory === "Tim Pohon" || selectedCategory === "Tim Siram";
   const isToolsOptional = ["Taman Kota", "Taman Amplas", "Taman Area"].includes(selectedCategory);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Bersihkan alat kosong
       const cleanGlobalTools = values.globalTools?.filter(t => t.name && t.name.trim() !== "") || [];
       
-      // Proses items: Jika Tim Pohon, gunakan data global
       const processedItems = values.items.map(item => {
-        if (isTimPohon) {
+        if (isGlobalStyle) {
           return {
             ...item,
             tools: cleanGlobalTools,
@@ -243,14 +242,14 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           </CardContent>
         </Card>
 
-        {/* Bagian Global Khusus Tim Pohon */}
-        {isTimPohon && (
+        {/* Bagian Global Khusus Tim Pohon & Tim Siram */}
+        {isGlobalStyle && (
           <Card className="border-t-4 border-t-orange-500 bg-orange-50/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2 text-orange-700">
                 <ShieldAlert className="h-5 w-5" /> Sumber Daya Tim (Global)
               </CardTitle>
-              <p className="text-xs text-slate-500 italic">Khusus Tim Pohon, alat dan personil diatur secara global untuk seluruh lokasi.</p>
+              <p className="text-xs text-slate-500 italic">Khusus {selectedCategory}, alat dan personil diatur secara global untuk seluruh lokasi.</p>
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -328,7 +327,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
 
                 <div className="grid grid-cols-1 gap-4">
                   <FormField control={form.control} name={`items.${index}.description`} render={({ field }) => (
-                    <FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pemangkasan pohon..." /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Penyiraman taman..." /></FormControl><FormMessage /></FormItem>
                   )} />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -365,8 +364,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
                   </div>
                 </div>
 
-                {/* Sembunyikan Alat, Koordinator, Personil jika Tim Pohon (karena sudah diatur secara global) */}
-                {!isTimPohon && (
+                {!isGlobalStyle && (
                   <>
                     <div className="pt-4 border-t space-y-4">
                       <div className="flex items-center justify-between">
@@ -436,9 +434,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: WorkPlanFormProps) => 
           <Button type="button" variant="outline" className="w-full border-dashed py-8 text-blue-600 font-bold" onClick={() => appendItem({
             description: "",
             location: { street: "", village: [""], subDistrict: "" },
-            tools: isTimPohon ? [] : [{ name: "", unit: 1, usage: "" }],
-            coordinator: isTimPohon ? form.getValues("globalCoordinator") : (form.getValues("items.0.coordinator") || ""),
-            personnel: { members: isTimPohon ? form.getValues("globalMembers") : 0 },
+            tools: isGlobalStyle ? [] : [{ name: "", unit: 1, usage: "" }],
+            coordinator: isGlobalStyle ? form.getValues("globalCoordinator") : (form.getValues("items.0.coordinator") || ""),
+            personnel: { members: isGlobalStyle ? form.getValues("globalMembers") : 0 },
             basis: form.getValues("items.0.basis") || "",
             remarks: ""
           })}>
