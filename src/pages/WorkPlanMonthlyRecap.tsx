@@ -62,7 +62,7 @@ const WorkPlanMonthlyRecap = () => {
   
   const categoriesInPlans = Array.from(new Set(plans.map(p => p.category)));
   const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
-  const showSignatory5 = categoriesInPlans.some(c => c === "Tim Pohon" || c === "Tim Siram");
+  const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -208,7 +208,7 @@ const WorkPlanMonthlyRecap = () => {
                         {tIdx === 0 && (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>
+                            <td className="border-2 border-black p-1 align-top break-words">
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
