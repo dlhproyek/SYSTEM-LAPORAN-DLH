@@ -7,8 +7,7 @@ import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Calendar as CalendarIcon, Fuel, FileText, ChevronsUpDown, Table, LogOut, LogIn, CloudUpload, Loader2, Lock, ChevronDown, Image as ImageIcon, ImageOff, PenTool, Plus } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { ArrowLeft, Printer, Calendar as CalendarIcon, PenTool, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -75,26 +74,43 @@ const WorkPlanWeeklyRecap = () => {
 
   const renderedGroups = new Set<string>();
 
-  const calculateSpans = (items: WorkPlanItem[]) => {
-    const spans: any[] = [];
+  const calculateDescriptionSpans = (items: WorkPlanItem[]) => {
+    const spans: number[] = [];
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
-      while (j < items.length && 
-             JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
-             items[i].coordinator === items[j].coordinator &&
-             items[i].basis === items[j].basis &&
-             items[i].personnel.members === items[j].personnel.members) {
+      let totalRows = Math.max(items[i].tools.length, 1);
+      while (j < items.length && items[i].description === items[j].description) {
+        totalRows += Math.max(items[j].tools.length, 1);
         j++;
       }
       const count = j - i;
-      for (let k = 0; k < count; k++) { spans.push(k === 0 ? count : 0); }
+      for (let k = 0; k < count; k++) { spans.push(k === 0 ? totalRows : 0); }
       i = j;
     }
     return spans;
   };
 
-  const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
+  const calculateResourceSpans = (items: WorkPlanItem[]) => {
+    const spans: number[] = [];
+    let i = 0;
+    while (i < items.length) {
+      let j = i + 1;
+      let totalRows = Math.max(items[i].tools.length, 1);
+      while (j < items.length && 
+             JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
+             items[i].coordinator === items[j].coordinator &&
+             items[i].basis === items[j].basis &&
+             items[i].personnel.members === items[j].personnel.members) {
+        totalRows += Math.max(items[j].tools.length, 1);
+        j++;
+      }
+      const count = j - i;
+      for (let k = 0; k < count; k++) { spans.push(k === 0 ? totalRows : 0); }
+      i = j;
+    }
+    return spans;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -145,8 +161,8 @@ const WorkPlanWeeklyRecap = () => {
               <th className="border-2 border-black p-1 w-[60px]">Hari / Tgl</th>
               <th className="border-2 border-black p-1 w-[50px]">Tim/ Kec</th>
               <th className="border-2 border-black p-1 w-[110px]">Detail Kegiatan</th>
-              <th className="border-2 border-black p-1 w-[130px]">Lokasi</th>
-              <th className="border-2 border-black p-1 w-[120px]">Alat Operasional</th>
+              <th className="border-2 border-black p-1 w-[120px]">Lokasi</th>
+              <th className="border-2 border-black p-1 w-[100px]">Alat Operasional</th>
               <th className="border-2 border-black p-1 w-[25px]">Unit</th>
               <th className="border-2 border-black p-1 w-[90px]">Kegunaan</th>
               <th className="border-2 border-black p-1 w-[70px]">Koordinator</th>
@@ -159,7 +175,8 @@ const WorkPlanWeeklyRecap = () => {
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
                 const isTimPohon = plan.category === "Tim Pohon";
-                const itemSpans = calculateSpans(plan.items);
+                const descSpans = calculateDescriptionSpans(plan.items);
+                const resSpans = calculateResourceSpans(plan.items);
                 const groupKey = `${plan.date}-${plan.category}`;
                 const isFirstOfGroup = !renderedGroups.has(groupKey);
                 if (isFirstOfGroup) renderedGroups.add(groupKey);
@@ -213,8 +230,8 @@ const WorkPlanWeeklyRecap = () => {
                   const planTotalRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-                    const toolRowCount = toolsToRender.length;
-                    const span = itemSpans[iIdx];
+                    const dSpan = descSpans[iIdx];
+                    const rSpan = resSpans[iIdx];
                     return toolsToRender.map((tool, tIdx) => (
                       <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
                         {iIdx === 0 && tIdx === 0 && (
@@ -228,25 +245,25 @@ const WorkPlanWeeklyRecap = () => {
                             )}
                           </>
                         )}
-                        {tIdx === 0 && (
-                          <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>{item.description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>
-                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                            </td>
-                          </>
+                        {tIdx === 0 && dSpan > 0 && (
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={dSpan}>{item.description}</td>
                         )}
-                        {span > 0 ? (
+                        {tIdx === 0 && (
+                          <td className="border-2 border-black p-1 align-top break-words">
+                            {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                          </td>
+                        )}
+                        {rSpan > 0 ? (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{tool.unit || "-"}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.usage || "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{item.basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={span * toolRowCount}>{item.remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rSpan}>{tool.name ? `• ${tool.name}` : "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={rSpan}>{tool.unit || "-"}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rSpan}>{tool.usage || "-"}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={rSpan}>{item.coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={rSpan}>{item.personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rSpan}>{item.basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={rSpan}>{item.remarks || "-"}</td>}
                           </>
-                        ) : (span === 0 ? null : (
+                        ) : (rSpan === 0 ? null : (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
                             <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
