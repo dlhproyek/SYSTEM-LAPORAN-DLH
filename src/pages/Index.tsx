@@ -32,6 +32,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const categories: string[] = [
   "semua", "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
@@ -134,7 +140,6 @@ const Index = () => {
     return matchSearch && matchMonth && matchYear && matchCategory && restrictionMatch;
   });
 
-  // Sort: Date (desc) then Category (Tim Pohon first)
   filteredReports.sort((a, b) => {
     const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
     if (dateDiff !== 0) return dateDiff;
@@ -160,94 +165,111 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {isLoggedIn && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/work-plans')} className="bg-blue-50 text-blue-700 border-blue-200">
-                <ClipboardList className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rencana Kerja</span>
-              </Button>
-            )}
-
-            {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/maintenance')} className="bg-amber-50 text-amber-700 border-amber-200">
-                <Database className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Maintenance</span>
-              </Button>
-            )}
-
-            {!isAdminHarian && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200">
-                <FileBarChart className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rekap Bulanan</span>
-              </Button>
-            )}
-
-            {isLoggedIn ? (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200">
-                      <Printer className="h-4 w-4 md:mr-2" /> 
-                      <span className="hidden md:inline">Cetak</span>
-                      <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <TooltipProvider>
+              {isLoggedIn && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/work-plans')} className="bg-blue-50 text-blue-700 border-blue-200 px-2 md:px-3">
+                      <ClipboardList className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rencana Kerja</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/print-rekap?category=semua`)}
-                      className="cursor-pointer py-2"
-                    >
-                      <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Harian
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/daily-rekap?categories=semua&date=semua`)}
-                      className="cursor-pointer py-2"
-                    >
-                      <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Harian
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/weekly-rekap?categories=semua&date=${new Date().toISOString().split('T')[0]}`)}
-                      className="cursor-pointer py-2"
-                    >
-                      <Table className="mr-2 h-4 w-4 text-purple-600" /> Rekap Mingguan
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent className="md:hidden"><p>Rencana Kerja</p></TooltipContent>
+                </Tooltip>
+              )}
 
-                <div className="flex items-center gap-1 border-l pl-2 ml-1">
-                  <div className="hidden sm:flex flex-col items-end mr-2">
-                    <p className="text-[10px] font-bold text-slate-900 leading-none">
-                      {isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}
-                    </p>
-                    <p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
+              {isAdmin && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/maintenance')} className="bg-amber-50 text-amber-700 border-amber-200 px-2 md:px-3">
+                      <Database className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Maintenance</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="md:hidden"><p>Maintenance</p></TooltipContent>
+                </Tooltip>
+              )}
+
+              {!isAdminHarian && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/monthly-rekap')} className="bg-purple-50 text-purple-700 border-purple-200 px-2 md:px-3">
+                      <FileBarChart className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Rekap Bulanan</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="md:hidden"><p>Rekap Bulanan</p></TooltipContent>
+                </Tooltip>
+              )}
+
+              {isLoggedIn ? (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200 px-2 md:px-3">
+                        <Printer className="h-4 w-4 md:mr-2" /> 
+                        <span className="hidden md:inline">Cetak</span>
+                        <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => navigate(`/print-rekap?category=semua`)} className="cursor-pointer py-2">
+                        <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Harian
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/daily-rekap?categories=semua&date=semua`)} className="cursor-pointer py-2">
+                        <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Harian
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/weekly-rekap?categories=semua&date=${new Date().toISOString().split('T')[0]}`)} className="cursor-pointer py-2">
+                        <Table className="mr-2 h-4 w-4 text-purple-600" /> Rekap Mingguan
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <div className="flex items-center gap-1 border-l pl-1.5 md:pl-2 ml-0.5 md:ml-1">
+                    <div className="hidden sm:flex flex-col items-end mr-2">
+                      <p className="text-[10px] font-bold text-slate-900 leading-none">
+                        {isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}
+                      </p>
+                      <p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian ? 'Semua Kategori' : (profile?.category || 'Semua')}</p>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 md:h-9 md:w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-4 w-4 md:h-5 md:w-5" /></Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>Keluar Sistem</p></TooltipContent>
+                    </Tooltip>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-5 w-5" /></Button>
-                </div>
 
-                <Button 
-                  onClick={() => navigate('/create')} 
-                  size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700 h-9 px-3 md:px-4 ml-1"
-                >
-                  <Plus className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Laporan Baru</span>
-                </Button>
-                
-                {isPimpinan && (
-                  <Badge className="bg-amber-100 text-amber-700 border-amber-200 ml-2 hidden md:flex">
-                    <ShieldCheck className="h-3 w-3 mr-1" /> Mode Pantau
-                  </Badge>
-                )}
-              </>
-            ) : (
-              !authLoading && (
-                <Button onClick={() => navigate('/login')} size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                  <LogIn className="mr-2 h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk Sistem</span>
-                </Button>
-              )
-            )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={() => navigate('/create')} 
+                        size="sm" 
+                        className="bg-blue-600 hover:bg-blue-700 h-8 md:h-9 px-2 md:px-4 ml-1"
+                      >
+                        <Plus className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Laporan Baru</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="md:hidden"><p>Laporan Baru</p></TooltipContent>
+                  </Tooltip>
+                  
+                  {isPimpinan && (
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 ml-2 hidden md:flex">
+                      <ShieldCheck className="h-3 w-3 mr-1" /> Mode Pantau
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                !authLoading && (
+                  <Button onClick={() => navigate('/login')} size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-8 md:h-9 px-2 md:px-4">
+                    <LogIn className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Masuk Sistem</span>
+                  </Button>
+                )
+              )}
+            </TooltipProvider>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Filter Bar */}
         <div className="bg-white p-4 rounded-xl shadow-sm border mb-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1 w-full space-y-1.5">

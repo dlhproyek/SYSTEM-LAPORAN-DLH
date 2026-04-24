@@ -25,6 +25,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { startOfWeek, endOfWeek, isWithinInterval, parseISO, format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -39,7 +45,6 @@ const WorkPlanList = () => {
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("semua");
   const [selectedDate, setSelectedDate] = useState("");
@@ -91,17 +96,11 @@ const WorkPlanList = () => {
 
   const filteredPlans = plans.filter(plan => {
     const planDate = parseISO(plan.date);
-    
-    // 1. Text Search
     const matchSearch = plan.items.some(item => 
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.location.street.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    // 2. Category Filter
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
-    
-    // 3. Date / Weekly Filter
     let matchDate = true;
     if (selectedDate) {
       if (isWeeklyMode) {
@@ -112,8 +111,6 @@ const WorkPlanList = () => {
         matchDate = plan.date === selectedDate;
       }
     }
-
-    // 4. Month & Year Filter (Hanya aktif jika tanggal tidak dipilih)
     let matchMonthYear = true;
     if (!selectedDate) {
       const m = (planDate.getMonth() + 1).toString();
@@ -122,7 +119,6 @@ const WorkPlanList = () => {
       const matchYear = selectedYear === "semua" || y === selectedYear;
       matchMonthYear = matchMonth && matchYear;
     }
-
     return matchSearch && matchCategory && matchDate && matchMonthYear;
   });
 
@@ -130,17 +126,26 @@ const WorkPlanList = () => {
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="h-4 w-4 mr-2" /> Beranda</Button>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FileText className="text-blue-600" /> Rencana Kerja
+          <div className="flex items-center gap-2 md:gap-4">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" onClick={() => navigate('/')} className="px-2 md:px-3">
+                    <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Beranda</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="md:hidden"><p>Beranda</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <h1 className="text-lg md:text-2xl font-bold flex items-center gap-2">
+              <FileText className="text-blue-600 h-5 w-5 md:h-6 md:w-6" /> Rencana Kerja
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-white">
-                  <Printer className="mr-2 h-4 w-4" /> Cetak Rekap <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                <Button variant="outline" className="bg-white px-2 md:px-3 h-8 md:h-10">
+                  <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Rekap</span> <ChevronDown className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -155,16 +160,21 @@ const WorkPlanList = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600">
-              <Plus className="mr-2 h-4 w-4" /> Buat Rencana Baru
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600 px-2 md:px-4 h-8 md:h-10">
+                    <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Buat Rencana Baru</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="md:hidden"><p>Buat Rencana Baru</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            {/* Search Text */}
             <div className="md:col-span-4 space-y-1.5">
               <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Cari Kegiatan / Lokasi</label>
               <div className="relative">
@@ -178,7 +188,6 @@ const WorkPlanList = () => {
               </div>
             </div>
 
-            {/* Category */}
             <div className="md:col-span-3 space-y-1.5">
               <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={!!isUserRestricted}>
@@ -194,7 +203,6 @@ const WorkPlanList = () => {
               </Select>
             </div>
 
-            {/* Date Picker */}
             <div className="md:col-span-3 space-y-1.5">
               <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Filter Tanggal / Minggu</label>
               <div className="flex gap-2">
@@ -220,7 +228,6 @@ const WorkPlanList = () => {
               </div>
             </div>
 
-            {/* Reset Button */}
             <div className="md:col-span-2 flex justify-end">
               <Button variant="ghost" onClick={resetFilters} className="h-10 text-slate-400 hover:text-red-500 hover:bg-red-50 w-full md:w-auto">
                 <FilterX className="h-4 w-4 mr-2" /> Reset Filter
@@ -228,7 +235,6 @@ const WorkPlanList = () => {
             </div>
           </div>
 
-          {/* Month & Year Filter (Hanya muncul jika tanggal tidak dipilih) */}
           {!selectedDate && (
             <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2">
