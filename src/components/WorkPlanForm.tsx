@@ -70,7 +70,7 @@ const formSchema = z.object({
   globalCoordinator: z.string().optional().default(""),
   globalMembers: z.coerce.number().optional().default(0),
 }).superRefine((data, ctx) => {
-  const isGlobalStyle = data.category === "Tim Pohon" || data.category === "Tim Babat";
+  const isGlobalStyle = data.category === "Tim Pohon";
   const isToolsOptional = ["Taman Kota", "Taman Amplas", "Taman Area"].includes(data.category);
 
   if (isGlobalStyle) {
@@ -98,7 +98,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State untuk Wizard (Hanya Tim Siram sekarang)
+  // State untuk Wizard (Tim Siram & Tim Babat)
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1); // 1: Tanya Alat, 2: Tanya Kegiatan
 
@@ -108,9 +108,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
       date: initialData.date,
       category: initialData.category,
       items: initialData.items.map(item => ({ ...item, uiMode: 'full' })),
-      globalTools: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
-      globalCoordinator: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].coordinator : "",
-      globalMembers: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].personnel.members : 0,
+      globalTools: initialData.category === "Tim Pohon" ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
+      globalCoordinator: initialData.category === "Tim Pohon" ? initialData.items[0].coordinator : "",
+      globalMembers: initialData.category === "Tim Pohon" ? initialData.items[0].personnel.members : 0,
     } : {
       date: new Date().toISOString().split('T')[0],
       category: profile?.role === 'user' ? (profile?.category || "") : "",
@@ -136,9 +136,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   });
 
   const selectedCategory = form.watch("category");
-  const isGlobalStyle = selectedCategory === "Tim Pohon" || selectedCategory === "Tim Babat";
+  const isGlobalStyle = selectedCategory === "Tim Pohon";
   const isToolsOptional = ["Taman Kota", "Taman Amplas", "Taman Area"].includes(selectedCategory);
-  const useWizard = selectedCategory === "Tim Siram"; // Tim Babat sekarang pakai Global Style
+  const useWizard = selectedCategory === "Tim Siram" || selectedCategory === "Tim Babat";
 
   const handleAddClick = () => {
     if (useWizard) {
@@ -195,7 +195,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     try {
       const cleanGlobalTools = values.globalTools?.filter(t => t.name && t.name.trim() !== "") || [];
       const processedItems = values.items.map(item => {
-        const { uiMode, ...rest } = item;
+        const { uiMode, ...rest } = item; // Hapus uiMode sebelum simpan ke DB
         if (isGlobalStyle) {
           return { ...rest, tools: cleanGlobalTools, coordinator: values.globalCoordinator || "", personnel: { members: values.globalMembers || 0 } };
         } else {
@@ -410,7 +410,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         </div>
       </form>
 
-      {/* Wizard Dialog (Hanya Tim Siram) */}
+      {/* Wizard Dialog (Tim Siram & Tim Babat) */}
       <Dialog open={showWizard} onOpenChange={setShowWizard}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
