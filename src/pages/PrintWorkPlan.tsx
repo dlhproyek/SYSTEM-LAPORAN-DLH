@@ -42,6 +42,7 @@ const PrintWorkPlan = () => {
   if (!plan) return null;
 
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
+  const isTimPohon = plan.category === "Tim Pohon";
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -91,36 +92,78 @@ const PrintWorkPlan = () => {
             </tr>
           </thead>
           <tbody>
-            {plan.items.map((item, itemIdx) => {
-              const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-              const rowCount = toolsToRender.length;
-              
-              return toolsToRender.map((tool, toolIdx) => (
-                <tr key={`${itemIdx}-${toolIdx}`}>
-                  {toolIdx === 0 && (
-                    <>
-                      <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{itemIdx + 1}</td>
-                      <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={rowCount}>{plan.category}</td>
-                      <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowCount}>{item.description}</td>
-                      <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowCount}>
-                        {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+            {isTimPohon ? (
+              // Logika khusus Tim Pohon
+              (() => {
+                const allTools = plan.items[0].tools;
+                const allItems = plan.items;
+                const maxRows = Math.max(allItems.length, allTools.length);
+                const planTotalRows = maxRows;
+
+                return Array.from({ length: maxRows }).map((_, rowIndex) => {
+                  const item = allItems[rowIndex];
+                  const tool = allTools[rowIndex];
+
+                  return (
+                    <tr key={`pohon-${rowIndex}`}>
+                      {rowIndex === 0 && (
+                        <>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>1</td>
+                          <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
+                        </>
+                      )}
+                      <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
+                      <td className="border-2 border-black p-1 align-top break-words">
+                        {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
                       </td>
-                    </>
-                  )}
-                  <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                  <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                  <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-                  {toolIdx === 0 && (
-                    <>
-                      <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{item.coordinator}</td>
-                      <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{item.personnel.members} Org</td>
-                      <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowCount}>{item.basis}</td>
-                      {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={rowCount}>{item.remarks || "-"}</td>}
-                    </>
-                  )}
-                </tr>
-              ));
-            })}
+                      <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                      <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                      <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                      {rowIndex === 0 && (
+                        <>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].personnel.members} Org</td>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={planTotalRows}>{plan.items[0].basis}</td>
+                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={planTotalRows}>{plan.items[0].remarks || "-"}</td>}
+                        </>
+                      )}
+                    </tr>
+                  );
+                });
+              })()
+            ) : (
+              // Logika standar
+              plan.items.map((item, itemIdx) => {
+                const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
+                const rowCount = toolsToRender.length;
+                
+                return toolsToRender.map((tool, toolIdx) => (
+                  <tr key={`${itemIdx}-${toolIdx}`}>
+                    {toolIdx === 0 && (
+                      <>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{itemIdx + 1}</td>
+                        <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={rowCount}>{plan.category}</td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowCount}>{item.description}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">
+                          {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                        </td>
+                      </>
+                    )}
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                    <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+                    {toolIdx === 0 && (
+                      <>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{item.coordinator}</td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={rowCount}>{item.personnel.members} Org</td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowCount}>{item.basis}</td>
+                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={rowCount}>{item.remarks || "-"}</td>}
+                      </>
+                    )}
+                  </tr>
+                ));
+              })
+            )}
           </tbody>
         </table>
 
