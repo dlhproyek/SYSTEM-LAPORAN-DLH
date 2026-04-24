@@ -67,11 +67,9 @@ const WorkPlanDailyRecap = () => {
 
   const categoryRowSpans: Record<string, number> = {};
   plans.forEach(plan => {
-    // Kategori yang menggunakan penggabungan kolom sumber daya (Global Style)
-    const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Babat" || plan.category === "Tim Siram";
+    const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
     let planRows = 0;
-    if (isGlobalStyle) {
-      // Untuk global style, jumlah baris adalah maksimal antara jumlah lokasi atau jumlah alat
+    if (isTimPohon) {
       planRows = Math.max(plan.items.length, plan.items[0].tools.length);
     } else {
       planRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
@@ -166,19 +164,18 @@ const WorkPlanDailyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Babat" || plan.category === "Tim Siram";
+                const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
                 const isFirstOfCategory = !renderedCategories.has(plan.category);
                 if (isFirstOfCategory) renderedCategories.add(plan.category);
                 
                 const descSpans = getSpans(plan.items, (it) => it.description);
 
-                if (isGlobalStyle) {
+                if (isTimPohon) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
                   const maxRows = Math.max(allItems.length, allTools.length);
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
                     const item = allItems[rowIndex];
-                    const tool = allTools[rowIndex];
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
@@ -201,12 +198,29 @@ const WorkPlanDailyRecap = () => {
                           </>
                         )}
 
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
-                        
                         {rowIndex === 0 && (
                           <>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                              {allTools.map((t, i) => (
+                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.name ? `• ${t.name}` : "-"}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
+                              {allTools.map((t, i) => (
+                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.unit || "-"}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
+                              {allTools.map((t, i) => (
+                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
+                                  {t.usage || "-"}
+                                </div>
+                              ))}
+                            </td>
                             <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
                             <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
