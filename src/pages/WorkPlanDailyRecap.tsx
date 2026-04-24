@@ -20,6 +20,15 @@ const getLogoUrl = (fileName: string) => {
 const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
+const categoryOrder: Record<string, number> = {
+  "Tim Pohon": 1,
+  "Tim Siram": 2,
+  "Tim Babat": 3,
+  "Taman Kota": 4,
+  "Taman Area": 5,
+  "Taman Amplas": 6
+};
+
 type SignatureMode = "with-signature" | "without-signature";
 
 const WorkPlanDailyRecap = () => {
@@ -41,7 +50,10 @@ const WorkPlanDailyRecap = () => {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
       const filtered = data.filter(p => selectedDate === "semua" || p.date === selectedDate);
-      filtered.sort((a, b) => a.category.localeCompare(b.category));
+      
+      // Urutan kategori sesuai permintaan user
+      filtered.sort((a, b) => (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99));
+      
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -181,7 +193,6 @@ const WorkPlanDailyRecap = () => {
                           </>
                         )}
                         
-                        {/* Logika Rowspan untuk Detail Kegiatan & Lokasi agar garis hilang jika kosong */}
                         {item && (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>

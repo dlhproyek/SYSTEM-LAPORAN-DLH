@@ -26,6 +26,15 @@ const months = [
 
 const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
+const categoryOrder: Record<string, number> = {
+  "Tim Pohon": 1,
+  "Tim Siram": 2,
+  "Tim Babat": 3,
+  "Taman Kota": 4,
+  "Taman Area": 5,
+  "Taman Amplas": 6
+};
+
 type SignatureMode = "with-signature" | "without-signature";
 
 const WorkPlanMonthlyRecap = () => {
@@ -49,7 +58,14 @@ const WorkPlanMonthlyRecap = () => {
         return (pDate.getMonth() + 1).toString() === selectedMonth && 
                pDate.getFullYear().toString() === selectedYear;
       });
-      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.category.localeCompare(b.category));
+      
+      // Urutan: Tanggal (desc), lalu Kategori sesuai permintaan
+      filtered.sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99);
+      });
+      
       setPlans(filtered);
     } catch (error) {
       console.error(error);
