@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, FileText, Trash2, Edit, 
   Printer, Search, FilterX, ArrowLeft, ChevronDown,
-  Table
+  Table, CalendarDays
 } from 'lucide-react';
 import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
@@ -22,14 +22,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+
+const months = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
 const WorkPlanList = () => {
   const navigate = useNavigate();
   const { session, profile } = useAuth();
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("semua");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [isWeeklyMode, setIsWeeklyMode] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("semua");
+  const [selectedYear, setSelectedYear] = useState("semua");
 
   const isLoggedIn = !!session;
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && profile?.category;
@@ -64,15 +79,50 @@ const WorkPlanList = () => {
     }
   };
 
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory(isUserRestricted ? profile.category! : "semua");
+    setSelectedDate("");
+    setIsWeeklyMode(false);
+    setSelectedMonth("semua");
+    setSelectedYear("semua");
+  };
+
   const filteredPlans = plans.filter(plan => {
+    const planDate = parseISO(plan.date);
+    
+    // 1. Text Search
     const matchSearch = plan.items.some(item => 
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.location.street.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // 2. Category Filter
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
-    const restrictionMatch = !isUserRestricted || plan.category === profile?.category;
     
-    return matchSearch && matchCategory && restrictionMatch;
+    // 3. Date / Weekly Filter
+    let matchDate = true;
+    if (selectedDate) {
+      if (isWeeklyMode) {
+        const start = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+        const end = endOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+        matchDate = isWithinInterval(planDate, { start, end });
+      } else {
+        matchDate = plan.date === selectedDate;
+      }
+    }
+
+    // 4. Month & Year Filter (Hanya aktif jika tanggal tidak dipilih)
+    let matchMonthYear = true;
+    if (!selectedDate) {
+      const m = (planDate.getMonth() + 1).toString();
+      const y = planDate.getFullYear().toString();
+      const matchMonth = selectedMonth === "semua" || m === selectedMonth;
+      const matchYear = selectedYear === "semua" || y === selectedYear;
+      matchMonthYear = matchMonth && matchYear;
+    }
+
+    return matchSearch && matchCategory && matchDate && matchMonthYear;
   });
 
   return (
@@ -110,30 +160,99 @@ const WorkPlanList = () => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow-sm border flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input 
-              placeholder="Cari kegiatan atau lokasi..." 
-              className="pl-10" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        {/* Filter Bar */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* Search Text */}
+            <div className="md:col-span-4 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Cari Kegiatan / Lokasi</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                  placeholder="Ketik kata kunci..." 
+                  className="pl-10 bg-slate-50 border-slate-200 h-10" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="md:col-span-3 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={!!isUserRestricted}>
+                <SelectTrigger className="bg-slate-50 border-slate-200 h-10">
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Kategori</SelectItem>
+                  {["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"].map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Picker */}
+            <div className="md:col-span-3 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Filter Tanggal / Minggu</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input 
+                    type="date" 
+                    className="pl-10 bg-slate-50 border-slate-200 h-10" 
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                </div>
+                {selectedDate && (
+                  <div className="flex items-center gap-2 bg-blue-50 px-3 rounded-md border border-blue-100 h-10">
+                    <Checkbox 
+                      id="weekly" 
+                      checked={isWeeklyMode} 
+                      onCheckedChange={(val) => setIsWeeklyMode(!!val)} 
+                    />
+                    <label htmlFor="weekly" className="text-[10px] font-bold text-blue-700 cursor-pointer whitespace-nowrap">PER MINGGU</label>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Reset Button */}
+            <div className="md:col-span-2 flex justify-end">
+              <Button variant="ghost" onClick={resetFilters} className="h-10 text-slate-400 hover:text-red-500 hover:bg-red-50 w-full md:w-auto">
+                <FilterX className="h-4 w-4 mr-2" /> Reset Filter
+              </Button>
+            </div>
           </div>
-          <div className="w-full md:w-48">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={!!isUserRestricted}>
-              <SelectTrigger><SelectValue placeholder="Kategori" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua Kategori</SelectItem>
-                {["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"].map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => { setSearchQuery(""); setSelectedCategory(isUserRestricted ? profile.category! : "semua"); }}>
-            <FilterX className="h-4 w-4" />
-          </Button>
+
+          {/* Month & Year Filter (Hanya muncul jika tanggal tidak dipilih) */}
+          {!selectedDate && (
+            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-slate-400">Atau Filter Bulan:</span>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[140px] h-8 text-xs bg-slate-50">
+                    <SelectValue placeholder="Bulan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="semua">Semua Bulan</SelectItem>
+                    {months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs bg-slate-50">
+                    <SelectValue placeholder="Tahun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="semua">Semua Tahun</SelectItem>
+                    {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -177,7 +296,12 @@ const WorkPlanList = () => {
           </div>
         ) : (
           <div className="text-center py-20 bg-white rounded-xl border border-dashed">
-            <p className="text-slate-500">Tidak ada rencana kerja ditemukan</p>
+            <div className="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+              <Search className="text-slate-300 h-6 w-6" />
+            </div>
+            <p className="text-slate-500 font-medium">Tidak ada rencana kerja ditemukan</p>
+            <p className="text-slate-400 text-xs mt-1">Coba ubah filter pencarian Anda</p>
+            <Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Semua Filter</Button>
           </div>
         )}
       </div>
