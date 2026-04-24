@@ -44,30 +44,30 @@ const PrintWorkPlan = () => {
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
   const isTimPohon = plan.category === "Tim Pohon";
 
-  // Fungsi untuk menghitung rowSpan cerdas (Smart Merging)
-  const calculateSpans = (items: WorkPlanItem[]) => {
-    const spans: any[] = [];
+  // Fungsi pembantu untuk menghitung rowspan
+  const getSpans = (items: WorkPlanItem[], keyExtractor: (item: WorkPlanItem) => string) => {
+    const spans: number[] = [];
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
-      // Cek baris berikutnya yang memiliki Alat, Koordinator, dan Dasar yang sama persis
-      while (j < items.length && 
-             JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
-             items[i].coordinator === items[j].coordinator &&
-             items[i].basis === items[j].basis &&
-             items[i].personnel.members === items[j].personnel.members) {
+      const currentKey = keyExtractor(items[i]);
+      while (j < items.length && keyExtractor(items[j]) === currentKey) {
         j++;
       }
       const count = j - i;
-      for (let k = 0; k < count; k++) {
-        spans.push(k === 0 ? count : 0);
-      }
+      for (let k = 0; k < count; k++) spans.push(k === 0 ? count : 0);
       i = j;
     }
     return spans;
   };
 
-  const itemSpans = calculateSpans(plan.items);
+  // Hitung span untuk Detail Kegiatan
+  const descSpans = getSpans(plan.items, (it) => it.description);
+  
+  // Hitung span untuk Alat, Koordinator, Dasar (Resource Group)
+  const resourceSpans = getSpans(plan.items, (it) => 
+    JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -121,37 +121,30 @@ const PrintWorkPlan = () => {
                 const allTools = plan.items[0].tools;
                 const allItems = plan.items;
                 const maxRows = Math.max(allItems.length, allTools.length);
-                const planTotalRows = maxRows;
                 return Array.from({ length: maxRows }).map((_, rowIndex) => {
                   const item = allItems[rowIndex];
                   const tool = allTools[rowIndex];
-                  let itemRowSpan = 0;
-                  if (rowIndex < allItems.length) { itemRowSpan = (rowIndex === allItems.length - 1) ? (maxRows - rowIndex) : 1; }
                   return (
                     <tr key={`pohon-${rowIndex}`}>
                       {rowIndex === 0 && (
                         <>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>1</td>
-                          <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>1</td>
+                          <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={maxRows}>{plan.category}</td>
                         </>
                       )}
-                      {itemRowSpan > 0 && (
-                        <>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>{item?.description || ""}</td>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>
-                            {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                          </td>
-                        </>
-                      )}
+                      <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
+                      <td className="border-2 border-black p-1 align-top break-words">
+                        {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
+                      </td>
                       <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                       <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                       <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
                       {rowIndex === 0 && (
                         <>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].personnel.members} Org</td>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={planTotalRows}>{plan.items[0].basis}</td>
-                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={planTotalRows}>{plan.items[0].remarks || "-"}</td>}
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
+                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members} Org</td>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
+                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
                         </>
                       )}
                     </tr>
@@ -162,43 +155,53 @@ const PrintWorkPlan = () => {
               plan.items.map((item, itemIdx) => {
                 const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
                 const toolRowCount = toolsToRender.length;
-                const span = itemSpans[itemIdx];
+                
+                const dSpan = descSpans[itemIdx];
+                const rSpan = resourceSpans[itemIdx];
 
                 return toolsToRender.map((tool, toolIdx) => (
                   <tr key={`${itemIdx}-${toolIdx}`}>
-                    {toolIdx === 0 && (
+                    {itemIdx === 0 && toolIdx === 0 && (
                       <>
-                        <td className="border-2 border-black p-1 text-center align-top">{itemIdx + 1}</td>
-                        <td className="border-2 border-black p-1 text-center font-bold align-top">{plan.category}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">
-                          {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                        </td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>1</td>
+                        <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>{plan.category}</td>
                       </>
                     )}
                     
-                    {/* Kolom Alat, Koordinator, dll yang di-merge jika datanya sama */}
-                    {span > 0 ? (
+                    {toolIdx === 0 && dSpan > 0 && (
+                      <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(itemIdx, itemIdx + dSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                        {item.description}
+                      </td>
+                    )}
+                    
+                    {toolIdx === 0 && (
+                      <td className="border-2 border-black p-1 align-top break-words">
+                        {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                      </td>
+                    )}
+
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                    <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+
+                    {toolIdx === 0 && rSpan > 0 && (
                       <>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.usage || "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.coordinator}</td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.personnel.members} Org</td>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{item.basis}</td>
-                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={span * toolRowCount}>{item.remarks || "-"}</td>}
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                          {item.coordinator}
+                        </td>
+                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                          {item.personnel.members} Org
+                        </td>
+                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                          {item.basis}
+                        </td>
+                        {hasRemarks && (
+                          <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                            {item.remarks || "-"}
+                          </td>
+                        )}
                       </>
-                    ) : (span === 0 ? null : (
-                      <>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{item.coordinator}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{item.personnel.members} Org</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{item.basis}</td>
-                        {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{item.remarks || "-"}</td>}
-                      </>
-                    ))}
+                    )}
                   </tr>
                 ));
               })

@@ -59,10 +59,7 @@ const WorkPlanMonthlyRecap = () => {
   };
 
   const hasRemarks = plans.some(plan => plan.items.some(item => item.remarks && item.remarks.trim() !== ""));
-  const categoriesInPlans = Array.from(new Set(plans.map(p => p.category)));
-  const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
-  const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
-
+  
   const groupRowSpans: Record<string, number> = {};
   plans.forEach(plan => {
     const key = `${plan.date}-${plan.category}`;
@@ -78,20 +75,17 @@ const WorkPlanMonthlyRecap = () => {
 
   const renderedGroups = new Set<string>();
 
-  const calculateSpans = (items: WorkPlanItem[]) => {
-    const spans: any[] = [];
+  const getSpans = (items: WorkPlanItem[], keyExtractor: (item: WorkPlanItem) => string) => {
+    const spans: number[] = [];
     let i = 0;
     while (i < items.length) {
       let j = i + 1;
-      while (j < items.length && 
-             JSON.stringify(items[i].tools) === JSON.stringify(items[j].tools) &&
-             items[i].coordinator === items[j].coordinator &&
-             items[i].basis === items[j].basis &&
-             items[i].personnel.members === items[j].personnel.members) {
+      const currentKey = keyExtractor(items[i]);
+      while (j < items.length && keyExtractor(items[j]) === currentKey) {
         j++;
       }
       const count = j - i;
-      for (let k = 0; k < count; k++) { spans.push(k === 0 ? count : 0); }
+      for (let k = 0; k < count; k++) spans.push(k === 0 ? count : 0);
       i = j;
     }
     return spans;
@@ -161,27 +155,28 @@ const WorkPlanMonthlyRecap = () => {
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
                 const isTimPohon = plan.category === "Tim Pohon";
-                const itemSpans = calculateSpans(plan.items);
                 const groupKey = `${plan.date}-${plan.category}`;
                 const isFirstOfGroup = !renderedGroups.has(groupKey);
                 if (isFirstOfGroup) renderedGroups.add(groupKey);
                 
+                const descSpans = getSpans(plan.items, (it) => it.description);
+                const resourceSpans = getSpans(plan.items, (it) => 
+                  JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
+                );
+
                 if (isTimPohon) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
                   const maxRows = Math.max(allItems.length, allTools.length);
-                  const planTotalRows = maxRows;
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
                     const item = allItems[rowIndex];
                     const tool = allTools[rowIndex];
-                    let itemRowSpan = 0;
-                    if (rowIndex < allItems.length) { itemRowSpan = (rowIndex === allItems.length - 1) ? (maxRows - rowIndex) : 1; }
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={maxRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
                               {format(parseISO(plan.date), 'dd/MM/yy')}
                             </td>
                             {isFirstOfGroup && (
@@ -189,40 +184,37 @@ const WorkPlanMonthlyRecap = () => {
                             )}
                           </>
                         )}
-                        {itemRowSpan > 0 && (
-                          <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>{item?.description || ""}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>
-                              {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                            </td>
-                          </>
-                        )}
+                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">
+                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
+                        </td>
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                         <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={planTotalRows}>{plan.items[0].basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={planTotalRows}>{plan.items[0].remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
                           </>
                         )}
                       </tr>
                     );
                   });
                 } else {
-                  const planTotalRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
                     const toolRowCount = toolsToRender.length;
-                    const span = itemSpans[iIdx];
+                    const dSpan = descSpans[iIdx];
+                    const rSpan = resourceSpans[iIdx];
+
                     return toolsToRender.map((tool, tIdx) => (
                       <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
                         {iIdx === 0 && tIdx === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                               {format(parseISO(plan.date), 'dd/MM/yy')}
                             </td>
                             {isFirstOfGroup && (
@@ -230,35 +222,41 @@ const WorkPlanMonthlyRecap = () => {
                             )}
                           </>
                         )}
+                        
+                        {tIdx === 0 && dSpan > 0 && (
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + dSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                            {item.description}
+                          </td>
+                        )}
+
                         {tIdx === 0 && (
+                          <td className="border-2 border-black p-1 align-top break-words">
+                            {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                          </td>
+                        )}
+
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+
+                        {tIdx === 0 && rSpan > 0 && (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>{item.description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={toolRowCount}>
-                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.coordinator}
                             </td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.personnel.members}
+                            </td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                              {item.basis}
+                            </td>
+                            {hasRemarks && (
+                              <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
+                                {item.remarks || "-"}
+                              </td>
+                            )}
                           </>
                         )}
-                        {span > 0 ? (
-                          <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.name ? `• ${tool.name}` : "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{tool.unit || "-"}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{tool.usage || "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={span * toolRowCount}>{item.personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={span * toolRowCount}>{item.basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={span * toolRowCount}>{item.remarks || "-"}</td>}
-                          </>
-                        ) : (span === 0 ? null : (
-                          <>
-                            <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                            <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-                            <td className="border-2 border-black p-1 text-center align-top">{item.coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top">{item.personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words">{item.basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{item.remarks || "-"}</td>}
-                          </>
-                        ))}
                       </tr>
                     ));
                   });
