@@ -128,10 +128,18 @@ const PrintWorkPlan = () => {
                           <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={maxRows}>{plan.category}</td>
                         </>
                       )}
-                      <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                      <td className="border-2 border-black p-1 align-top break-words">
-                        {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                      </td>
+                      
+                      {item && (
+                        <>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                            {item.description}
+                          </td>
+                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                            {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                          </td>
+                        </>
+                      )}
+
                       <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                       <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                       <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
@@ -174,18 +182,12 @@ const PrintWorkPlan = () => {
                       </td>
                     )}
 
-                    {/* Kolom Alat, Unit, Kegunaan sekarang menggunakan rSpan agar menyatu jika datanya sama */}
-                    {rSpan > 0 ? (
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                    <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                    <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+
+                    {toolIdx === 0 && rSpan > 0 && (
                       <>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                          {tool.name ? `• ${tool.name}` : "-"}
-                        </td>
-                        <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                          {tool.unit || "-"}
-                        </td>
-                        <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                          {tool.usage || "-"}
-                        </td>
                         <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(itemIdx, itemIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
                           {item.coordinator}
                         </td>
@@ -200,13 +202,6 @@ const PrintWorkPlan = () => {
                             {item.remarks || "-"}
                           </td>
                         )}
-                      </>
-                    ) : toolIdx === 0 ? null : (
-                      // Jika item memiliki lebih dari 1 alat tapi rSpan=0 (baris lanjutan), tetap tampilkan alat tambahannya
-                      <>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
                       </>
                     )}
                   </tr>

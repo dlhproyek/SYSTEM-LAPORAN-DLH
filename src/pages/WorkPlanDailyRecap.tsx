@@ -180,10 +180,19 @@ const WorkPlanDailyRecap = () => {
                             )}
                           </>
                         )}
-                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">
-                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                        </td>
+                        
+                        {/* Logika Rowspan untuk Detail Kegiatan & Lokasi agar garis hilang jika kosong */}
+                        {item && (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                              {item.description}
+                            </td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            </td>
+                          </>
+                        )}
+
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                         <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>

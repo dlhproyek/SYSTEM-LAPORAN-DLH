@@ -62,15 +62,14 @@ const WorkPlanMonthlyRecap = () => {
   
   const groupRowSpans: Record<string, number> = {};
   plans.forEach(plan => {
-    const key = `${plan.date}-${plan.category}`;
-    const isTimPohon = plan.category === "Tim Pohon";
+    const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
     let planRows = 0;
     if (isTimPohon) {
       planRows = Math.max(plan.items.length, plan.items[0].tools.length);
     } else {
       planRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
     }
-    groupRowSpans[key] = (groupRowSpans[key] || 0) + planRows;
+    groupRowSpans[`${plan.date}-${plan.category}`] = (groupRowSpans[`${plan.date}-${plan.category}`] || 0) + planRows;
   });
 
   const renderedGroups = new Set<string>();
@@ -154,7 +153,7 @@ const WorkPlanMonthlyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isTimPohon = plan.category === "Tim Pohon";
+                const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
                 const groupKey = `${plan.date}-${plan.category}`;
                 const isFirstOfGroup = !renderedGroups.has(groupKey);
                 if (isFirstOfGroup) renderedGroups.add(groupKey);
@@ -184,10 +183,18 @@ const WorkPlanMonthlyRecap = () => {
                             )}
                           </>
                         )}
-                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">
-                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                        </td>
+                        
+                        {item && (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                              {item.description}
+                            </td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
+                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            </td>
+                          </>
+                        )}
+
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
                         <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
                         <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
@@ -205,7 +212,6 @@ const WorkPlanMonthlyRecap = () => {
                 } else {
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-                    const toolRowCount = toolsToRender.length;
                     const dSpan = descSpans[iIdx];
                     const rSpan = resourceSpans[iIdx];
 
