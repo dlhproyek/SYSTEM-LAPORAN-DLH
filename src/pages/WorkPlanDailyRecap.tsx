@@ -145,44 +145,42 @@ const WorkPlanDailyRecap = () => {
                 const isTimPohon = plan.category === "Tim Pohon";
                 
                 if (isTimPohon) {
-                  // Logika khusus Tim Pohon: Gabungkan alat dan lokasi agar tidak double
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
-                  const maxRows = Math.max(allItems.length, allTools.length);
-                  const planTotalRows = maxRows;
+                  const totalRows = Math.max(1, allTools.length);
 
-                  return Array.from({ length: maxRows }).map((_, rowIndex) => {
-                    const item = allItems[rowIndex];
+                  // Gabungkan semua deskripsi dan lokasi menjadi satu teks dengan baris baru
+                  const combinedDesc = allItems.map((it, idx) => `${idx + 1}. ${it.description}`).join("\n\n");
+                  const combinedLoc = allItems.map((it) => `${it.location.street}, ${Array.isArray(it.location.village) ? it.location.village.join(", ") : it.location.village}, ${it.location.subDistrict}`).join("\n\n");
+
+                  return Array.from({ length: totalRows }).map((_, rowIndex) => {
                     const tool = allTools[rowIndex];
 
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={totalRows}>{plan.category}</td>
+                            <td className="border-2 border-black p-1 align-top whitespace-pre-line" rowSpan={totalRows}>{combinedDesc}</td>
+                            <td className="border-2 border-black p-1 align-top whitespace-pre-line" rowSpan={totalRows}>{combinedLoc}</td>
                           </>
                         )}
-                        <td className="border-2 border-black p-1 align-top break-words">{item?.description || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">
-                          {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
-                        </td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || "-"}</td>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={planTotalRows}>{plan.items[0].basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={planTotalRows}>{plan.items[0].remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={totalRows}>{plan.items[0].basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={totalRows}>{plan.items[0].remarks || "-"}</td>}
                           </>
                         )}
                       </tr>
                     );
                   });
                 } else {
-                  // Logika standar untuk kategori lain
                   const planTotalRows = plan.items.reduce((acc, item) => acc + Math.max(item.tools.length, 1), 0);
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
