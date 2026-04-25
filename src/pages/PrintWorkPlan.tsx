@@ -42,8 +42,7 @@ const PrintWorkPlan = () => {
   if (!plan) return null;
 
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
-  // Tim Siram sekarang juga menggunakan Global Style
-  const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Siram";
+  const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
 
   const getSpans = (items: WorkPlanItem[], keyExtractor: (item: WorkPlanItem) => string) => {
     const spans: number[] = [];
@@ -114,15 +113,7 @@ const PrintWorkPlan = () => {
           <tbody>
             {isGlobalStyle ? (
               (() => {
-                // Cari alat dari semua item untuk memastikan data lama tetap muncul
-                let allTools = [];
-                for (const item of plan.items) {
-                  if (item.tools && item.tools.length > 0 && item.tools[0].name) {
-                    allTools = item.tools;
-                    break;
-                  }
-                }
-                
+                const allTools = plan.items[0].tools;
                 const allItems = plan.items;
                 const maxRows = Math.max(allItems.length, allTools.length);
                 return Array.from({ length: maxRows }).map((_, rowIndex) => {
