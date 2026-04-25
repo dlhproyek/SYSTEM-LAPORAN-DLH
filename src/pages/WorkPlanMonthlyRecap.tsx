@@ -49,10 +49,7 @@ const WorkPlanMonthlyRecap = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
-      
-      // Filter hanya yang AKTIF
       const filtered = data.filter(p => {
-        if (p.is_active === false) return false;
         const pDate = parseISO(p.date);
         return (pDate.getMonth() + 1).toString() === selectedMonth && 
                pDate.getFullYear().toString() === selectedYear;

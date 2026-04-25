@@ -45,16 +45,13 @@ const WorkPlanWeeklyRecap = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
-      
-      // Filter hanya yang AKTIF
       const filtered = data.filter(p => {
-        if (p.is_active === false) return false;
         const pDate = parseISO(p.date);
         return isWithinInterval(pDate, { start: weekStart, end: weekEnd });
       });
       
       filtered.sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(a.date).getTime();
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         return sortByCategory(a.category, b.category);
       });

@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, FileText, Trash2, Edit, 
   Printer, Search, FilterX, ArrowLeft, ChevronDown,
-  Table, CalendarDays, Clock, LogIn, RefreshCw, Eye,
-  Power, PowerOff
+  Table, CalendarDays, Clock, LogIn, RefreshCw, Eye
 } from 'lucide-react';
 import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
@@ -64,6 +63,7 @@ const WorkPlanList = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
+      console.log("Fetched plans:", data);
       setPlans(data || []);
     } catch (error) {
       console.error("Error loading plans:", error);
@@ -82,24 +82,6 @@ const WorkPlanList = () => {
       setSelectedCategory(profile.category);
     }
   }, [profile, isUserRestricted]);
-
-  const handleToggleStatus = async (e: React.MouseEvent, plan: WorkPlan) => {
-    e.stopPropagation();
-    if (!isLoggedIn || isPimpinan) return;
-    
-    const newStatus = plan.is_active === false ? true : false;
-    const actionText = newStatus ? "mengaktifkan" : "menonaktifkan";
-    
-    if (window.confirm(`Apakah Anda yakin ingin ${actionText} rencana kerja ini?`)) {
-      try {
-        await workPlanService.updateWorkPlan(plan.id, { is_active: newStatus });
-        setPlans(prev => prev.map(p => p.id === plan.id ? { ...p, is_active: newStatus } : p));
-        showSuccess(`Rencana kerja berhasil ${newStatus ? 'diaktifkan' : 'dinonaktifkan'}`);
-      } catch (error) {
-        showError("Gagal mengubah status rencana");
-      }
-    }
-  };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -125,14 +107,17 @@ const WorkPlanList = () => {
   };
 
   const filteredPlans = plans.filter(plan => {
+    // 1. Filter Pencarian (Uraian atau Jalan)
     const search = searchQuery.toLowerCase().trim();
     const matchSearch = !search || (Array.isArray(plan.items) && plan.items.some(item => 
       (item.description?.toLowerCase() || "").includes(search) ||
       (item.location?.street?.toLowerCase() || "").includes(search)
     ));
 
+    // 2. Filter Kategori
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
 
+    // 3. Filter Tanggal / Minggu
     let matchDate = true;
     const planDate = parseISO(plan.date);
     
@@ -146,6 +131,7 @@ const WorkPlanList = () => {
       }
     }
 
+    // 4. Filter Bulan & Tahun
     let matchMonthYear = true;
     if (!selectedDate) {
       const m = (planDate.getMonth() + 1).toString();
@@ -318,14 +304,7 @@ const WorkPlanList = () => {
         ) : filteredPlans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPlans.map((plan) => (
-              <Card 
-                key={plan.id} 
-                className={cn(
-                  "hover:shadow-md transition-all cursor-pointer border-l-4 group relative overflow-hidden",
-                  plan.is_active === false ? "border-l-slate-300 opacity-60 grayscale-[0.5]" : "border-l-blue-500"
-                )} 
-                onClick={() => navigate(`/work-plans/print/${plan.id}`)}
-              >
+              <Card key={plan.id} className="hover:shadow-md transition-all cursor-pointer border-l-4 border-l-blue-500 group relative overflow-hidden" onClick={() => navigate(`/work-plans/print/${plan.id}`)}>
                 <CardHeader className="p-4 pb-2">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1">
@@ -334,15 +313,7 @@ const WorkPlanList = () => {
                         {new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn(
-                          "w-fit text-[10px]",
-                          plan.is_active === false ? "bg-slate-100 text-slate-500 border-slate-200" : "bg-blue-50 text-blue-700 border-blue-200"
-                        )}>
-                          {plan.category}
-                        </Badge>
-                        {plan.is_active === false && (
-                          <Badge variant="destructive" className="text-[9px] h-4 px-1.5 uppercase font-bold">Nonaktif</Badge>
-                        )}
+                        <Badge variant="outline" className="w-fit text-[10px] bg-blue-50 text-blue-700 border-blue-200">{plan.category}</Badge>
                         {plan.created_at && (
                           <div className="flex items-center text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                             <Clock className="h-2.5 w-2.5 mr-1" />
@@ -353,26 +324,6 @@ const WorkPlanList = () => {
                     </div>
                     {isLoggedIn && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className={cn(
-                                  "h-8 w-8",
-                                  plan.is_active === false ? "text-green-500 hover:text-green-600 hover:bg-green-50" : "text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                                )}
-                                disabled={isPimpinan}
-                                onClick={(e) => handleToggleStatus(e, plan)}
-                              >
-                                {plan.is_active === false ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>{plan.is_active === false ? 'Aktifkan' : 'Nonaktifkan'}</p></TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
                         <Button 
                           variant="ghost" 
                           size="icon" 

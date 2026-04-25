@@ -26,5 +26,4 @@ export interface WorkPlan {
   category: string;
   items: WorkPlanItem[];
   created_at: string;
-  is_active?: boolean; // Properti baru untuk status aktif/nonaktif
 }
