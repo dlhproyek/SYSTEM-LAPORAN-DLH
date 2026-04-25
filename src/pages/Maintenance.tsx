@@ -11,7 +11,7 @@ import {
   CheckCircle2, FileWarning, Loader2, Database, 
   Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity,
   CalendarDays, BarChart3, TrendingUp, Globe, Cpu, ArrowUpCircle,
-  ExternalLink, BarChart
+  ExternalLink, BarChart, Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -304,17 +304,18 @@ const Maintenance = () => {
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
+                      <div className="bg-amber-100 p-2 rounded-lg shrink-0"><Calendar className="h-4 w-4 text-amber-600" /></div>
+                      <div>
+                        <p className="text-xs font-bold uppercase text-slate-500">Masa Aktif Database</p>
+                        <p className="text-sm font-medium">Pause otomatis setelah 7 hari inaktif</p>
+                        <p className="text-[10px] text-slate-400 italic">* Inaktif = Tidak ada akses API/Login sama sekali.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
                       <div className="bg-amber-100 p-2 rounded-lg shrink-0"><Activity className="h-4 w-4 text-amber-600" /></div>
                       <div>
                         <p className="text-xs font-bold uppercase text-slate-500">Pengguna Aktif (MAU)</p>
                         <p className="text-sm font-medium">Limit: 50.000 Pengguna / Bulan</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-amber-100 p-2 rounded-lg shrink-0"><Clock className="h-4 w-4 text-amber-600" /></div>
-                      <div>
-                        <p className="text-xs font-bold uppercase text-slate-500">Project Pausing</p>
-                        <p className="text-sm font-medium">7 Hari Inaktivitas</p>
                       </div>
                     </div>
                   </div>
@@ -336,11 +337,18 @@ const Maintenance = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 p-2 rounded-lg shrink-0"><Calendar className="h-4 w-4 text-blue-600" /></div>
+                      <div>
+                        <p className="text-xs font-bold uppercase text-slate-500">Masa Aktif Hosting</p>
+                        <p className="text-sm font-medium">Selamanya (Tanpa Kedaluwarsa)</p>
+                        <p className="text-[10px] text-slate-400 italic">* Kuota Bandwidth direset setiap tanggal 1.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
                       <div className="bg-blue-100 p-2 rounded-lg shrink-0"><ArrowUpCircle className="h-4 w-4 text-blue-600" /></div>
                       <div>
                         <p className="text-xs font-bold uppercase text-slate-500">Bandwidth</p>
                         <p className="text-sm font-medium">Limit: 100 GB / Bulan</p>
-                        <p className="text-[10px] text-slate-400">Total data akses pengunjung.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -348,15 +356,6 @@ const Maintenance = () => {
                       <div>
                         <p className="text-xs font-bold uppercase text-slate-500">Build Minutes</p>
                         <p className="text-sm font-medium">Limit: 6.000 Menit / Bulan</p>
-                        <p className="text-[10px] text-slate-400">Waktu proses update aplikasi.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-blue-100 p-2 rounded-lg shrink-0"><Clock className="h-4 w-4 text-blue-600" /></div>
-                      <div>
-                        <p className="text-xs font-bold uppercase text-slate-500">Function Timeout</p>
-                        <p className="text-sm font-medium">Maksimal 10 Detik</p>
-                        <p className="text-[10px] text-slate-400">Batas waktu proses data berat.</p>
                       </div>
                     </div>
                   </div>
