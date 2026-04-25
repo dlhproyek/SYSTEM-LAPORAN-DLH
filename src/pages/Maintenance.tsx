@@ -11,7 +11,7 @@ import {
   CheckCircle2, FileWarning, Loader2, Database, 
   Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity,
   CalendarDays, BarChart3, TrendingUp, Globe, Cpu, ArrowUpCircle,
-  ExternalLink, BarChart, Calendar, PowerOff
+  ExternalLink, BarChart, Calendar, PowerOff, BellRing
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -362,6 +362,23 @@ const Maintenance = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="bg-green-50 border-l-4 border-l-green-600 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-green-700">
+                  <BellRing size={16} /> Tips: Agar Database Tidak Pernah Mati (Keep-Alive)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-green-800 space-y-3">
+                <p>Supabase akan menonaktifkan database jika tidak ada aktivitas selama 7 hari. Untuk mencegahnya:</p>
+                <ol className="list-decimal ml-4 space-y-1">
+                  <li>Gunakan layanan gratis seperti <strong>UptimeRobot</strong> atau <strong>Cron-job.org</strong>.</li>
+                  <li>Masukkan URL website Anda (Vercel) ke layanan tersebut.</li>
+                  <li>Atur pengecekan (ping) setiap 24 jam sekali.</li>
+                  <li>Sistem akan otomatis "membangunkan" database Anda setiap hari sehingga tidak akan pernah di-pause.</li>
+                </ol>
+              </CardContent>
+            </Card>
 
             <Card className="bg-red-50 border-l-4 border-l-red-600 shadow-sm">
               <CardHeader className="pb-2">
