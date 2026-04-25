@@ -9,7 +9,7 @@ import {
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
   LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronDown,
-  Table, ClipboardList, Users
+  Table, ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -164,15 +164,7 @@ const Index = () => {
 
           <div className="flex items-center gap-1.5 md:gap-2">
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/attendance')} className="bg-amber-50 text-amber-700 border-amber-200 px-2 md:px-3">
-                    <Users className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Absensi PHL</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="md:hidden"><p>Absensi PHL</p></TooltipContent>
-              </Tooltip>
-
+              {/* Rencana Kerja is now Public */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="sm" onClick={() => navigate('/work-plans')} className="bg-blue-50 text-blue-700 border-blue-200 px-2 md:px-3">
