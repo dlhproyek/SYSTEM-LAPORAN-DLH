@@ -11,7 +11,7 @@ import {
   CheckCircle2, FileWarning, Loader2, Database, 
   Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity,
   CalendarDays, BarChart3, TrendingUp, Globe, Cpu, ArrowUpCircle,
-  ExternalLink, BarChart, Calendar
+  ExternalLink, BarChart, Calendar, PowerOff
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -362,6 +362,24 @@ const Maintenance = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="bg-red-50 border-l-4 border-l-red-600 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-red-700">
+                  <PowerOff size={16} /> Apa yang terjadi jika Supabase Nonaktif (Paused)?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-red-800 space-y-2">
+                <p>Jika database di-pause oleh Supabase karena inaktivitas:</p>
+                <ul className="list-disc ml-4 space-y-1">
+                  <li>Aplikasi di Vercel <strong>tetap bisa dibuka</strong> (tampilan muncul).</li>
+                  <li>Namun, <strong>data laporan tidak akan muncul</strong> (kosong/error).</li>
+                  <li>Fitur <strong>Login akan gagal</strong>.</li>
+                  <li>Foto-foto di laporan tidak akan tampil.</li>
+                </ul>
+                <p className="font-bold mt-2 italic">Solusi: Masuk ke Dashboard Supabase dan klik "Resume Project".</p>
+              </CardContent>
+            </Card>
 
             <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-center gap-2 text-amber-800 text-[11px] font-medium">
               <AlertTriangle size={14} className="shrink-0" />
