@@ -15,6 +15,7 @@ import WeeklyRecap from "./pages/WeeklyRecap";
 import Maintenance from "./pages/Maintenance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import AttendancePrint from "./pages/AttendancePrint";
 
 // Work Plan Pages
 import WorkPlanList from "./pages/WorkPlanList";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/monthly-rekap" element={<MonthlyRecap />} />
             <Route path="/daily-rekap" element={<DailyRecap />} />
             <Route path="/weekly-rekap" element={<WeeklyRecap />} />
+            <Route path="/attendance" element={<ProtectedRoute><AttendancePrint /></ProtectedRoute>} />
             
             {/* Work Plan Routes - All are now Public for viewing */}
             <Route path="/work-plans" element={<WorkPlanList />} />

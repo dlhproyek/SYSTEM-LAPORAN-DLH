@@ -9,7 +9,7 @@ import {
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
   LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronDown,
-  Table, ClipboardList
+  Table, ClipboardList, Users
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -209,6 +209,9 @@ const Index = () => {
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => navigate(`/print-rekap?category=semua`)} className="cursor-pointer py-2">
                         <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Harian
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/attendance`)} className="cursor-pointer py-2">
+                        <Users className="mr-2 h-4 w-4 text-orange-600" /> Cetak Absensi
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate(`/daily-rekap?categories=semua&date=semua`)} className="cursor-pointer py-2">
                         <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Harian
