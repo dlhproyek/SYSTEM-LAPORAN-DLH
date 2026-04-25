@@ -38,7 +38,8 @@ const WorkPlanDailyRecap = () => {
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
+  // Inisialisasi dengan string kosong jika tidak ada di params untuk memicu pencarian tanggal terbaru
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   
   const printRef = useRef<HTMLDivElement>(null);
@@ -51,7 +52,21 @@ const WorkPlanDailyRecap = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
-      const filtered = data.filter(p => selectedDate === "semua" || p.date === selectedDate);
+      
+      let targetDate = selectedDate;
+      
+      // Jika belum ada tanggal terpilih (tampilan awal), cari tanggal terbaru dari data
+      if (!targetDate && data.length > 0) {
+        const allDates = data.map(p => p.date);
+        targetDate = allDates.reduce((a, b) => (a > b ? a : b));
+        setSelectedDate(targetDate);
+      } else if (!targetDate && data.length === 0) {
+        // Jika benar-benar tidak ada data sama sekali
+        targetDate = "semua";
+        setSelectedDate("semua");
+      }
+
+      const filtered = data.filter(p => targetDate === "semua" || p.date === targetDate);
       
       // Urutkan: Tanggal (desc) lalu Kategori (sesuai urutan prioritas)
       filtered.sort((a, b) => {
@@ -112,19 +127,19 @@ const WorkPlanDailyRecap = () => {
             </Button>
             
             <div className="flex items-center gap-2">
-              <Select value={selectedDate === "semua" ? "semua" : "custom"} onValueChange={(v) => {
+              <Select value={selectedDate === "semua" ? "semua" : selectedDate === "" ? "" : "custom"} onValueChange={(v) => {
                 if (v === "semua") setSelectedDate("semua");
-                else setSelectedDate(new Date().toISOString().split('T')[0]);
+                else if (v === "custom") setSelectedDate(new Date().toISOString().split('T')[0]);
               }}>
                 <SelectTrigger className="w-[110px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-xs md:text-sm">
-                  <SelectValue placeholder="Tanggal" />
+                  <SelectValue placeholder="Pilih Tanggal" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="semua">Semua</SelectItem>
                   <SelectItem value="custom">Pilih...</SelectItem>
                 </SelectContent>
               </Select>
-              {selectedDate !== "semua" && (
+              {selectedDate !== "semua" && selectedDate !== "" && (
                 <div className="relative">
                   <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
                   <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
@@ -173,7 +188,7 @@ const WorkPlanDailyRecap = () => {
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold underline uppercase">RENCANA KERJA WILAYAH 4 DLH MEDAN KOTA</h3>
           <p className="text-lg font-bold">
-            Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}
+            Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : selectedDate ? format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId }) : "Memuat..."}
           </p>
         </div>
 
