@@ -177,32 +177,43 @@ const WorkPlanDailyRecap = () => {
                           </>
                         )}
                         
-                        {/* Detail Kegiatan & Lokasi: Spanning jika hanya ada 1 item tapi banyak alat */}
-                        {rowIndex === 0 && allItems.length === 1 ? (
-                          <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{allItems[0].description}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
-                              {allItems[0].location.street}, {Array.isArray(allItems[0].location.village) ? allItems[0].location.village.join(", ") : allItems[0].location.village}, {allItems[0].location.subDistrict}
-                            </td>
-                          </>
-                        ) : rowIndex < allItems.length ? (
+                        {/* Detail Kegiatan & Lokasi */}
+                        {rowIndex < allItems.length - 1 ? (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
                             <td className="border-2 border-black p-1 align-top break-words">
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
-                        ) : rowIndex >= allItems.length && allItems.length > 1 ? (
+                        ) : rowIndex === allItems.length - 1 ? (
                           <>
-                            <td className="border-2 border-black p-1"></td>
-                            <td className="border-2 border-black p-1"></td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows - rowIndex}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows - rowIndex}>
+                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            </td>
                           </>
                         ) : null}
 
-                        {/* Alat, Unit, Kegunaan: Sejajar baris demi baris */}
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                        {/* Alat, Unit, Kegunaan */}
+                        {rowIndex < allTools.length - 1 ? (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                            <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                          </>
+                        ) : rowIndex === allTools.length - 1 ? (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows - rowIndex}>{tool?.name ? `• ${tool.name}` : ""}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows - rowIndex}>{tool?.unit || ""}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows - rowIndex}>{tool?.usage || ""}</td>
+                          </>
+                        ) : allTools.length === 0 && rowIndex === 0 ? (
+                          <>
+                            <td className="border-2 border-black p-1" rowSpan={maxRows}></td>
+                            <td className="border-2 border-black p-1" rowSpan={maxRows}></td>
+                            <td className="border-2 border-black p-1" rowSpan={maxRows}></td>
+                          </>
+                        ) : null}
 
                         {rowIndex === 0 && (
                           <>
