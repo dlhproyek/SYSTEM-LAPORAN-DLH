@@ -10,6 +10,7 @@ import { ArrowLeft, Printer, FileText, PenTool, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import { sortByCategory } from '@/utils/report-helpers';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -49,7 +50,14 @@ const WorkPlanMonthlyRecap = () => {
         return (pDate.getMonth() + 1).toString() === selectedMonth && 
                pDate.getFullYear().toString() === selectedYear;
       });
-      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
+      
+      // Urutkan: Tanggal (asc) lalu Kategori (sesuai urutan prioritas)
+      filtered.sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return sortByCategory(a.category, b.category);
+      });
+      
       setPlans(filtered);
     } catch (error) {
       console.error(error);

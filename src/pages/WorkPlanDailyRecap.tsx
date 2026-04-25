@@ -11,6 +11,7 @@ import { ArrowLeft, Printer, Calendar as CalendarIcon, PenTool, Plus } from 'luc
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import { sortByCategory } from '@/utils/report-helpers';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -51,7 +52,14 @@ const WorkPlanDailyRecap = () => {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
       const filtered = data.filter(p => selectedDate === "semua" || p.date === selectedDate);
-      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
+      
+      // Urutkan: Tanggal (desc) lalu Kategori (sesuai urutan prioritas)
+      filtered.sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return sortByCategory(a.category, b.category);
+      });
+      
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -66,14 +74,10 @@ const WorkPlanDailyRecap = () => {
   const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
   const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
 
-  // Fungsi untuk mengelompokkan item berdasarkan kesamaan sumber daya (Alat + Koordinator + Personil)
   const groupPlanResources = (plan: WorkPlan): ResourceGroup[] => {
     const groups: ResourceGroup[] = [];
-    
     plan.items.forEach((item) => {
       const itemToolsJson = JSON.stringify(item.tools);
-      
-      // Cari grup terakhir yang memiliki identitas sumber daya yang sama
       const lastGroup = groups[groups.length - 1];
       const isSameResource = lastGroup && 
         JSON.stringify(lastGroup.tools) === itemToolsJson && 
@@ -94,7 +98,6 @@ const WorkPlanDailyRecap = () => {
         });
       }
     });
-    
     return groups;
   };
 
@@ -211,7 +214,6 @@ const WorkPlanDailyRecap = () => {
 
                     return (
                       <tr key={`${plan.id}-${gIdx}-${rowIndex}`}>
-                        {/* Kolom No & Kategori (Span seluruh rencana) */}
                         {isFirstInPlan && (
                           <>
                             <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalPlanRows}>{pIdx + 1}</td>
@@ -219,7 +221,6 @@ const WorkPlanDailyRecap = () => {
                           </>
                         )}
                         
-                        {/* Detail Kegiatan & Lokasi (Span per grup jika item lebih sedikit dari alat) */}
                         {rowIndex < group.items.length - 1 ? (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
@@ -236,7 +237,6 @@ const WorkPlanDailyRecap = () => {
                           </>
                         ) : null}
 
-                        {/* Alat, Unit, Kegunaan (Span per grup jika alat lebih sedikit dari item) */}
                         {rowIndex < group.tools.length - 1 ? (
                           <>
                             <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
@@ -251,7 +251,6 @@ const WorkPlanDailyRecap = () => {
                           </>
                         ) : null}
 
-                        {/* Koordinator, Personil, Dasar, Keterangan (Span per grup) */}
                         {rowIndex === 0 && (
                           <>
                             <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.coordinator}</td>

@@ -17,7 +17,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from '@/utils/toast';
 import { reportService } from '@/services/reportService';
 import { useAuth } from '@/context/AuthContext';
-import { getUnitByCategory } from '@/utils/report-helpers';
+import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -143,10 +143,7 @@ const Index = () => {
   filteredReports.sort((a, b) => {
     const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
     if (dateDiff !== 0) return dateDiff;
-    
-    if (a.category === "Tim Pohon" && b.category !== "Tim Pohon") return -1;
-    if (a.category !== "Tim Pohon" && b.category === "Tim Pohon") return 1;
-    return a.category.localeCompare(b.category);
+    return sortByCategory(a.category, b.category);
   });
 
   return (
