@@ -121,8 +121,9 @@ const MonthlyRecap = () => {
         return matchMonth && matchYear && matchCategory;
       });
       
+      // URUTKAN BERDASARKAN TANGGAL (ASCENDING / DARI AWAL BULAN)
       data.sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(a.date).getTime();
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         return sortByCategory(a.category, b.category);
       });
