@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Trash2, RefreshCw, ShieldAlert, 
   CheckCircle2, FileWarning, Loader2, Database, 
-  Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity
+  Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity,
+  CalendarDays, BarChart3, TrendingUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -23,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import UserManagement from '@/components/UserManagement';
+import { isSameDay, isSameMonth, parseISO, startOfMonth, startOfDay } from 'date-fns';
 
 const Maintenance = () => {
   const navigate = useNavigate();
@@ -35,7 +37,11 @@ const Maintenance = () => {
     totalStorageSize: 0, 
     usedInDb: 0, 
     orphaned: 0,
-    dbRecordCount: 0
+    dbRecordCount: 0,
+    reportsToday: 0,
+    reportsThisMonth: 0,
+    photosToday: 0,
+    photosThisMonth: 0
   });
   const [isCleaned, setIsCleaned] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -63,31 +69,48 @@ const Maintenance = () => {
     setAnalyzing(true);
     setIsCleaned(false);
     try {
-      const { count: reportCount, error: countError } = await supabase
-        .from('reports')
-        .select('*', { count: 'exact', head: true });
+      const now = new Date();
       
-      if (countError) throw countError;
-
-      const { data: reports, error: dbError } = await supabase
+      // 1. Ambil semua data laporan untuk analisis
+      const { data: reports, error: dbError, count: reportCount } = await supabase
         .from('reports')
-        .select('tasks');
+        .select('tasks, date, createdAt', { count: 'exact' });
       
       if (dbError) throw dbError;
 
       const usedFileNames = new Set<string>();
+      let reportsToday = 0;
+      let reportsThisMonth = 0;
+      let photosToday = 0;
+      let photosThisMonth = 0;
+
       reports?.forEach(report => {
+        const reportDate = parseISO(report.date);
+        const createdDate = report.createdAt ? parseISO(report.createdAt) : reportDate;
+
+        // Hitung statistik laporan
+        if (isSameDay(reportDate, now)) reportsToday++;
+        if (isSameMonth(reportDate, now)) reportsThisMonth++;
+
+        // Analisis foto dalam tugas
         report.tasks?.forEach((task: any) => {
+          let taskPhotoCount = 0;
           ['zero', 'fifty', 'hundred'].forEach(key => {
             const url = task.photos?.[key];
             if (url && url.includes('report-photos/')) {
+              taskPhotoCount++;
               const fileName = url.split('report-photos/').pop();
               if (fileName) usedFileNames.add(fileName);
             }
           });
+
+          // Hitung statistik foto
+          if (isSameDay(reportDate, now)) photosToday += taskPhotoCount;
+          if (isSameMonth(reportDate, now)) photosThisMonth += taskPhotoCount;
         });
       });
 
+      // 2. Ambil daftar file di storage
       const { data: storageFiles, error: storageError } = await supabase
         .storage
         .from('report-photos')
@@ -108,13 +131,17 @@ const Maintenance = () => {
         totalStorageSize: totalSize,
         usedInDb: usedFileNames.size,
         orphaned: orphaned.length,
-        dbRecordCount: reportCount || 0
+        dbRecordCount: reportCount || 0,
+        reportsToday,
+        reportsThisMonth,
+        photosToday,
+        photosThisMonth
       });
 
-      showSuccess(`Analisis selesai: Storage ${formatSize(totalSize)} digunakan.`);
+      showSuccess(`Analisis selesai: Data penggunaan telah diperbarui.`);
     } catch (error: any) {
       console.error(error);
-      showError("Gagal menganalisis storage: " + error.message);
+      showError("Gagal menganalisis sistem: " + error.message);
     } finally {
       setAnalyzing(false);
     }
@@ -166,7 +193,10 @@ const Maintenance = () => {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Database className="text-blue-600" /> Pemeliharaan Sistem
           </h1>
-          <div className="w-20"></div>
+          <Button onClick={analyzeStorage} disabled={analyzing} variant="outline" className="bg-white border-blue-200 text-blue-600">
+            {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />} 
+            Refresh Data
+          </Button>
         </div>
 
         <Tabs defaultValue="storage" className="w-full">
@@ -180,6 +210,59 @@ const Maintenance = () => {
           </TabsList>
 
           <TabsContent value="storage" className="space-y-6">
+            {/* Statistik Penggunaan Harian & Bulanan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-white border-l-4 border-l-blue-600 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-blue-700">
+                    <TrendingUp size={16} /> Aktivitas Hari Ini
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Laporan Baru</p>
+                      <p className="text-2xl font-black text-slate-900">{stats.reportsToday}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Foto Diunggah</p>
+                      <p className="text-2xl font-black text-slate-900">{stats.photosToday}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100">
+                    <p className="text-[10px] text-slate-500 italic">
+                      * Data berdasarkan tanggal laporan yang diinput hari ini.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-l-4 border-l-purple-600 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-purple-700">
+                    <BarChart3 size={16} /> Aktivitas Bulan Ini
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Total Laporan</p>
+                      <p className="text-2xl font-black text-slate-900">{stats.reportsThisMonth}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Total Foto</p>
+                      <p className="text-2xl font-black text-slate-900">{stats.photosThisMonth}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100">
+                    <p className="text-[10px] text-slate-500 italic">
+                      * Akumulasi penggunaan sumber daya sepanjang bulan ini.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className={cn("bg-white border-t-4", isStorageCritical ? "border-t-red-500" : "border-t-blue-500")}>
                 <CardHeader className="pb-2">
@@ -270,27 +353,6 @@ const Maintenance = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-white border-blue-100">
-                <CardContent className="pt-6 text-center">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-1">Total File Foto</p>
-                  <p className="text-3xl font-black text-blue-600">{stats.totalStorageCount}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white border-green-100">
-                <CardContent className="pt-6 text-center">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-1">Foto Aktif (Link)</p>
-                  <p className="text-3xl font-black text-green-600">{stats.usedInDb}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white border-red-100">
-                <CardContent className="pt-6 text-center">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-1">Foto Sampah</p>
-                  <p className="text-3xl font-black text-red-600">{stats.orphaned}</p>
-                </CardContent>
-              </Card>
-            </div>
 
             <Card className="shadow-md border-t-4 border-t-blue-600">
               <CardHeader>
