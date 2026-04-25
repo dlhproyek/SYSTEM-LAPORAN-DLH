@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { WorkPlan, WorkPlanItem } from '@/types/workPlan';
+import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -20,15 +20,6 @@ const getLogoUrl = (fileName: string) => {
 const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
-const categoryOrder: Record<string, number> = {
-  "Tim Pohon": 1,
-  "Tim Siram": 2,
-  "Tim Babat": 3,
-  "Taman Kota": 4,
-  "Taman Area": 5,
-  "Taman Amplas": 6
-};
-
 type SignatureMode = "with-signature" | "without-signature";
 
 const WorkPlanDailyRecap = () => {
@@ -37,7 +28,7 @@ const WorkPlanDailyRecap = () => {
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "semua");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   
   const printRef = useRef<HTMLDivElement>(null);
@@ -51,7 +42,7 @@ const WorkPlanDailyRecap = () => {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
       const filtered = data.filter(p => selectedDate === "semua" || p.date === selectedDate);
-      filtered.sort((a, b) => (categoryOrder[a.category] || 99) - (categoryOrder[b.category] || 99));
+      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || a.category.localeCompare(b.category));
       setPlans(filtered);
     } catch (error) {
       console.error(error);
@@ -61,72 +52,65 @@ const WorkPlanDailyRecap = () => {
   };
 
   const hasRemarks = plans.some(plan => plan.items.some(item => item.remarks && item.remarks.trim() !== ""));
+  
   const categoriesInPlans = Array.from(new Set(plans.map(p => p.category)));
-  const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram"].includes(c));
-  const showSignatory5 = categoriesInPlans.some(c => c === "Tim Pohon");
-
-  const categoryRowSpans: Record<string, number> = {};
-  plans.forEach(plan => {
-    const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
-    let planRows = 0;
-    if (isTimPohon) {
-      planRows = Math.max(plan.items.length, plan.items[0].tools.length);
-    } else {
-      planRows = plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0);
-    }
-    categoryRowSpans[plan.category] = (categoryRowSpans[plan.category] || 0) + planRows;
-  });
-
-  const renderedCategories = new Set<string>();
-
-  const getSpans = (items: WorkPlanItem[], keyExtractor: (item: WorkPlanItem) => string) => {
-    const spans: number[] = [];
-    let i = 0;
-    while (i < items.length) {
-      let j = i + 1;
-      const currentKey = keyExtractor(items[i]);
-      while (j < items.length && keyExtractor(items[j]) === currentKey) {
-        j++;
-      }
-      const count = j - i;
-      for (let k = 0; k < count; k++) spans.push(k === 0 ? count : 0);
-      i = j;
-    }
-    return spans;
-  };
+  const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
+  const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/work-plans')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4">
+              <ArrowLeft className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Kembali</span>
+            </Button>
+            
             <div className="flex items-center gap-2">
               <Select value={selectedDate === "semua" ? "semua" : "custom"} onValueChange={(v) => {
                 if (v === "semua") setSelectedDate("semua");
                 else setSelectedDate(new Date().toISOString().split('T')[0]);
               }}>
-                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Tanggal" /></SelectTrigger>
-                <SelectContent><SelectItem value="semua">Semua Tanggal</SelectItem><SelectItem value="custom">Pilih Tanggal...</SelectItem></SelectContent>
+                <SelectTrigger className="w-[110px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-xs md:text-sm">
+                  <SelectValue placeholder="Tanggal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua</SelectItem>
+                  <SelectItem value="custom">Pilih...</SelectItem>
+                </SelectContent>
               </Select>
               {selectedDate !== "semua" && (
                 <div className="relative">
-                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px] h-10" />
+                  <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
                 </div>
               )}
             </div>
+
             <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium"><SelectValue placeholder="Tanda Tangan" /></SelectTrigger>
+              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <PenTool size={16} />
+                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
+                </div>
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="with-signature"><div className="flex items-center gap-2"><PenTool size={14} /> Ada Tanda Tangan</div></SelectItem>
-                <SelectItem value="without-signature"><div className="flex items-center gap-2"><PenTool size={14} className="opacity-40" /> Tanpa Tanda Tangan</div></SelectItem>
+                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50"><Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru</Button>
-            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap</Button>
+          
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
+              <Plus className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Tambah Baru</span>
+            </Button>
+            <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-10">
+              <Printer className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Cetak Rekap</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -141,10 +125,14 @@ const WorkPlanDailyRecap = () => {
           </div>
           <img src={LOGO_DLH_URL} className="h-20 w-20 object-contain" alt="Logo DLH" />
         </div>
+
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold underline uppercase">RENCANA KERJA WILAYAH 4 DLH MEDAN KOTA</h3>
-          <p className="text-lg font-bold">Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}</p>
+          <p className="text-lg font-bold">
+            Tanggal: {selectedDate === "semua" ? "Semua Tanggal" : format(new Date(selectedDate), 'dd MMMM yyyy', { locale: localeId })}
+          </p>
         </div>
+
         <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">
           <thead>
             <tr className="bg-slate-100">
@@ -164,143 +152,89 @@ const WorkPlanDailyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isTimPohon = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
-                const isFirstOfCategory = !renderedCategories.has(plan.category);
-                if (isFirstOfCategory) renderedCategories.add(plan.category);
+                const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Siram";
                 
-                const descSpans = getSpans(plan.items, (it) => it.description);
-                const resourceSpans = getSpans(plan.items, (it) => 
-                  JSON.stringify(it.tools) + it.coordinator + it.basis + it.personnel.members
-                );
-
-                if (isTimPohon) {
+                if (isGlobalStyle) {
                   const allTools = plan.items[0].tools;
                   const allItems = plan.items;
                   const maxRows = Math.max(allItems.length, allTools.length);
+                  const planTotalRows = maxRows;
+
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
                     const item = allItems[rowIndex];
+                    const tool = allTools[rowIndex];
+
+                    let itemRowSpan = 0;
+                    if (rowIndex < allItems.length) {
+                      itemRowSpan = (rowIndex === allItems.length - 1) ? (maxRows - rowIndex) : 1;
+                    }
+
                     return (
                       <tr key={`${plan.id}-${rowIndex}`}>
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={maxRows}>{pIdx + 1}</td>
-                            {isFirstOfCategory && (
-                              <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={categoryRowSpans[plan.category]}>{plan.category}</td>
-                            )}
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
                           </>
                         )}
                         
-                        {item && (
+                        {itemRowSpan > 0 && (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
-                              {item.description}
-                            </td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={rowIndex === allItems.length - 1 ? maxRows - rowIndex : 1}>
-                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>{item?.description || ""}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowSpan}>
+                              {item ? `${item.location.street}, ${Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, ${item.location.subDistrict}` : ""}
                             </td>
                           </>
                         )}
 
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                        
                         {rowIndex === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
-                              {allTools.map((t, i) => (
-                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.name ? `• ${t.name}` : "-"}
-                                </div>
-                              ))}
-                            </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>
-                              {allTools.map((t, i) => (
-                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.unit || "-"}
-                                </div>
-                              ))}
-                            </td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>
-                              {allTools.map((t, i) => (
-                                <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.usage || "-"}
-                                </div>
-                              ))}
-                            </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxRows}>{plan.items[0].personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxRows}>{plan.items[0].basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxRows}>{plan.items[0].remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>{plan.items[0].personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={planTotalRows}>{plan.items[0].basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={planTotalRows}>{plan.items[0].remarks || "-"}</td>}
                           </>
                         )}
                       </tr>
                     );
                   });
                 } else {
+                  const planTotalRows = plan.items.reduce((acc, item) => acc + Math.max(item.tools.length, 1), 0);
                   return plan.items.flatMap((item, iIdx) => {
                     const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-                    const dSpan = descSpans[iIdx];
-                    const rSpan = resourceSpans[iIdx];
-
+                    const itemRowCount = toolsToRender.length;
+                    
                     return toolsToRender.map((tool, tIdx) => (
                       <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
                         {iIdx === 0 && tIdx === 0 && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={plan.items.reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>{pIdx + 1}</td>
-                            {isFirstOfCategory && (
-                              <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={categoryRowSpans[plan.category]}>{plan.category}</td>
-                            )}
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
                           </>
                         )}
-                        
-                        {tIdx === 0 && dSpan > 0 && (
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + dSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                            {item.description}
-                          </td>
-                        )}
-
                         {tIdx === 0 && (
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={Math.max(item.tools.length, 1)}>
-                            {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                          </td>
-                        )}
-
-                        {rSpan > 0 && tIdx === 0 ? (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.tools.map((t, ti) => (
-                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.name ? `• ${t.name}` : "-"}
-                                </div>
-                              ))}
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">
+                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.tools.map((t, ti) => (
-                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.unit || "-"}
-                                </div>
-                              ))}
-                            </td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.tools.map((t, ti) => (
-                                <div key={ti} className={ti > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                  {t.usage || "-"}
-                                </div>
-                              ))}
-                            </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.coordinator}
-                            </td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.personnel.members}
-                            </td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                              {item.basis}
-                            </td>
-                            {hasRemarks && (
-                              <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={plan.items.slice(iIdx, iIdx + rSpan).reduce((acc, it) => acc + Math.max(it.tools.length, 1), 0)}>
-                                {item.remarks || "-"}
-                              </td>
-                            )}
                           </>
-                        ) : null}
+                        )}
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
+                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
+                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
+                        {tIdx === 0 && (
+                          <>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.personnel.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={itemRowCount}>{item.remarks || "-"}</td>}
+                          </>
+                        )}
                       </tr>
                     ));
                   });
@@ -311,6 +245,7 @@ const WorkPlanDailyRecap = () => {
             )}
           </tbody>
         </table>
+
         {signatureMode === "with-signature" && (
           <div className="pdf-footer mt-12">
             <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
@@ -323,7 +258,22 @@ const WorkPlanDailyRecap = () => {
           </div>
         )}
       </div>
-      <style dangerouslySetInnerHTML={{ __html: `@media print { body { background: white !important; } .no-print { display: none !important; } .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; } @page { size: landscape; margin: 1cm; } }`}} />
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body { background: white !important; }
+          .no-print { display: none !important; }
+          .print-area { 
+            box-shadow: none !important; 
+            border: none !important; 
+            padding: 0 !important; 
+            margin: 0 !important; 
+            width: 100% !important; 
+            max-width: none !important;
+          }
+          @page { size: landscape; margin: 1cm; }
+        }
+      `}} />
     </div>
   );
 };
