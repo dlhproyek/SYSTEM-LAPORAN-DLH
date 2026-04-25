@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,8 +53,8 @@ const vehicleCoordinatorMapping: Record<string, string> = {
 
 const locationSchema = z.object({
   street: z.string().min(1, "Jalan wajib diisi"),
-  village: z.array(z.string().min(1, "Kelurahan wajib diisi")).min(1, "Minimal satu kelurahan"),
-  subDistrict: z.string().min(1, "Kecamatan wajib diisi"),
+  village: z.array(z.string()).default([""]),
+  subDistrict: z.string().default(""),
 });
 
 const photosSchema = z.object({
@@ -96,6 +96,26 @@ const formSchema = z.object({
   category: z.string().min(1, "Kategori wajib dipilih"),
   tasks: z.array(taskSchema).min(1),
   remarks: z.string().optional().default(""),
+}).superRefine((data, ctx) => {
+  // Validasi kondisional: Jika bukan Tim Siram, maka Kecamatan dan Kelurahan wajib diisi
+  if (data.category !== "Tim Siram") {
+    data.tasks.forEach((task, index) => {
+      if (!task.location.subDistrict || task.location.subDistrict.trim() === "" || task.location.subDistrict === " ") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Kecamatan wajib diisi",
+          path: ['tasks', index, 'location', 'subDistrict']
+        });
+      }
+      if (!task.location.village || task.location.village.some(v => !v || v.trim() === "" || v === " ")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Kelurahan wajib diisi",
+          path: ['tasks', index, 'location', 'village', 0]
+        });
+      }
+    });
+  }
 });
 
 interface ReportFormProps {
@@ -426,18 +446,22 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name={`tasks.${taskIndex}.location.street`} render={({ field }) => (<FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name={`tasks.${taskIndex}.location.subDistrict`} render={({ field }) => (
-                      <FormItem><FormLabel>Kecamatan</FormLabel>
+                      <FormItem><FormLabel>Kecamatan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal ml-1">(Opsional)</span>}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl>
-                          <SelectContent>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                          <SelectContent>
+                            <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                            {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          </SelectContent>
                         </Select>
+                        <FormMessage />
                       </FormItem>
                     )} />
                   </div>
 
                   <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex items-center justify-between">
-                      <FormLabel className="flex items-center gap-2"><MapPin size={14} className="text-red-500" /> Daftar Kelurahan</FormLabel>
+                      <FormLabel className="flex items-center gap-2"><MapPin size={14} className="text-red-500" /> Daftar Kelurahan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal ml-1">(Opsional)</span>}</FormLabel>
                       <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] bg-white" onClick={() => {
                         const current = form.getValues(`tasks.${taskIndex}.location.village`);
                         form.setValue(`tasks.${taskIndex}.location.village`, [...current, ""]);
@@ -450,8 +474,12 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                             <FormItem className="flex-1">
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl><SelectTrigger className="bg-white h-9 text-xs"><SelectValue placeholder="Pilih Kelurahan..." /></SelectTrigger></FormControl>
-                                <SelectContent>{form.watch(`tasks.${taskIndex}.location.subDistrict`) && medanDistricts[form.watch(`tasks.${taskIndex}.location.subDistrict`)].map(v => (<SelectItem key={v} value={v}>{v}</SelectItem>))}</SelectContent>
+                                <SelectContent>
+                                  <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                                  {form.watch(`tasks.${taskIndex}.location.subDistrict`) && form.watch(`tasks.${taskIndex}.location.subDistrict`) !== " " && medanDistricts[form.watch(`tasks.${taskIndex}.location.subDistrict`)].map(v => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
+                                </SelectContent>
                               </Select>
+                              <FormMessage />
                             </FormItem>
                           )} />
                           {form.watch(`tasks.${taskIndex}.location.village`).length > 1 && (
