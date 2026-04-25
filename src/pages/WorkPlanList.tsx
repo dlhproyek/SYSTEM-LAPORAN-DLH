@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, FileText, Trash2, Edit, 
   Printer, Search, FilterX, ArrowLeft, ChevronDown,
-  Table, CalendarDays, Clock, LogIn, RefreshCw, Eye
+  Table, CalendarDays, Clock, LogIn, RefreshCw, Eye, EyeOff
 } from 'lucide-react';
 import { WorkPlan } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
@@ -63,11 +63,10 @@ const WorkPlanList = () => {
     try {
       setLoading(true);
       const data = await workPlanService.getAllWorkPlans();
-      console.log("Fetched plans:", data);
       setPlans(data || []);
     } catch (error) {
       console.error("Error loading plans:", error);
-      showError("Gagal memuat rencana kerja dari database");
+      showError("Gagal memuat rencana kerja");
     } finally {
       setLoading(false);
     }
@@ -82,6 +81,20 @@ const WorkPlanList = () => {
       setSelectedCategory(profile.category);
     }
   }, [profile, isUserRestricted]);
+
+  const handleToggleVisibility = async (e: React.MouseEvent, plan: WorkPlan) => {
+    e.stopPropagation();
+    if (!isLoggedIn || isPimpinan) return;
+    
+    const newVisibility = plan.is_visible === false ? true : false;
+    try {
+      await workPlanService.updateWorkPlan(plan.id, { is_visible: newVisibility });
+      setPlans(prev => prev.map(p => p.id === plan.id ? { ...p, is_visible: newVisibility } : p));
+      showSuccess(newVisibility ? "Rencana akan muncul di rekap" : "Rencana disembunyikan dari rekap");
+    } catch (error) {
+      showError("Gagal mengubah status visibilitas");
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -107,17 +120,14 @@ const WorkPlanList = () => {
   };
 
   const filteredPlans = plans.filter(plan => {
-    // 1. Filter Pencarian (Uraian atau Jalan)
     const search = searchQuery.toLowerCase().trim();
     const matchSearch = !search || (Array.isArray(plan.items) && plan.items.some(item => 
       (item.description?.toLowerCase() || "").includes(search) ||
       (item.location?.street?.toLowerCase() || "").includes(search)
     ));
 
-    // 2. Filter Kategori
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
 
-    // 3. Filter Tanggal / Minggu
     let matchDate = true;
     const planDate = parseISO(plan.date);
     
@@ -131,7 +141,6 @@ const WorkPlanList = () => {
       }
     }
 
-    // 4. Filter Bulan & Tahun
     let matchMonthYear = true;
     if (!selectedDate) {
       const m = (planDate.getMonth() + 1).toString();
@@ -268,32 +277,6 @@ const WorkPlanList = () => {
               </Button>
             </div>
           </div>
-
-          {!selectedDate && (
-            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Atau Filter Bulan:</span>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="w-[140px] h-8 text-xs bg-slate-50">
-                    <SelectValue placeholder="Bulan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="semua">Semua Bulan</SelectItem>
-                    {months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[100px] h-8 text-xs bg-slate-50">
-                    <SelectValue placeholder="Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="semua">Semua Tahun</SelectItem>
-                    {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
         </div>
 
         {loading ? (
@@ -304,7 +287,10 @@ const WorkPlanList = () => {
         ) : filteredPlans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPlans.map((plan) => (
-              <Card key={plan.id} className="hover:shadow-md transition-all cursor-pointer border-l-4 border-l-blue-500 group relative overflow-hidden" onClick={() => navigate(`/work-plans/print/${plan.id}`)}>
+              <Card key={plan.id} className={cn(
+                "hover:shadow-md transition-all cursor-pointer border-l-4 group relative overflow-hidden",
+                plan.is_visible === false ? "border-l-slate-300 opacity-75" : "border-l-blue-500"
+              )} onClick={() => navigate(`/work-plans/print/${plan.id}`)}>
                 <CardHeader className="p-4 pb-2">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1">
@@ -313,17 +299,39 @@ const WorkPlanList = () => {
                         {new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="w-fit text-[10px] bg-blue-50 text-blue-700 border-blue-200">{plan.category}</Badge>
-                        {plan.created_at && (
-                          <div className="flex items-center text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                            <Clock className="h-2.5 w-2.5 mr-1" />
-                            {format(parseISO(plan.created_at), 'HH:mm')}
-                          </div>
+                        <Badge variant="outline" className={cn(
+                          "w-fit text-[10px] border-blue-200",
+                          plan.is_visible === false ? "bg-slate-100 text-slate-500" : "bg-blue-50 text-blue-700"
+                        )}>{plan.category}</Badge>
+                        {plan.is_visible === false && (
+                          <Badge variant="outline" className="text-[9px] bg-red-50 text-red-600 border-red-100">
+                            <EyeOff size={10} className="mr-1" /> Sembunyi di Rekap
+                          </Badge>
                         )}
                       </div>
                     </div>
                     {isLoggedIn && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className={cn(
+                                  "h-8 w-8",
+                                  plan.is_visible === false ? "text-slate-400 hover:text-blue-600" : "text-blue-600 hover:bg-blue-50"
+                                )}
+                                onClick={(e) => handleToggleVisibility(e, plan)}
+                                disabled={isPimpinan}
+                              >
+                                {plan.is_visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>{plan.is_visible === false ? "Tampilkan di Rekap" : "Sembunyikan dari Rekap"}</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
                         <Button 
                           variant="ghost" 
                           size="icon" 

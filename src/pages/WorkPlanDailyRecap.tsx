@@ -66,7 +66,11 @@ const WorkPlanDailyRecap = () => {
         setSelectedDate("semua");
       }
 
-      const filtered = data.filter(p => targetDate === "semua" || p.date === targetDate);
+      // FILTER: Hanya tampilkan yang is_visible !== false
+      const filtered = data.filter(p => 
+        (targetDate === "semua" || p.date === targetDate) && 
+        p.is_visible !== false
+      );
       
       filtered.sort((a, b) => {
         const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
