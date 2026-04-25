@@ -27,8 +27,8 @@ const PrintRekap = () => {
       if (category && category !== 'semua') {
         data = data.filter(r => r.category === category);
       }
-      // Urutkan berdasarkan tanggal terbaru
-      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Urutkan berdasarkan tanggal dari awal ke akhir (ascending)
+      data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       setReports(data);
     } catch (error) {
       console.error(error);

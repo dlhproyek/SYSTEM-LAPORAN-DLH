@@ -122,8 +122,9 @@ const DailyRecap = () => {
         return matchDate && matchCategory;
       });
       
+      // Urutkan berdasarkan tanggal dari awal ke akhir (ascending)
       data.sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(a.date).getTime();
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         return sortByCategory(a.category, b.category);
       });
