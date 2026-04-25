@@ -25,6 +25,10 @@ import WorkPlanDailyRecap from "./pages/WorkPlanDailyRecap";
 import WorkPlanWeeklyRecap from "./pages/WorkPlanWeeklyRecap";
 import WorkPlanMonthlyRecap from "./pages/WorkPlanMonthlyRecap";
 
+// Attendance Pages
+import AttendanceManager from "./pages/AttendanceManager";
+import PrintAttendance from "./pages/PrintAttendance";
+
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -51,17 +55,20 @@ const App = () => (
             <Route path="/daily-rekap" element={<DailyRecap />} />
             <Route path="/weekly-rekap" element={<WeeklyRecap />} />
             
-            {/* Work Plan Routes - All are now Public for viewing */}
+            {/* Work Plan Routes */}
             <Route path="/work-plans" element={<WorkPlanList />} />
             <Route path="/work-plans/print/:id" element={<PrintWorkPlan />} />
             <Route path="/work-plans/daily-rekap" element={<WorkPlanDailyRecap />} />
             <Route path="/work-plans/weekly-rekap" element={<WorkPlanWeeklyRecap />} />
             <Route path="/work-plans/monthly-rekap" element={<WorkPlanMonthlyRecap />} />
             
-            {/* Protected Work Plan Routes - Only for management */}
+            {/* Attendance Routes */}
+            <Route path="/attendance" element={<AttendanceManager />} />
+            <Route path="/attendance/print" element={<PrintAttendance />} />
+            
+            {/* Protected Routes */}
             <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
-            
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
             <Route path="/print-rekap" element={<ProtectedRoute><PrintRekap /></ProtectedRoute>} />
