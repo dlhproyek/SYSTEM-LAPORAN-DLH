@@ -108,10 +108,12 @@ const formSchema = z.object({
 
 const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPlan; isEditing?: boolean }) => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { session, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
+
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
 
   const getTomorrowDate = () => {
     const tomorrow = new Date();
@@ -240,6 +242,10 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (isPimpinan) {
+      showError("Akun Pimpinan tidak diizinkan menyimpan data");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const cleanGlobalTools = values.globalTools?.filter(t => t.name && t.name.trim() !== "") || [];
@@ -279,7 +285,7 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <h1 className="text-2xl font-bold text-primary">{isEditing ? "Edit Rencana Kerja" : "Buat Rencana Kerja Baru"}</h1>
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700", isPimpinan && "opacity-50 cursor-not-allowed")}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Simpan
           </Button>
         </div>
@@ -463,9 +469,18 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 px-8">{isSubmitting ? "Menyimpan..." : "Simpan Rencana Kerja"}</Button>
+          <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>
+            {isSubmitting ? "Menyimpan..." : "Simpan Rencana Kerja"}
+          </Button>
         </div>
       </form>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body { background: white !important; }
+          .no-print { display: none !important; }
+        }
+      `}} />
 
       <Dialog open={showWizard} onOpenChange={setShowWizard}>
         <DialogContent className="sm:max-w-[450px]">

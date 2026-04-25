@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const months = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -53,7 +54,8 @@ const WorkPlanList = () => {
   const [selectedYear, setSelectedYear] = useState("semua");
 
   const isLoggedIn = !!session;
-  const isUserRestricted = isLoggedIn && profile?.role === 'user' && profile?.category;
+  const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && profile?.category && !isPimpinan;
 
   useEffect(() => {
     loadPlans();
@@ -74,6 +76,10 @@ const WorkPlanList = () => {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (isPimpinan) {
+      showError("Akun Pimpinan tidak diizinkan menghapus data");
+      return;
+    }
     if (window.confirm("Hapus rencana kerja ini?")) {
       try {
         await workPlanService.deleteWorkPlan(id);
@@ -284,10 +290,22 @@ const WorkPlanList = () => {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); navigate(`/work-plans/edit/${plan.id}`); }}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className={cn("h-8 w-8", isPimpinan && "opacity-50 cursor-not-allowed")} 
+                        disabled={isPimpinan}
+                        onClick={(e) => { e.stopPropagation(); if(!isPimpinan) navigate(`/work-plans/edit/${plan.id}`); }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={(e) => handleDelete(e, plan.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className={cn("h-8 w-8 text-red-500", isPimpinan && "opacity-50 cursor-not-allowed")} 
+                        disabled={isPimpinan}
+                        onClick={(e) => handleDelete(e, plan.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
