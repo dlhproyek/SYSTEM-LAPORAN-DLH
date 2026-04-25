@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { sortByCategory } from '@/utils/report-helpers';
+import { useAuth } from '@/context/AuthContext';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -26,6 +27,7 @@ type SignatureMode = "with-signature" | "without-signature";
 const WorkPlanWeeklyRecap = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { session } = useAuth();
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
@@ -33,6 +35,7 @@ const WorkPlanWeeklyRecap = () => {
   
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+  const isLoggedIn = !!session;
 
   useEffect(() => {
     loadData();
@@ -47,7 +50,6 @@ const WorkPlanWeeklyRecap = () => {
         return isWithinInterval(pDate, { start: weekStart, end: weekEnd });
       });
       
-      // Urutkan: Tanggal (asc) lalu Kategori (sesuai urutan prioritas)
       filtered.sort((a, b) => {
         const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
@@ -92,9 +94,11 @@ const WorkPlanWeeklyRecap = () => {
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-              <Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru
-            </Button>
+            {isLoggedIn && (
+              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+                <Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru
+              </Button>
+            )}
             <Button onClick={() => window.print()} className="bg-blue-600">
               <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
             </Button>

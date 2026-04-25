@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { sortByCategory } from '@/utils/report-helpers';
+import { useAuth } from '@/context/AuthContext';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -35,14 +36,15 @@ interface ResourceGroup {
 const WorkPlanDailyRecap = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { session } = useAuth();
   const [plans, setPlans] = useState<WorkPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Inisialisasi dengan string kosong jika tidak ada di params untuk memicu pencarian tanggal terbaru
   const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || "");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   
   const printRef = useRef<HTMLDivElement>(null);
+  const isLoggedIn = !!session;
 
   useEffect(() => {
     loadData();
@@ -55,20 +57,17 @@ const WorkPlanDailyRecap = () => {
       
       let targetDate = selectedDate;
       
-      // Jika belum ada tanggal terpilih (tampilan awal), cari tanggal terbaru dari data
       if (!targetDate && data.length > 0) {
         const allDates = data.map(p => p.date);
         targetDate = allDates.reduce((a, b) => (a > b ? a : b));
         setSelectedDate(targetDate);
       } else if (!targetDate && data.length === 0) {
-        // Jika benar-benar tidak ada data sama sekali
         targetDate = "semua";
         setSelectedDate("semua");
       }
 
       const filtered = data.filter(p => targetDate === "semua" || p.date === targetDate);
       
-      // Urutkan: Tanggal (desc) lalu Kategori (sesuai urutan prioritas)
       filtered.sort((a, b) => {
         const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
         if (dateDiff !== 0) return dateDiff;
@@ -162,10 +161,12 @@ const WorkPlanDailyRecap = () => {
           </div>
           
           <div className="flex items-center gap-1.5 md:gap-2">
-            <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
-              <Plus className="h-4 w-4 md:mr-2" /> 
-              <span className="hidden md:inline">Tambah Baru</span>
-            </Button>
+            {isLoggedIn && (
+              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
+                <Plus className="h-4 w-4 md:mr-2" /> 
+                <span className="hidden md:inline">Tambah Baru</span>
+              </Button>
+            )}
             <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-10">
               <Printer className="h-4 w-4 md:mr-2" /> 
               <span className="hidden md:inline">Cetak Rekap</span>
@@ -308,7 +309,7 @@ const WorkPlanDailyRecap = () => {
             padding: 0 !important; 
             margin: 0 !important; 
             width: 100% !important; 
-            max-width: none !important;
+            max-width: none !important; 
           }
           @page { size: landscape; margin: 1cm; }
         }

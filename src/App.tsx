@@ -51,16 +51,16 @@ const App = () => (
             <Route path="/daily-rekap" element={<DailyRecap />} />
             <Route path="/weekly-rekap" element={<WeeklyRecap />} />
             
-            {/* Work Plan Routes - List and Print are now Public */}
+            {/* Work Plan Routes - All are now Public for viewing */}
             <Route path="/work-plans" element={<WorkPlanList />} />
             <Route path="/work-plans/print/:id" element={<PrintWorkPlan />} />
+            <Route path="/work-plans/daily-rekap" element={<WorkPlanDailyRecap />} />
+            <Route path="/work-plans/weekly-rekap" element={<WorkPlanWeeklyRecap />} />
+            <Route path="/work-plans/monthly-rekap" element={<WorkPlanMonthlyRecap />} />
             
-            {/* Protected Work Plan Routes */}
+            {/* Protected Work Plan Routes - Only for management */}
             <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
-            <Route path="/work-plans/daily-rekap" element={<ProtectedRoute><WorkPlanDailyRecap /></ProtectedRoute>} />
-            <Route path="/work-plans/weekly-rekap" element={<ProtectedRoute><WorkPlanWeeklyRecap /></ProtectedRoute>} />
-            <Route path="/work-plans/monthly-rekap" element={<ProtectedRoute><WorkPlanMonthlyRecap /></ProtectedRoute>} />
             
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
