@@ -22,6 +22,7 @@ import { workPlanService } from '@/services/workPlanService';
 import { useAuth } from '@/context/AuthContext';
 import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { auditLogService } from '@/services/auditLogService';
+import TrashDialog from '@/components/TrashDialog';
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -62,6 +63,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("reports");
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
   
   const [selectedMonth, setSelectedMonth] = useState("semua");
   const [selectedYear, setSelectedYear] = useState("semua");
@@ -230,6 +232,18 @@ const Index = () => {
                   <TooltipContent className="md:hidden"><p>Maintenance</p></TooltipContent>
                 </Tooltip>
               )}
+              
+              {isLoggedIn && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={() => setIsTrashOpen(true)} className="h-8 w-8 md:h-9 md:w-9 text-slate-500 hover:text-red-600 hover:bg-red-50 border-slate-200">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Tempat Sampah</p></TooltipContent>
+                </Tooltip>
+              )}
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200 px-2 md:px-3"><Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak {activeTab === "reports" ? "Laporan" : "Rencana"}</span><ChevronDown className="ml-1 h-3 w-3 opacity-50" /></Button>
@@ -329,6 +343,13 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+      
+      <TrashDialog 
+        isOpen={isTrashOpen} 
+        onClose={() => setIsTrashOpen(false)} 
+        onRefresh={loadData} 
+      />
+      
       <MadeWithDyad />
     </div>
   );
