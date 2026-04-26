@@ -8,6 +8,7 @@ interface Profile {
   id: string;
   role: 'admin' | 'user' | 'pimpinan' | 'admin_harian';
   category: string | null;
+  username: string | null;
 }
 
 interface AuthContextType {
