@@ -8,11 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, Trash2, RefreshCw, ShieldAlert, 
-  CheckCircle2, FileWarning, Loader2, Database, 
-  Eye, HardDrive, AlertTriangle, Users, Info, Clock, Zap, Activity,
-  CalendarDays, BarChart3, TrendingUp, Globe, Cpu, ArrowUpCircle,
-  ExternalLink, BarChart, Calendar, PowerOff, BellRing, History,
-  FileText, ClipboardList, Pencil, PlusCircle
+  Loader2, Database, Users, History,
+  FileText, ClipboardList, Pencil, PlusCircle,
+  RotateCcw, AlertTriangle, HardDrive, TrendingUp, BarChart3, Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -27,6 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import UserManagement from '@/components/UserManagement';
 import { auditLogService } from '@/services/auditLogService';
+import { reportService } from '@/services/reportService';
+import { workPlanService } from '@/services/workPlanService';
 import { format, isSameDay, isSameMonth, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 
@@ -37,6 +37,9 @@ const Maintenance = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [orphanedFiles, setOrphanedFiles] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [deletedReports, setDeletedReports] = useState<any[]>([]);
+  const [deletedWorkPlans, setDeletedWorkPlans] = useState<any[]>([]);
+  
   const [stats, setStats] = useState({ 
     totalStorageCount: 0, 
     totalStorageSize: 0, 
@@ -48,29 +51,74 @@ const Maintenance = () => {
     photosToday: 0,
     photosThisMonth: 0
   });
-  const [isCleaned, setIsCleaned] = useState(false);
+  
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
 
-  const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB Supabase
-  
+  const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB
   const isAdmin = profile?.role === 'admin' || session?.user?.email === 'admin@gmail.com';
 
   useEffect(() => {
     if (!isAdmin && session) {
-      showError("Akses ditolak. Hanya Admin yang dapat melakukan pemeliharaan.");
+      showError("Akses ditolak.");
       navigate('/');
     } else {
-      fetchLogs();
+      fetchData();
     }
   }, [isAdmin, session]);
 
-  const fetchLogs = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const data = await auditLogService.getLogs();
-      setLogs(data);
+      const [logsData, delReports, delPlans] = await Promise.all([
+        auditLogService.getLogs(),
+        reportService.getAllReports('semua', true),
+        workPlanService.getAllWorkPlans('semua', true)
+      ]);
+      setLogs(logsData);
+      setDeletedReports(delReports);
+      setDeletedWorkPlans(delPlans);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async (type: 'REPORT' | 'WORK_PLAN', id: string) => {
+    try {
+      if (type === 'REPORT') await reportService.restoreReport(id);
+      else await workPlanService.restoreWorkPlan(id);
+      
+      showSuccess("Data berhasil dipulihkan");
+      fetchData();
+      
+      // Log Restore
+      if (session?.user) {
+        await auditLogService.logAction({
+          action: 'UPDATE',
+          entityType: type,
+          entityId: id,
+          details: { title: "Data dipulihkan dari tempat sampah" },
+          userId: session.user.id,
+          username: profile?.username || session.user.email || "Admin"
+        });
+      }
+    } catch (e) {
+      showError("Gagal memulihkan data");
+    }
+  };
+
+  const handlePermanentDelete = async (type: 'REPORT' | 'WORK_PLAN', id: string) => {
+    if (!confirm("Hapus permanen? Data tidak bisa dikembalikan lagi.")) return;
+    try {
+      if (type === 'REPORT') await reportService.hardDeleteReport(id);
+      else await workPlanService.hardDeleteWorkPlan(id);
+      
+      showSuccess("Data dihapus permanen");
+      fetchData();
+    } catch (e) {
+      showError("Gagal menghapus permanen");
     }
   };
 
@@ -84,7 +132,6 @@ const Maintenance = () => {
 
   const analyzeStorage = async () => {
     setAnalyzing(true);
-    setIsCleaned(false);
     try {
       const now = new Date();
       const { data: reports, error: dbError, count: reportCount } = await supabase
@@ -146,12 +193,6 @@ const Maintenance = () => {
     }
   };
 
-  const handlePreview = (fileName: string) => {
-    const { data } = supabase.storage.from('report-photos').getPublicUrl(fileName);
-    setPreviewUrl(data.publicUrl);
-    setPreviewName(fileName);
-  };
-
   const cleanStorage = async () => {
     if (orphanedFiles.length === 0) return;
     if (!confirm(`Hapus ${orphanedFiles.length} file sampah?`)) return;
@@ -162,7 +203,6 @@ const Maintenance = () => {
       if (error) throw error;
       showSuccess(`${fileNamesToDelete.length} file dihapus.`);
       await analyzeStorage();
-      setIsCleaned(true);
     } catch (error: any) {
       showError("Gagal membersihkan: " + error.message);
     } finally {
@@ -180,16 +220,17 @@ const Maintenance = () => {
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Database className="text-blue-600" /> Pemeliharaan Sistem</h1>
-          <Button onClick={() => { analyzeStorage(); fetchLogs(); }} disabled={analyzing} variant="outline" className="bg-white border-blue-200 text-blue-600">
-            {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />} Refresh
+          <Button onClick={fetchData} disabled={loading} variant="outline" className="bg-white border-blue-200 text-blue-600">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />} Refresh
           </Button>
         </div>
 
         <Tabs defaultValue="storage" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 h-12 bg-white border shadow-sm p-1">
+          <TabsList className="grid w-full grid-cols-4 mb-8 h-12 bg-white border shadow-sm p-1">
             <TabsTrigger value="storage" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><HardDrive size={16} /> Storage</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><Users size={16} /> Pengguna</TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><History size={16} /> Riwayat Aktivitas</TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><History size={16} /> Riwayat</TabsTrigger>
+            <TabsTrigger value="trash" className="data-[state=active]:bg-red-600 data-[state=active]:text-white flex items-center gap-2"><Trash2 size={16} /> Tempat Sampah</TabsTrigger>
           </TabsList>
 
           <TabsContent value="storage" className="space-y-6">
@@ -219,7 +260,7 @@ const Maintenance = () => {
                 {orphanedFiles.length > 0 && (
                   <div className="max-h-[300px] overflow-y-auto border rounded-lg divide-y bg-slate-50">
                     {orphanedFiles.map((file, i) => (
-                      <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-blue-50 cursor-pointer" onClick={() => handlePreview(file.name)}>
+                      <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-blue-50 cursor-pointer">
                         <div className="flex items-center gap-2"><Eye className="h-3 w-3 text-slate-400" /><span>{file.name}</span></div>
                         <Badge variant="outline" className="text-[10px]">{formatSize(file.metadata?.size || 0)}</Badge>
                       </div>
@@ -259,9 +300,6 @@ const Maintenance = () => {
                               log.action === 'UPDATE' ? "bg-amber-100 text-amber-700" : 
                               "bg-green-100 text-green-700"
                             )}>
-                              {log.action === 'DELETE' ? <Trash2 size={10} className="mr-1" /> : 
-                               log.action === 'UPDATE' ? <Pencil size={10} className="mr-1" /> : 
-                               <PlusCircle size={10} className="mr-1" />}
                               {log.action}
                             </Badge>
                           </td>
@@ -282,16 +320,78 @@ const Maintenance = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="trash">
+            <div className="space-y-6">
+              <Card className="shadow-md border-t-4 border-t-red-600">
+                <CardHeader><CardTitle className="text-lg flex items-center gap-2 text-red-700"><FileText size={20} /> Laporan Terhapus</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">Tanggal Laporan</th>
+                          <th className="px-4 py-3">Uraian</th>
+                          <th className="px-4 py-3">Kategori</th>
+                          <th className="px-4 py-3 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {deletedReports.length > 0 ? deletedReports.map((r) => (
+                          <tr key={r.id} className="hover:bg-slate-50/50">
+                            <td className="px-4 py-3">{r.date}</td>
+                            <td className="px-4 py-3 font-medium">{r.description}</td>
+                            <td className="px-4 py-3"><Badge variant="outline">{r.category}</Badge></td>
+                            <td className="px-4 py-3 text-right space-x-2">
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-200" onClick={() => handleRestore('REPORT', r.id)}><RotateCcw size={14} className="mr-1" /> Pulihkan</Button>
+                              <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handlePermanentDelete('REPORT', r.id)}><Trash2 size={14} /></Button>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-400 italic">Tempat sampah laporan kosong</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-md border-t-4 border-t-red-600">
+                <CardHeader><CardTitle className="text-lg flex items-center gap-2 text-red-700"><ClipboardList size={20} /> Rencana Kerja Terhapus</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">Tanggal Rencana</th>
+                          <th className="px-4 py-3">Kategori</th>
+                          <th className="px-4 py-3">Jumlah Lokasi</th>
+                          <th className="px-4 py-3 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {deletedWorkPlans.length > 0 ? deletedWorkPlans.map((p) => (
+                          <tr key={p.id} className="hover:bg-slate-50/50">
+                            <td className="px-4 py-3">{p.date}</td>
+                            <td className="px-4 py-3 font-medium">{p.category}</td>
+                            <td className="px-4 py-3">{p.items?.length || 0} Lokasi</td>
+                            <td className="px-4 py-3 text-right space-x-2">
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-200" onClick={() => handleRestore('WORK_PLAN', p.id)}><RotateCcw size={14} className="mr-1" /> Pulihkan</Button>
+                              <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handlePermanentDelete('WORK_PLAN', p.id)}><Trash2 size={14} /></Button>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-400 italic">Tempat sampah rencana kerja kosong</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black">
-          <DialogHeader className="p-4 bg-white border-b"><DialogTitle className="text-sm truncate pr-8">{previewName}</DialogTitle></DialogHeader>
-          <div className="relative aspect-[2.26/2.95] w-full flex items-center justify-center bg-slate-900">{previewUrl && <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain" />}</div>
-          <div className="p-4 bg-white flex justify-end"><Button variant="outline" onClick={() => setPreviewUrl(null)}>Tutup</Button></div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { WorkPlan } from '@/types/workPlan';
 
 export const workPlanService = {
-  async getAllWorkPlans(categoryFilter?: string | null) {
+  async getAllWorkPlans(categoryFilter?: string | null, includeDeleted = false) {
     let query = supabase
       .from('work_plans')
       .select('*')
@@ -11,6 +11,12 @@ export const workPlanService = {
     
     if (categoryFilter && categoryFilter !== 'semua') {
       query = query.eq('category', categoryFilter);
+    }
+
+    if (!includeDeleted) {
+      query = query.is('deleted_at', null);
+    } else {
+      query = query.not('deleted_at', 'is', null);
     }
     
     const { data, error } = await query;
@@ -54,6 +60,25 @@ export const workPlanService = {
   },
 
   async deleteWorkPlan(id: string) {
+    // Soft Delete
+    const { error } = await supabase
+      .from('work_plans')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async restoreWorkPlan(id: string) {
+    const { error } = await supabase
+      .from('work_plans')
+      .update({ deleted_at: null })
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async hardDeleteWorkPlan(id: string) {
     const { error } = await supabase
       .from('work_plans')
       .delete()

@@ -2,14 +2,20 @@ import { supabase } from '@/lib/supabase';
 import { Report } from '@/types/report';
 
 export const reportService = {
-  async getAllReports(categoryFilter?: string | null) {
+  async getAllReports(categoryFilter?: string | null, includeDeleted = false) {
     let query = supabase
       .from('reports')
       .select('*')
       .order('date', { ascending: false });
     
-    if (categoryFilter) {
+    if (categoryFilter && categoryFilter !== 'semua') {
       query = query.eq('category', categoryFilter);
+    }
+
+    if (!includeDeleted) {
+      query = query.is('deleted_at', null);
+    } else {
+      query = query.not('deleted_at', 'is', null);
     }
     
     const { data, error } = await query;
@@ -53,6 +59,25 @@ export const reportService = {
   },
 
   async deleteReport(id: string) {
+    // Soft Delete: Tandai sebagai dihapus
+    const { error } = await supabase
+      .from('reports')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async restoreReport(id: string) {
+    const { error } = await supabase
+      .from('reports')
+      .update({ deleted_at: null })
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async hardDeleteReport(id: string) {
     const { error } = await supabase
       .from('reports')
       .delete()

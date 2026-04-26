@@ -111,7 +111,7 @@ const Index = () => {
   const handleDeleteReport = async (e: React.MouseEvent, report: Report) => {
     e.stopPropagation();
     if (isPimpinan) return;
-    if (window.confirm(`Hapus laporan "${report.description}"?`)) {
+    if (window.confirm(`Pindahkan laporan "${report.description}" ke tempat sampah?`)) {
       try {
         await reportService.deleteReport(report.id);
         
@@ -128,7 +128,7 @@ const Index = () => {
         }
 
         setReports(reports.filter(r => r.id !== report.id));
-        showSuccess("Laporan dihapus");
+        showSuccess("Laporan dipindahkan ke tempat sampah");
       } catch (error) {
         showError("Gagal menghapus");
       }
@@ -152,7 +152,7 @@ const Index = () => {
   const handleDeleteWorkPlan = async (e: React.MouseEvent, plan: WorkPlan) => {
     e.stopPropagation();
     if (!isLoggedIn || isPimpinan) return;
-    if (window.confirm(`Hapus rencana kerja "${plan.items[0]?.description}"?`)) {
+    if (window.confirm(`Pindahkan rencana kerja "${plan.items[0]?.description}" ke tempat sampah?`)) {
       try {
         await workPlanService.deleteWorkPlan(plan.id);
 
@@ -169,7 +169,7 @@ const Index = () => {
         }
 
         setWorkPlans(prev => prev.filter(p => p.id !== plan.id));
-        showSuccess("Rencana kerja berhasil dihapus");
+        showSuccess("Rencana kerja dipindahkan ke tempat sampah");
       } catch (error) {
         showError("Gagal menghapus data");
       }
