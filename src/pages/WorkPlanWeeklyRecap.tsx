@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { WorkPlan } from '@/types/workPlan';
+import { WorkPlan, WorkPlanItem } from '@/types/workPlan';
 import { workPlanService } from '@/services/workPlanService';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,15 @@ const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
 type SignatureMode = "with-signature" | "without-signature";
+
+interface ResourceGroup {
+  items: WorkPlanItem[];
+  tools: any[];
+  coordinator: string;
+  members: number;
+  basis: string;
+  remarks: string;
+}
 
 const WorkPlanWeeklyRecap = () => {
   const navigate = useNavigate();
@@ -47,7 +56,7 @@ const WorkPlanWeeklyRecap = () => {
       const data = await workPlanService.getAllWorkPlans();
       const filtered = data.filter(p => {
         const pDate = parseISO(p.date);
-        return isWithinInterval(pDate, { start: weekStart, end: weekEnd });
+        return isWithinInterval(pDate, { start: weekStart, end: weekEnd }) && p.is_visible !== false;
       });
       
       filtered.sort((a, b) => {
@@ -70,15 +79,44 @@ const WorkPlanWeeklyRecap = () => {
   const showSignatory4 = categoriesInPlans.some(c => ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat"].includes(c));
   const showSignatory5 = categoriesInPlans.some(c => ["Tim Pohon", "Tim Siram"].includes(c));
 
+  const groupPlanResources = (plan: WorkPlan): ResourceGroup[] => {
+    const groups: ResourceGroup[] = [];
+    plan.items.forEach((item) => {
+      const itemToolsJson = JSON.stringify(item.tools);
+      const lastGroup = groups[groups.length - 1];
+      const isSameResource = lastGroup && 
+        JSON.stringify(lastGroup.tools) === itemToolsJson && 
+        lastGroup.coordinator === item.coordinator &&
+        lastGroup.members === item.personnel.members &&
+        lastGroup.basis === item.basis;
+
+      if (isSameResource) {
+        lastGroup.items.push(item);
+      } else {
+        groups.push({
+          items: [item],
+          tools: item.tools,
+          coordinator: item.coordinator,
+          members: item.personnel.members,
+          basis: item.basis,
+          remarks: item.remarks
+        });
+      }
+    });
+    return groups;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/work-plans')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4">
+              <ArrowLeft className="h-4 w-4 md:mr-2" /> Kembali
+            </Button>
             <div className="relative">
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[200px]" />
+              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px]" />
             </div>
             <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-100">
               {format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}
@@ -88,15 +126,15 @@ const WorkPlanWeeklyRecap = () => {
                 <SelectValue placeholder="Tanda Tangan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="with-signature"><div className="flex items-center gap-2"><PenTool size={14} /> Ada Tanda Tangan</div></SelectItem>
-                <SelectItem value="without-signature"><div className="flex items-center gap-2"><PenTool size={14} className="opacity-40" /> Tanpa Tanda Tangan</div></SelectItem>
+                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn && (
               <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                <Plus className="mr-2 h-4 w-4" /> Tambah Rencana Baru
+                <Plus className="mr-2 h-4 w-4" /> Tambah Baru
               </Button>
             )}
             <Button onClick={() => window.print()} className="bg-blue-600">
@@ -122,18 +160,18 @@ const WorkPlanWeeklyRecap = () => {
           <p className="text-lg font-bold">Periode: {format(weekStart, 'dd MMMM', { locale: localeId })} s/d {format(weekEnd, 'dd MMMM yyyy', { locale: localeId })}</p>
         </div>
 
-        <table className="w-full border-collapse border-2 border-black text-[8px] table-fixed">
+        <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">
           <thead>
             <tr className="bg-slate-100">
               <th className="border-2 border-black p-1 w-[25px]">No</th>
-              <th className="border-2 border-black p-1 w-[60px]">Hari / Tgl</th>
-              <th className="border-2 border-black p-1 w-[50px]">Tim/ Kec</th>
+              <th className="border-2 border-black p-1 w-[55px]">Hari/Tgl</th>
+              <th className="border-2 border-black p-1 w-[55px]">Tim/Kec</th>
               <th className="border-2 border-black p-1 w-[110px]">Detail Kegiatan</th>
               <th className="border-2 border-black p-1 w-[120px]">Lokasi</th>
-              <th className="border-2 border-black p-1 w-[100px]">Alat Operasional</th>
+              <th className="border-2 border-black p-1 w-[110px]">Alat Operasional</th>
               <th className="border-2 border-black p-1 w-[25px]">Unit</th>
               <th className="border-2 border-black p-1 w-[90px]">Kegunaan</th>
-              <th className="border-2 border-black p-1 w-[70px]">Koordinator</th>
+              <th className="border-2 border-black p-1 w-[75px]">Koordinator</th>
               <th className="border-2 border-black p-1 w-[35px]">Pers</th>
               <th className="border-2 border-black p-1 w-[90px]">Dasar Pengerjaan</th>
               {hasRemarks && <th className="border-2 border-black p-1 w-[90px]">Keterangan</th>}
@@ -142,101 +180,76 @@ const WorkPlanWeeklyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Siram";
-                
-                if (isGlobalStyle) {
-                  const allItems = plan.items;
-                  const totalRows = allItems.length;
-                  const allTools = Array.from(new Set(plan.items.flatMap(it => it.tools.map(t => JSON.stringify(t))))).map(s => JSON.parse(s));
+                const resourceGroups = groupPlanResources(plan);
+                const totalPlanRows = resourceGroups.reduce((acc, group) => 
+                  acc + Math.max(group.items.length, group.tools.length, 1), 0
+                );
 
-                  return allItems.map((item, rowIndex) => (
-                    <tr key={`${plan.id}-${rowIndex}`}>
-                      {rowIndex === 0 && (
-                        <>
-                          <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalRows}>{pIdx + 1}</td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>
-                            {format(parseISO(plan.date), 'eee, dd MMM', { locale: localeId })}
-                          </td>
-                          <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={totalRows}>{plan.category}</td>
-                        </>
-                      )}
-                      
-                      <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
-                      <td className="border-2 border-black p-1 align-top break-words">
-                        {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                      </td>
+                let currentPlanRow = 0;
 
-                      {rowIndex === 0 && (
-                        <>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={totalRows}>
-                            {allTools.map((t, i) => (
-                              <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                {t.name ? `• ${t.name}` : "-"}
-                              </div>
-                            ))}
-                          </td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>
-                            {allTools.map((t, i) => (
-                              <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                {t.unit || "-"}
-                              </div>
-                            ))}
-                          </td>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={totalRows}>
-                            {allTools.map((t, i) => (
-                              <div key={i} className={i > 0 ? "mt-1 border-t border-slate-200 pt-1" : ""}>
-                                {t.usage || "-"}
-                              </div>
-                            ))}
-                          </td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].coordinator}</td>
-                          <td className="border-2 border-black p-1 text-center align-top" rowSpan={totalRows}>{plan.items[0].personnel.members}</td>
-                          <td className="border-2 border-black p-1 align-top break-words" rowSpan={totalRows}>{plan.items[0].basis}</td>
-                          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={totalRows}>{plan.items[0].remarks || "-"}</td>}
-                        </>
-                      )}
-                    </tr>
-                  ));
-                } else {
-                  const planTotalRows = plan.items.reduce((acc, item) => acc + Math.max(item.tools.length, 1), 0);
-                  return plan.items.flatMap((item, iIdx) => {
-                    const toolsToRender = item.tools.length > 0 ? item.tools : [{ name: "", unit: "", usage: "" }];
-                    const itemRowCount = toolsToRender.length;
-                    
-                    return toolsToRender.map((tool, tIdx) => (
-                      <tr key={`${plan.id}-${iIdx}-${tIdx}`}>
-                        {iIdx === 0 && tIdx === 0 && (
+                return resourceGroups.flatMap((group, gIdx) => {
+                  const maxGroupRows = Math.max(group.items.length, group.tools.length, 1);
+                  
+                  return Array.from({ length: maxGroupRows }).map((_, rowIndex) => {
+                    const item = group.items[rowIndex];
+                    const tool = group.tools[rowIndex];
+                    const isFirstInPlan = currentPlanRow === 0;
+                    currentPlanRow++;
+
+                    return (
+                      <tr key={`${plan.id}-${gIdx}-${rowIndex}`}>
+                        {isFirstInPlan && (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={planTotalRows}>{pIdx + 1}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={planTotalRows}>
-                              {format(parseISO(plan.date), 'eee, dd MMM', { locale: localeId })}
+                            <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalPlanRows}>{pIdx + 1}</td>
+                            <td className="border-2 border-black p-1 text-center align-top text-[8px]" rowSpan={totalPlanRows}>
+                              {format(parseISO(plan.date), 'eee, dd/MM', { locale: localeId })}
                             </td>
-                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planTotalRows}>{plan.category}</td>
+                            <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={totalPlanRows}>{plan.category}</td>
                           </>
                         )}
-                        {tIdx === 0 && (
+                        
+                        {rowIndex < group.items.length - 1 ? (
                           <>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
                             <td className="border-2 border-black p-1 align-top break-words">
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
-                        )}
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.name ? `• ${tool.name}` : "-"}</td>
-                        <td className="border-2 border-black p-1 text-center align-top">{tool.unit || "-"}</td>
-                        <td className="border-2 border-black p-1 align-top break-words">{tool.usage || "-"}</td>
-                        {tIdx === 0 && (
+                        ) : rowIndex === group.items.length - 1 ? (
                           <>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.coordinator}</td>
-                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={itemRowCount}>{item.personnel.members}</td>
-                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={itemRowCount}>{item.basis}</td>
-                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={itemRowCount}>{item.remarks || "-"}</td>}
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>
+                              {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
+                            </td>
+                          </>
+                        ) : null}
+
+                        {rowIndex < group.tools.length - 1 ? (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                            <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                          </>
+                        ) : rowIndex === group.tools.length - 1 || (group.tools.length === 0 && rowIndex === 0) ? (
+                          <>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.name ? `• ${tool.name}` : ""}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows - rowIndex}>{tool?.unit || ""}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.usage || ""}</td>
+                          </>
+                        ) : null}
+
+                        {rowIndex === 0 && (
+                          <>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.coordinator}</td>
+                            <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.members}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows}>{group.basis}</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxGroupRows}>{group.remarks || "-"}</td>}
                           </>
                         )}
                       </tr>
-                    ));
+                    );
                   });
-                }
+                });
               })
             ) : (
               <tr><td colSpan={hasRemarks ? 12 : 11} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada rencana kerja untuk periode ini</td></tr>
