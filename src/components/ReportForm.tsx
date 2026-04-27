@@ -44,6 +44,12 @@ const coordinatorMapping: Record<string, string> = {
   "Tim Babat": "Benget Simanjuntak",
 };
 
+const defaultActivityMapping: Record<string, string> = {
+  "Taman Kota": "Perawatan dan Pembersihan Taman Media ",
+  "Taman Area": "Perawatan dan Pembersihan Taman Media ",
+  "Taman Amplas": "Perawatan dan Pembersihan Taman Media ",
+};
+
 const vehicleCoordinatorMapping: Record<string, string> = {
   "BK 8128 A": "M. Irwan Syahputra, SE",
   "BK 9031 J": "Aluddin Gultom",
@@ -184,6 +190,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   useEffect(() => {
     if (!isEditing && !isDuplicateMode && selectedCategory) {
       const tasks = form.getValues("tasks");
+      const defaultDesc = defaultActivityMapping[selectedCategory] || "";
+      
       const updatedTasks = tasks.map(task => {
         let coordinator = task.personnel.coordinator;
         if (selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon") {
@@ -192,7 +200,12 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         } else {
           coordinator = coordinatorMapping[selectedCategory] || "";
         }
-        return { ...task, personnel: { ...task.personnel, coordinator } };
+        
+        return { 
+          ...task, 
+          personnel: { ...task.personnel, coordinator },
+          description: task.description === "" ? defaultDesc : task.description
+        };
       });
       form.setValue("tasks", updatedTasks);
     }
@@ -221,10 +234,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     for (let i = 0; i < updatedTasks.length; i++) {
       const task = updatedTasks[i];
       setUploadProgress(`Mengunggah foto #${i + 1}...`);
-      
-      // Jika mode duplikat, kita tidak ingin menghapus foto lama dari storage karena itu milik laporan asli
-      // Tapi kita ingin mengunggah ulang jika itu base64 baru
-      
       if (task.photos.zero?.startsWith('data:image')) {
         if (isEditing && !isDuplicateMode && initialData?.tasks[i]?.photos.zero) await storageService.deletePhotoByUrl(initialData.tasks[i].photos.zero);
         task.photos.zero = await storageService.uploadPhoto(task.photos.zero, `task_${i}_0`);
@@ -321,13 +330,8 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
 
   const handleDuplicate = () => {
     if (!duplicateDate) { showError("Pilih tanggal"); return; }
-    
-    // Update tanggal di form
     form.setValue("date", duplicateDate);
-    
-    // Aktifkan mode duplikat
     setIsDuplicateMode(true);
-    
     showSuccess(`Data disalin ke tanggal ${duplicateDate}. Silakan periksa dan klik Simpan.`);
     setShowDuplicateDialog(false);
   };
@@ -432,7 +436,10 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               </CardContent>
             </Card>
           ))}
-          <Button type="button" variant="outline" className="w-full border-dashed py-8 bg-white text-blue-600 font-bold border-blue-200 hover:bg-blue-50" onClick={() => appendTask({ description: "", location: { street: "", village: [""], subDistrict: "" }, photos: { zero: "", fifty: "", hundred: "" }, volume: 0, equipment: [{ type: "", quantity: 1 }], heavyEquipment: [], personnel: { coordinator: form.getValues("tasks.0.personnel.coordinator") || "", members: 0 }, vehicle: "", remarks: "" })}><Plus className="mr-2 h-5 w-5" /> Tambah Kegiatan & Lokasi Baru</Button>
+          <Button type="button" variant="outline" className="w-full border-dashed py-8 bg-white text-blue-600 font-bold border-blue-200 hover:bg-blue-50" onClick={() => {
+            const defaultDesc = defaultActivityMapping[selectedCategory] || "";
+            appendTask({ description: defaultDesc, location: { street: "", village: [""], subDistrict: "" }, photos: { zero: "", fifty: "", hundred: "" }, volume: 0, equipment: [{ type: "", quantity: 1 }], heavyEquipment: [], personnel: { coordinator: form.getValues("tasks.0.personnel.coordinator") || "", members: 0 }, vehicle: "", remarks: "" });
+          }}><Plus className="mr-2 h-5 w-5" /> Tambah Kegiatan & Lokasi Baru</Button>
         </div>
         <Card className="border-t-4 border-t-slate-400"><CardHeader><CardTitle className="text-lg">Keterangan Tambahan</CardTitle></CardHeader><CardContent><FormField control={form.control} name="remarks" render={({ field }) => (<FormItem><FormLabel>Catatan Laporan (Opsional)</FormLabel><FormControl><Input {...field} placeholder="Catatan umum..." /></FormControl></FormItem>)} /></CardContent></Card>
         <div className="flex justify-end gap-4"><Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button><Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || "Menyimpan..."}</> : isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan Laporan"}</Button></div>
@@ -441,7 +448,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       <Dialog open={showWorkPlanPrompt} onOpenChange={setShowWorkPlanPrompt}><DialogContent className="sm:max-w-[450px]"><DialogHeader><DialogTitle className="flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-6 w-6" /> Sinkronisasi Rencana Kerja</DialogTitle><DialogDescription className="pt-2">Ditemukan Rencana Kerja untuk kategori {selectedCategory} pada tanggal {selectedDate}. Apakah Anda ingin mengisi data laporan secara otomatis?</DialogDescription></DialogHeader><div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-2"><p className="text-[10px] font-bold text-blue-700 uppercase">Data yang akan disinkronkan:</p><ul className="text-[11px] text-blue-800 space-y-1"><li>• Uraian Kegiatan & Lokasi</li><li>• Jenis Alat Berat</li><li>• Koordinator & Jumlah Anggota</li><li>• Keterangan Kegiatan</li></ul></div><DialogFooter className="gap-2 sm:gap-0"><Button variant="ghost" onClick={() => setShowWorkPlanPrompt(false)}>Tidak, Input Manual</Button><Button onClick={applyWorkPlan} className="bg-blue-600 hover:bg-blue-700"><HelpCircle className="mr-2 h-4 w-4" /> Ya, Sinkronkan Data</Button></DialogFooter></DialogContent></Dialog>
 
       <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}><DialogContent className="sm:max-w-[400px]"><DialogHeader><DialogTitle className="flex items-center gap-2"><Copy className="text-blue-600 h-5 w-5" /> Duplikat Laporan</DialogTitle><DialogDescription>Pilih tanggal baru untuk menyalin data laporan ini ke formulir.</DialogDescription></DialogHeader><div className="py-4 space-y-4"><div className="space-y-2"><FormLabel>Tanggal Baru</FormLabel><Input type="date" value={duplicateDate} onChange={(e) => setDuplicateDate(e.target.value)} className="h-11" /></div></div><DialogFooter className="gap-2 sm:gap-0"><Button variant="ghost" onClick={() => setShowDuplicateDialog(false)}>Batal</Button><Button onClick={handleDuplicate} disabled={!duplicateDate} className="bg-blue-600 hover:bg-blue-700"><Copy className="h-4 w-4 mr-2" /> Salin ke Form</Button></DialogFooter></DialogContent></Dialog>
-    </Form>
+    </form>
   );
 };
 

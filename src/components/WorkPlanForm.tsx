@@ -47,6 +47,12 @@ const categoryCoordinatorMapping: Record<string, string> = {
   "Taman Area": "Ismail Siregar",
 };
 
+const defaultActivityMapping: Record<string, string> = {
+  "Taman Kota": "Perawatan dan Pembersihan Taman Media ",
+  "Taman Area": "Perawatan dan Pembersihan Taman Media ",
+  "Taman Amplas": "Perawatan dan Pembersihan Taman Media ",
+};
+
 const toolCoordinatorMapping: Record<string, string> = {
   "Truk Siram (BK 8128 A)": "M. Irwan Syahputra, SE",
   "Truk Siram (BK 9031 J)": "Aluddin Gultom",
@@ -137,22 +143,47 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
   const useWizard = selectedCategory === "Tim Siram";
 
   useEffect(() => {
-    if (!isEditing && isGlobalStyle) {
+    if (!isEditing && !isDuplicateMode && selectedCategory) {
+      // Auto-fill coordinator
       const autoCoord = categoryCoordinatorMapping[selectedCategory];
-      if (autoCoord) form.setValue("globalCoordinator", autoCoord);
+      if (autoCoord && isGlobalStyle) form.setValue("globalCoordinator", autoCoord);
+      
+      // Auto-fill description for specific categories
+      const defaultDesc = defaultActivityMapping[selectedCategory];
+      if (defaultDesc) {
+        const currentItems = form.getValues("items");
+        const updatedItems = currentItems.map(item => ({
+          ...item,
+          description: item.description === "" ? defaultDesc : item.description
+        }));
+        form.setValue("items", updatedItems);
+      }
     }
-  }, [selectedCategory, isGlobalStyle, isEditing, form]);
+  }, [selectedCategory, isGlobalStyle, isEditing, isDuplicateMode, form]);
 
   const performAppend = (mode: 'full' | 'activity_location' | 'location_only') => {
     const items = form.getValues("items");
     const lastItem = items[items.length - 1];
     let defaultCoord = isGlobalStyle ? form.getValues("globalCoordinator") : (categoryCoordinatorMapping[selectedCategory] || lastItem?.coordinator || "");
+    
+    // Default description based on category
+    const defaultDesc = defaultActivityMapping[selectedCategory] || "";
+
     if (mode === 'full') {
-      appendItem({ description: "", location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, tools: isGlobalStyle ? [] : [{ name: "", unit: 1, usage: "" }], coordinator: defaultCoord, personnel: { members: isGlobalStyle ? form.getValues("globalMembers") : lastItem?.personnel.members || 0 }, basis: lastItem?.basis || "", remarks: "", uiMode: 'full' });
+      appendItem({ 
+        description: defaultDesc, 
+        location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, 
+        tools: isGlobalStyle ? [] : [{ name: "", unit: 1, usage: "" }], 
+        coordinator: defaultCoord, 
+        personnel: { members: isGlobalStyle ? form.getValues("globalMembers") : lastItem?.personnel.members || 0 }, 
+        basis: lastItem?.basis || "", 
+        remarks: "", 
+        uiMode: 'full' 
+      });
     } else if (mode === 'activity_location') {
-      appendItem({ description: "", location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, tools: lastItem.tools.map(t => ({ ...t })), coordinator: lastItem.coordinator, personnel: { ...lastItem.personnel }, basis: lastItem.basis, remarks: lastItem.remarks, uiMode: 'activity_location' });
+      appendItem({ description: defaultDesc, location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, tools: lastItem.tools.map(t => ({ ...t })), coordinator: lastItem.coordinator, personnel: { ...lastItem.personnel }, basis: lastItem.basis, remarks: lastItem.remarks, uiMode: 'activity_location' });
     } else if (mode === 'location_only') {
-      appendItem({ description: lastItem.description, location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, tools: lastItem.tools.map(t => ({ ...t })), coordinator: lastItem.coordinator, personnel: { ...lastItem.personnel }, basis: lastItem.basis, remarks: lastItem.remarks, uiMode: 'location_only' });
+      appendItem({ description: lastItem.description || defaultDesc, location: { street: "", village: [""], subDistrict: lastItem?.location.subDistrict || "" }, tools: lastItem.tools.map(t => ({ ...t })), coordinator: lastItem.coordinator, personnel: { ...lastItem.personnel }, basis: lastItem.basis, remarks: lastItem.remarks, uiMode: 'location_only' });
     }
     setShowWizard(false);
   };
@@ -180,7 +211,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
       const finalValues = { date: values.date, category: values.category, items: processedItems };
       let result;
       
-      // Jika isDuplicateMode aktif, kita paksa buat baru meskipun isEditing true
       if (isEditing && initialData && !isDuplicateMode) {
         result = await workPlanService.updateWorkPlan(initialData.id, finalValues as Partial<WorkPlan>);
         if (session?.user) {
@@ -219,13 +249,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
 
   const handleDuplicate = () => {
     if (!duplicateDate) { showError("Pilih tanggal"); return; }
-    
-    // Update tanggal di form
     form.setValue("date", duplicateDate);
-    
-    // Aktifkan mode duplikat (ini akan memaksa onSubmit melakukan CREATE bukannya UPDATE)
     setIsDuplicateMode(true);
-    
     showSuccess(`Data disalin ke tanggal ${duplicateDate}. Silakan periksa dan klik Simpan.`);
     setShowDuplicateDialog(false);
   };
