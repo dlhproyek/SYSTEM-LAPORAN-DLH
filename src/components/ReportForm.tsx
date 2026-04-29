@@ -50,14 +50,6 @@ const defaultActivityMapping: Record<string, string> = {
   "Taman Amplas": "Perawatan dan Pembersihan Taman Media ",
 };
 
-const vehicleCoordinatorMapping: Record<string, string> = {
-  "BK 8128 A": "M. Irwan Syahputra, SE",
-  "BK 9031 J": "Aluddin Gultom",
-  "BK 8265 A": "Budi",
-  "BK 8266 A": "Sutrisno",
-  "BK 8451 J": "Mhd. Said"
-};
-
 const locationSchema = z.object({
   street: z.string().min(1, "Jalan wajib diisi"),
   village: z.array(z.string()).default([""]),
@@ -74,6 +66,7 @@ const fuelSchema = z.object({
   pertamax: z.coerce.number().int().default(0),
   dexlite: z.coerce.number().int().default(0),
   solar: z.coerce.number().int().default(0),
+  oli: z.coerce.number().int().default(0),
 });
 
 const taskSchema = z.object({
@@ -86,9 +79,9 @@ const taskSchema = z.object({
     quantity: z.coerce.number().int().min(1),
   })),
   heavyEquipment: z.array(z.object({
-    type: z.string().min(1, "Jenis alat berat wajib diisi"),
-    vehicle: z.string().optional().default(""),
+    type: z.string().min(1, "Nama kendaraan/alat wajib diisi"),
     fuel: fuelSchema,
+    remarks: z.string().optional().default(""),
   })),
   personnel: z.object({
     coordinator: z.string().min(1, "Nama koordinator wajib diisi"),
@@ -126,7 +119,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const { session, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
-  const [existingVehicles, setExistingVehicles] = useState<string[]>(["BK 8128 A", "BK 9031 J", "BK 8265 A", "BK 8266 A", "BK 8451 J"]);
   const [matchingWorkPlan, setMatchingWorkPlan] = useState<WorkPlan | null>(null);
   const [showWorkPlanPrompt, setShowWorkPlanPrompt] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
@@ -142,7 +134,19 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     defaultValues: initialData ? {
       date: initialData.date,
       category: initialData.category,
-      tasks: initialData.tasks.map(t => ({ ...t, location: { ...t.location, village: Array.isArray(t.location.village) ? t.location.village : [t.location.village] } })),
+      tasks: initialData.tasks.map(t => ({ 
+        ...t, 
+        location: { ...t.location, village: Array.isArray(t.location.village) ? t.location.village : [t.location.village] },
+        heavyEquipment: t.heavyEquipment?.map(he => ({
+          ...he,
+          fuel: {
+            pertamax: he.fuel?.pertamax || 0,
+            dexlite: he.fuel?.dexlite || 0,
+            solar: he.fuel?.solar || 0,
+            oli: (he.fuel as any)?.oli || 0
+          }
+        })) || []
+      })),
       remarks: initialData.remarks,
     } : {
       date: new Date().toISOString().split('T')[0],
@@ -155,23 +159,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   const selectedCategory = form.watch("category");
   const selectedDate = form.watch("date");
   const { fields: taskFields, append: appendTask, remove: removeTask, replace: replaceTasks } = useFieldArray({ control: form.control, name: "tasks" });
-
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const reports = await reportService.getAllReports();
-        const vehicles = new Set(existingVehicles);
-        reports.forEach(r => {
-          r.tasks?.forEach(t => {
-            if (t.vehicle) vehicles.add(t.vehicle);
-            t.heavyEquipment?.forEach(he => { if (he.vehicle) vehicles.add(he.vehicle); });
-          });
-        });
-        setExistingVehicles(Array.from(vehicles));
-      } catch (e) { console.error(e); }
-    };
-    fetchVehicles();
-  }, []);
 
   useEffect(() => {
     const checkWorkPlan = async () => {
@@ -193,14 +180,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const defaultDesc = defaultActivityMapping[selectedCategory] || "";
       
       const updatedTasks = tasks.map(task => {
-        let coordinator = task.personnel.coordinator;
-        if (selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon") {
-          const firstVehicle = task.heavyEquipment?.[0]?.vehicle || task.vehicle;
-          coordinator = firstVehicle ? vehicleCoordinatorMapping[firstVehicle] || "" : "";
-        } else {
-          coordinator = coordinatorMapping[selectedCategory] || "";
-        }
-        
+        const coordinator = coordinatorMapping[selectedCategory] || task.personnel.coordinator || "";
         return { 
           ...task, 
           personnel: { ...task.personnel, coordinator },
@@ -219,7 +199,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       photos: { zero: "", fifty: "", hundred: "" },
       volume: 0,
       equipment: [],
-      heavyEquipment: item.tools.map(tool => ({ type: tool.name, vehicle: "", fuel: { pertamax: 0, dexlite: 0, solar: 0 } })),
+      heavyEquipment: item.tools.map(tool => ({ type: tool.name, fuel: { pertamax: 0, dexlite: 0, solar: 0, oli: 0 }, remarks: "" })),
       personnel: { coordinator: item.coordinator, members: item.personnel.members },
       vehicle: "",
       remarks: item.basis
@@ -256,7 +236,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
     try {
       const processedTasksWithUrls = await uploadTaskPhotos(values.tasks);
       let totalVolume = 0;
-      let totalFuel: FuelUsage = { pertamax: 0, dexlite: 0, solar: 0 };
+      let totalFuel: FuelUsage = { pertamax: 0, dexlite: 0, solar: 0, oli: 0 };
       let allEquipment: Equipment[] = [];
       let allHeavyEquipment: HeavyEquipment[] = [];
       let totalMembers = 0;
@@ -267,6 +247,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           totalFuel.pertamax += he.fuel.pertamax;
           totalFuel.dexlite += he.fuel.dexlite;
           totalFuel.solar += he.fuel.solar;
+          totalFuel.oli += he.fuel.oli;
           allHeavyEquipment.push(he as HeavyEquipment);
         });
         task.equipment.forEach((e: any) => allEquipment.push(e as Equipment));
@@ -277,7 +258,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       const reportData: Omit<Report, 'id' | 'createdAt'> = {
         date: values.date,
         category: values.category as ReportCategory,
-        vehicle: finalTasks[0].heavyEquipment?.[0]?.vehicle || finalTasks[0].vehicle,
         description: finalTasks[0].description,
         location: finalTasks[0].location as Location,
         tasks: finalTasks as Task[],
@@ -339,7 +319,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto pb-20">
-        <datalist id="vehicle-list">{existingVehicles.map(v => <option key={v} value={v} />)}</datalist>
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <div className="flex flex-col items-center">
@@ -402,23 +381,24 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                   <FormField control={form.control} name={`tasks.${taskIndex}.volume`} render={({ field }) => (<FormItem className="max-w-[200px]"><FormLabel>Volume ({getUnitByCategory(selectedCategory)})</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                 </div>
                 <div className="pt-6 border-t border-slate-100 space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-red-600"><Fuel size={16} /> Operasional Alat Berat & BBM</div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-red-600"><Fuel size={16} /> SPJ BBM & Oli (Voucer)</div>
                   <div className="space-y-4">
                     {form.watch(`tasks.${taskIndex}.heavyEquipment`)?.map((_, heIdx) => (
                       <div key={heIdx} className="p-4 border rounded-lg bg-slate-50 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                          <div className="md:col-span-6"><FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.type`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Jenis Alat Berat</FormLabel><FormControl><Input {...field} placeholder="Contoh: Mesin Robin, Excavator..." /></FormControl></FormItem>)} /></div>
-                          <div className="md:col-span-5"><FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.vehicle`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Plat Kendaraan (Opsional)</FormLabel><FormControl><Input {...field} list="vehicle-list" placeholder="BK 1234 XX" onChange={(e) => { field.onChange(e); if (heIdx === 0 && (selectedCategory === "Tim Siram" || selectedCategory === "Tim Pohon")) { const coordinator = vehicleCoordinatorMapping[e.target.value] || ""; if (coordinator) form.setValue(`tasks.${taskIndex}.personnel.coordinator`, coordinator); } }} /></FormControl></FormItem>)} /></div>
+                          <div className="md:col-span-11"><FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.type`} render={({ field }) => (<FormItem><FormLabel className="text-xs font-bold">Kendaraan / Alat operasional</FormLabel><FormControl><Input {...field} placeholder="Contoh: Truk Siram, Mesin Babat..." /></FormControl></FormItem>)} /></div>
                           <div className="md:col-span-1 flex justify-end"><Button type="button" variant="destructive" size="icon" className={cn("h-10 w-10", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`); form.setValue(`tasks.${taskIndex}.heavyEquipment`, current.filter((_, i) => i !== heIdx)); }}><Trash2 className="h-4 w-4" /></Button></div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4 p-3 bg-white rounded border border-red-100">
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.pertamax`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Pertamax (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.dexlite`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Dexlite (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.solar`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Solar (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-white rounded border border-red-100">
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.pertamax`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-bold">Voucer Pertamax (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.dexlite`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-bold">Voucer Dexlite (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.solar`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-bold">Voucer Solar (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.oli`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-bold">Voucer Oli (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
                         </div>
+                        <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.remarks`} render={({ field }) => (<FormItem><FormLabel className="text-xs font-bold">Keterangan / Kegiatan Alat</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pengisian BBM untuk operasional rutin..." /></FormControl></FormItem>)} />
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`) || []; form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", vehicle: "", fuel: { pertamax: 0, dexlite: 0, solar: 0 } }]); }}><Plus className="h-3 w-3 mr-2" /> Tambah Alat Berat</Button>
+                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`) || []; form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", fuel: { pertamax: 0, dexlite: 0, solar: 0, oli: 0 }, remarks: "" }]); }}><Plus className="h-3 w-3 mr-2" /> Tambah Kendaraan / Alat Operasional</Button>
                   </div>
                 </div>
                 <div className="pt-6 border-t border-slate-100 space-y-4">
