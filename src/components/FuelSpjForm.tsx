@@ -27,8 +27,8 @@ const formSchema = z.object({
   usage_solar: z.coerce.number().min(0),
   usage_oil: z.coerce.number().min(0),
   location_street: z.string().min(1, "Nama jalan wajib diisi"),
-  location_village: z.string().optional().default(""),
-  location_district: z.string().optional().default(""),
+  location_village: z.string().min(1, "Kelurahan wajib diisi"),
+  location_district: z.string().min(1, "Kecamatan wajib diisi"),
   team: z.enum(["Tim Pohon", "Tim Siram", "Tim Babat"]),
   region: z.enum(["Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4", "Wilayah 5 Selatan"]),
   remarks: z.string().optional().default(""),
@@ -55,8 +55,8 @@ const FuelSpjForm = ({ initialData, isEditing = false }: FuelSpjFormProps) => {
       usage_solar: initialData.usage_solar,
       usage_oil: initialData.usage_oil,
       location_street: initialData.location_street,
-      location_village: initialData.location_village || "",
-      location_district: initialData.location_district || "",
+      location_village: initialData.location_village,
+      location_district: initialData.location_district,
       team: initialData.team,
       region: initialData.region,
       remarks: initialData.remarks,
@@ -82,15 +82,8 @@ const FuelSpjForm = ({ initialData, isEditing = false }: FuelSpjFormProps) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // Pastikan nilai " " (spasi/abaikan) dikonversi kembali ke string kosong jika dipilih
-      const processedValues = {
-        ...values,
-        location_district: values.location_district === " " ? "" : values.location_district,
-        location_village: values.location_village === " " ? "" : values.location_village,
-      };
-
       if (isEditing && initialData) {
-        await fuelSpjService.update(initialData.id, processedValues);
+        await fuelSpjService.update(initialData.id, values);
         if (session?.user) {
           await auditLogService.logAction({
             action: 'UPDATE',
@@ -103,7 +96,7 @@ const FuelSpjForm = ({ initialData, isEditing = false }: FuelSpjFormProps) => {
         }
         showSuccess("SPJ BBM diperbarui!");
       } else {
-        const result = await fuelSpjService.create(processedValues);
+        const result = await fuelSpjService.create(values);
         if (session?.user) {
           await auditLogService.logAction({
             action: 'CREATE',
@@ -165,25 +158,19 @@ const FuelSpjForm = ({ initialData, isEditing = false }: FuelSpjFormProps) => {
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField control={form.control} name="location_street" render={({ field }) => (<FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input placeholder="Jl. ..." {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="location_district" render={({ field }) => (
-                <FormItem><FormLabel>Kecamatan <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span></FormLabel>
+                <FormItem><FormLabel>Kecamatan</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
-                      {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="location_village" render={({ field }) => (
-                <FormItem><FormLabel>Kelurahan <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span></FormLabel>
+                <FormItem><FormLabel>Kelurahan</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
-                      {selectedDistrict && selectedDistrict !== " " && medanDistricts[selectedDistrict]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{selectedDistrict && medanDistricts[selectedDistrict]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
