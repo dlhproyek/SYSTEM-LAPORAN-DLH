@@ -377,10 +377,7 @@ const DailyRecap = () => {
       <div className="max-w-[1400px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-4 w-4 md:mr-2" /> 
-              <span className="hidden md:inline">Kembali</span>
-            </Button>
+            <Button variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
             {isLoggedIn ? (
               <TooltipProvider>
                 <Tooltip>
@@ -392,8 +389,7 @@ const DailyRecap = () => {
               </TooltipProvider>
             ) : (
               <Button variant="outline" size="sm" onClick={() => navigate('/login')} className="text-blue-600 border-blue-600">
-                <LogIn className="h-4 w-4 md:mr-2" /> 
-                <span className="hidden md:inline">Masuk</span>
+                <LogIn className="mr-2 h-4 w-4" /> Masuk
               </Button>
             )}
           </div>
@@ -403,7 +399,7 @@ const DailyRecap = () => {
                 if (v === "semua") setSelectedDate("semua");
                 else setSelectedDate(new Date().toISOString().split('T')[0]);
               }}>
-                <SelectTrigger className="w-[110px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-xs md:text-sm">
+                <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10">
                   <SelectValue placeholder="Pilih Tanggal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -413,17 +409,17 @@ const DailyRecap = () => {
               </Select>
               {selectedDate !== "semua" && (
                 <div className="relative">
-                  <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
-                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
+                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px] h-10" />
                 </div>
               )}
             </div>
             <div className="relative">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[160px] md:w-[220px] justify-between font-normal h-10 text-xs md:text-sm", isUserRestricted && "bg-slate-50 text-slate-500")}>
-                    <span className="truncate">{selectedCategories.includes('semua') ? "Semua Kategori" : selectedCategories.length > 1 ? `${selectedCategories.length} Kategori` : selectedCategories[0]}</span>
-                    <ChevronsUpDown className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 shrink-0 opacity-50" />
+                  <Button variant="outline" role="combobox" disabled={isUserRestricted} className={cn("w-[220px] justify-between font-normal h-10", isUserRestricted && "bg-slate-50 text-slate-500")}>
+                    <span className="truncate">{selectedCategories.includes('semua') ? "Semua Kategori" : selectedCategories.length > 1 ? `${selectedCategories.length} Kategori Terpilih` : selectedCategories[0]}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[220px] p-0" align="start">
@@ -437,46 +433,30 @@ const DailyRecap = () => {
               {isUserRestricted && <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm"><Lock size={10} /></div>}
             </div>
             <Select value={photoMode} onValueChange={(v) => setPhotoMode(v as PhotoMode)}>
-              <SelectTrigger className="w-[40px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-slate-700 font-medium p-0 md:px-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <ImageIcon size={16} />
-                  <span className="hidden md:inline"><SelectValue placeholder="Mode Foto" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent><SelectItem value="with-photo">Dengan Foto</SelectItem><SelectItem value="without-photo">Tanpa Foto</SelectItem></SelectContent>
+              <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 h-10 text-slate-700 font-medium"><SelectValue placeholder="Mode Foto" /></SelectTrigger>
+              <SelectContent><SelectItem value="with-photo"><div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div></SelectItem><SelectItem value="without-photo"><div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div></SelectItem></SelectContent>
             </Select>
             <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
-              <SelectTrigger className="w-[40px] md:w-[180px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium p-0 md:px-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <Fuel size={16} />
-                  <span className="hidden md:inline"><SelectValue placeholder="Mode Rekap" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent><SelectItem value="with-fuel">Rekap Dengan BBM</SelectItem><SelectItem value="without-fuel">Rekap Tanpa BBM</SelectItem></SelectContent>
+              <SelectTrigger className="w-[180px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium"><SelectValue placeholder="Mode Rekap" /></SelectTrigger>
+              <SelectContent><SelectItem value="with-fuel"><div className="flex items-center gap-2"><Fuel size={14} /> Rekap Dengan BBM</div></SelectItem><SelectItem value="without-fuel"><div className="flex items-center gap-2"><FileText size={14} /> Rekap Tanpa BBM</div></SelectItem></SelectContent>
             </Select>
             <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <PenTool size={16} />
-                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
-                </div>
-              </SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium"><SelectValue placeholder="Tanda Tangan" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
-                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
+                <SelectItem value="with-signature"><div className="flex items-center gap-2"><PenTool size={14} /> Ada Tanda Tangan</div></SelectItem>
+                <SelectItem value="without-signature"><div className="flex items-center gap-2"><PenTool size={14} className="opacity-40" /> Tanpa Tanda Tangan</div></SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn && (
-              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 h-10 px-2 md:px-4">
-                <CloudUpload className="h-4 w-4 md:mr-2" /> 
-                <span className="hidden md:inline">Simpan ke Drive</span>
+              <Button onClick={() => setIsDriveDialogOpen(true)} disabled={reports.length === 0} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 h-10">
+                <CloudUpload className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Simpan ke Drive</span>
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 h-10 px-2 md:px-4">
+                <Button className="bg-blue-600 hover:bg-blue-700 h-10">
                   <Printer className="h-4 w-4 md:mr-2" /> 
                   <span className="hidden md:inline">Cetak</span>
                   <ChevronDown className="ml-1 h-4 w-4" />

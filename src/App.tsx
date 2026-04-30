@@ -69,7 +69,7 @@ const App = () => (
             <Route path="/work-plans/weekly-rekap" element={<WorkPlanWeeklyRecap />} />
             <Route path="/work-plans/monthly-rekap" element={<WorkPlanMonthlyRecap />} />
             
-            {/* Fuel SPJ Routes */}
+            {/* Fuel SPJ Routes - Restricted to admin and spjbbm / Admin BBM Category */}
             <Route path="/fuel-spj" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><FuelSpjList /></ProtectedRoute>} />
             <Route path="/fuel-spj/create" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><CreateFuelSpj /></ProtectedRoute>} />
             <Route path="/fuel-spj/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><EditFuelSpj /></ProtectedRoute>} />

@@ -122,14 +122,10 @@ const FuelSpjForm = ({ initialData, isEditing = false }: FuelSpjFormProps) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto pb-20">
         <div className="flex items-center justify-between mb-6">
-          <Button type="button" variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 md:mr-2" /> 
-            <span className="hidden md:inline">Kembali</span>
-          </Button>
-          <h1 className="text-xl md:text-2xl font-bold text-blue-600">{isEditing ? "Edit SPJ BBM" : "Input SPJ BBM Baru"}</h1>
-          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 px-2 md:px-4">
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 md:mr-2" />} 
-            <span className="hidden md:inline">Simpan</span>
+          <Button type="button" variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
+          <h1 className="text-2xl font-bold text-blue-600">{isEditing ? "Edit SPJ BBM" : "Input SPJ BBM Baru"}</h1>
+          <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Simpan
           </Button>
         </div>
 

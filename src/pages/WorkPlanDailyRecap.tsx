@@ -66,6 +66,7 @@ const WorkPlanDailyRecap = () => {
         setSelectedDate("semua");
       }
 
+      // FILTER: Hanya tampilkan yang is_visible !== false
       const filtered = data.filter(p => 
         (targetDate === "semua" || p.date === targetDate) && 
         p.is_visible !== false
