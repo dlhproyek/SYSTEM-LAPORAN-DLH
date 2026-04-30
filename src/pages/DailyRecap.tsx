@@ -275,7 +275,7 @@ const DailyRecap = () => {
       }
       columns.push({ header: 'Vol', key: 'vol', width: 10 }, { header: 'Jenis Alat', key: 'eq_type', width: 20 }, { header: 'Jumlah Alat', key: 'eq_qty', width: 10 }, { header: 'Alat Berat', key: 'he', width: 25 });
       if (recapMode === "with-fuel") {
-        columns.push({ header: 'P (Voucher Rp)', key: 'fp', width: 15 }, { header: 'D (Voucher Rp)', key: 'fd', width: 15 }, { header: 'S (Voucher Rp)', key: 'fs', width: 15 });
+        columns.push({ header: 'P (Rp)', key: 'fp', width: 10 }, { header: 'D (Rp)', key: 'fd', width: 10 }, { header: 'S (Rp)', key: 'fs', width: 10 });
       }
       columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Anggota', key: 'members', width: 10 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
