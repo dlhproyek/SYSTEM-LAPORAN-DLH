@@ -29,6 +29,7 @@ import WorkPlanMonthlyRecap from "./pages/WorkPlanMonthlyRecap";
 import FuelSpjList from "./pages/FuelSpjList";
 import CreateFuelSpj from "./pages/CreateFuelSpj";
 import EditFuelSpj from "./pages/EditFuelSpj";
+import FuelSpjRecap from "./pages/FuelSpjRecap";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/fuel-spj" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><FuelSpjList /></ProtectedRoute>} />
             <Route path="/fuel-spj/create" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><CreateFuelSpj /></ProtectedRoute>} />
             <Route path="/fuel-spj/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><EditFuelSpj /></ProtectedRoute>} />
+            <Route path="/fuel-spj/recap" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><FuelSpjRecap /></ProtectedRoute>} />
             
             {/* Work Plan Creation/Edit */}
             <Route path="/work-plans/create" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><CreateWorkPlan /></ProtectedRoute>} />
