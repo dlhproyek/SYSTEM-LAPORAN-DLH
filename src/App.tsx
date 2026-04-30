@@ -72,14 +72,11 @@ const App = () => (
             <Route path="/fuel-spj/create" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']}><CreateFuelSpj /></ProtectedRoute>} />
             <Route path="/fuel-spj/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']}><EditFuelSpj /></ProtectedRoute>} />
             
-            {/* Work Plan Creation/Edit - Restricted to exclude spjbbm */}
-            <Route path="/work-plans/create" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><CreateWorkPlan /></ProtectedRoute>} />
-            <Route path="/work-plans/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><EditWorkPlan /></ProtectedRoute>} />
+            <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
+            <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
             
-            {/* Report Creation/Edit - Restricted to exclude spjbbm */}
-            <Route path="/create" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><CreateReport /></ProtectedRoute>} />
-            <Route path="/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><EditReport /></ProtectedRoute>} />
-            
+            <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
+            <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
             <Route path="/print-rekap" element={<ProtectedRoute><PrintRekap /></ProtectedRoute>} />
             <Route path="/maintenance" element={<ProtectedRoute allowedRoles={['admin']}><Maintenance /></ProtectedRoute>} />
             
