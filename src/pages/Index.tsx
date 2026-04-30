@@ -92,7 +92,7 @@ const Index = () => {
 
   useEffect(() => {
     loadData();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, profile]);
 
   const loadData = async () => {
     try {
@@ -106,10 +106,10 @@ const Index = () => {
         promises.push(fuelSpjService.getAll());
       }
 
-      const [reportsData, workPlansData, spjsData] = await Promise.all(promises);
-      setReports(reportsData);
-      setWorkPlans(workPlansData);
-      if (spjsData) setSpjs(spjsData);
+      const results = await Promise.all(promises);
+      setReports(results[0]);
+      setWorkPlans(results[1]);
+      if (results[2]) setSpjs(results[2]);
     } catch (error) {
       console.error(error);
       showError("Gagal memuat data");
