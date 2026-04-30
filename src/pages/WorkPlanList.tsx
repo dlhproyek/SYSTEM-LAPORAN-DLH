@@ -272,8 +272,8 @@ const WorkPlanList = () => {
             </div>
 
             <div className="md:col-span-2 flex justify-end">
-              <Button variant="ghost" onClick={resetFilters} className="h-10 text-slate-400 hover:text-red-500 hover:bg-red-50 w-full md:w-auto">
-                <FilterX className="h-4 w-4 mr-2" /> Reset Filter
+              <Button variant="ghost" onClick={resetFilters} className="h-10 text-slate-400 hover:text-red-500 hover:bg-red-50 w-full md:w-auto px-2 md:px-4">
+                <FilterX className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Reset Filter</span>
               </Button>
             </div>
           </div>

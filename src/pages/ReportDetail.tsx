@@ -20,7 +20,6 @@ const ReportDetail = () => {
   const [loading, setLoading] = useState(true);
 
   const isLoggedIn = !!session;
-  // Menyamakan logika Pimpinan dengan halaman lain (cek role atau email khusus)
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
 
   useEffect(() => { if (id) loadReport(id); }, [id]);
@@ -49,24 +48,27 @@ const ReportDetail = () => {
     <div className="min-h-screen bg-slate-100 p-4 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-6">
         <div className="flex items-center justify-between no-print">
-          <Button variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
+          <Button variant="ghost" onClick={() => navigate('/')} className="px-2 md:px-4">
+            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
+          </Button>
           
           {isLoggedIn ? (
             <div className="flex gap-2 items-center">
               {isPimpinan && (
-                <Badge className="bg-amber-100 text-amber-700 border-amber-200 h-9 px-4 mr-2">
-                  <ShieldCheck className="h-4 w-4 mr-2" /> Mode Pantau
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200 h-9 px-2 md:px-4 mr-1 md:mr-2">
+                  <ShieldCheck className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Mode Pantau</span>
                 </Badge>
               )}
               <Button 
                 variant="outline" 
                 onClick={() => navigate(`/edit/${report.id}`)}
+                className="px-2 md:px-4"
               >
-                <Edit className="mr-2 h-4 w-4" /> Edit
+                <Edit className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Edit</span>
               </Button>
               <Button 
                 variant="destructive" 
-                className={cn(isPimpinan && "opacity-50 cursor-not-allowed")}
+                className={cn("px-2 md:px-4", isPimpinan && "opacity-50 cursor-not-allowed")}
                 disabled={isPimpinan}
                 onClick={async () => { 
                   if (isPimpinan) return;
@@ -76,18 +78,17 @@ const ReportDetail = () => {
                   } 
                 }}
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                <Trash2 className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Hapus</span>
               </Button>
             </div>
           ) : (
-            <Button variant="outline" onClick={() => navigate('/login')} className="text-blue-600 border-blue-600">
-              <LogIn className="mr-2 h-4 w-4" /> Masuk untuk Edit
+            <Button variant="outline" onClick={() => navigate('/login')} className="text-blue-600 border-blue-600 px-2 md:px-4">
+              <LogIn className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk untuk Edit</span>
             </Button>
           )}
         </div>
 
         <div id="report-content" className="bg-white border shadow-lg p-8 space-y-8">
-          {/* Header Laporan */}
           <div className="border-b-2 border-black pb-4 flex justify-between items-center">
             <div>
               <h1 className="text-xl font-bold">PEMERINTAH KOTA MEDAN</h1>
@@ -99,7 +100,6 @@ const ReportDetail = () => {
             </div>
           </div>
 
-          {/* Info Dasar */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div><p className="text-slate-500">Tanggal</p><p className="font-bold">{report.date}</p></div>
             <div><p className="text-slate-500">Total Volume</p><p className="font-bold">{report.volume} {getUnitByCategory(report.category)}</p></div>
