@@ -341,21 +341,15 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl mx-auto pb-20">
         <datalist id="vehicle-list">{existingVehicles.map(v => <option key={v} value={v} />)}</datalist>
         <div className="flex items-center justify-between mb-6">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="px-2 md:px-4">
-            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
-          </Button>
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <div className="flex flex-col items-center">
-            <h1 className="text-xl md:text-2xl font-bold text-primary">{isEditing && !isDuplicateMode ? "Edit Laporan" : "Input Laporan Baru"}</h1>
+            <h1 className="text-2xl font-bold text-primary">{isEditing && !isDuplicateMode ? "Edit Laporan" : "Input Laporan Baru"}</h1>
             {isDuplicateMode && <Badge className="bg-amber-100 text-amber-700 border-amber-200 mt-1 animate-pulse"><Copy size={10} className="mr-1" /> Mode Duplikat: Belum Tersimpan</Badge>}
           </div>
           <div className="flex gap-2">
-            {isEditing && !isDuplicateMode && (
-              <Button type="button" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4" onClick={() => { setDuplicateDate(new Date().toISOString().split('T')[0]); setShowDuplicateDialog(true); }}>
-                <Copy className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Duplikat</span>
-              </Button>
-            )}
-            <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-2 md:px-4", isPimpinan && "opacity-50 cursor-not-allowed")}>
-              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin md:mr-2" /> <span className="hidden md:inline">{uploadProgress || "Menyimpan..."}</span></> : <><Save className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">{isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan"}</span></>}
+            {isEditing && !isDuplicateMode && <Button type="button" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50" onClick={() => { setDuplicateDate(new Date().toISOString().split('T')[0]); setShowDuplicateDialog(true); }}><Copy className="mr-2 h-4 w-4" /> Duplikat</Button>}
+            <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700", isPimpinan && "opacity-50 cursor-not-allowed")}>
+              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || "Menyimpan..."}</> : <><Save className="mr-2 h-4 w-4" /> {isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan"}</>}
             </Button>
           </div>
         </div>
@@ -386,7 +380,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
           {taskFields.map((taskField, taskIndex) => (
             <Card key={taskField.id} className="border-l-4 border-l-blue-400 overflow-hidden shadow-md">
               <CardContent className="p-6 space-y-8">
-                <div className="flex justify-between items-center border-b pb-4"><Badge variant="secondary" className="bg-blue-600 text-white px-3 py-1">Kegiatan #{taskIndex + 1}</Badge>{taskFields.length > 1 && <Button type="button" variant="ghost" size="sm" className={cn("text-red-500 hover:bg-red-50 px-2 md:px-3", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => removeTask(taskIndex)}><Trash2 className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Hapus Kegiatan</span></Button>}</div>
+                <div className="flex justify-between items-center border-b pb-4"><Badge variant="secondary" className="bg-blue-600 text-white px-3 py-1">Kegiatan #{taskIndex + 1}</Badge>{taskFields.length > 1 && <Button type="button" variant="ghost" size="sm" className={cn("text-red-500 hover:bg-red-50", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => removeTask(taskIndex)}><Trash2 className="h-4 w-4 mr-1" /> Hapus Kegiatan</Button>}</div>
                 <div className="space-y-4">
                   <FormField control={form.control} name={`tasks.${taskIndex}.description`} render={({ field }) => (<FormItem><FormLabel className="font-bold">Uraian Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pemangkasan pohon mahoni..." /></FormControl></FormItem>)} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -394,7 +388,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                     <FormField control={form.control} name={`tasks.${taskIndex}.location.subDistrict`} render={({ field }) => (<FormItem><FormLabel>Kecamatan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal ml-1">(Opsional)</span>}</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                   </div>
                   <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2"><MapPin size={14} className="text-red-500" /> Daftar Kelurahan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal ml-1">(Opsional)</span>}</FormLabel><Button type="button" variant="outline" size="sm" className="h-7 text-[10px] bg-white px-2" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.location.village`); form.setValue(`tasks.${taskIndex}.location.village`, [...current, ""]); }}><Plus size={12} className="md:mr-1" /> <span className="hidden md:inline">Tambah Kelurahan</span></Button></div>
+                    <div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2"><MapPin size={14} className="text-red-500" /> Daftar Kelurahan {selectedCategory === "Tim Siram" && <span className="text-[10px] text-slate-400 font-normal ml-1">(Opsional)</span>}</FormLabel><Button type="button" variant="outline" size="sm" className="h-7 text-[10px] bg-white" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.location.village`); form.setValue(`tasks.${taskIndex}.location.village`, [...current, ""]); }}><Plus size={12} className="mr-1" /> Tambah Kelurahan</Button></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{form.watch(`tasks.${taskIndex}.location.village`)?.map((_, vIdx) => (<div key={vIdx} className="flex gap-2 items-center"><FormField control={form.control} name={`tasks.${taskIndex}.location.village.${vIdx}`} render={({ field }) => (<FormItem className="flex-1"><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="bg-white h-9 text-xs"><SelectValue placeholder="Pilih Kelurahan..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{form.watch(`tasks.${taskIndex}.location.subDistrict`) && form.watch(`tasks.${taskIndex}.location.subDistrict`) !== " " && medanDistricts[form.watch(`tasks.${taskIndex}.location.subDistrict`)].map(v => (<SelectItem key={v} value={v}>{v}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />{form.watch(`tasks.${taskIndex}.location.village`).length > 1 && <Button type="button" variant="ghost" size="icon" className={cn("h-9 w-9 text-red-400 hover:text-red-600", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => { const current = form.getValues(`tasks.${taskIndex}.location.village`); form.setValue(`tasks.${taskIndex}.location.village`, current.filter((_, i) => i !== vIdx)); }}><Trash2 size={14} /></Button>}</div>))}</div>
                   </div>
                 </div>
@@ -408,7 +402,7 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                   <FormField control={form.control} name={`tasks.${taskIndex}.volume`} render={({ field }) => (<FormItem className="max-w-[200px]"><FormLabel>Volume ({getUnitByCategory(selectedCategory)})</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                 </div>
                 <div className="pt-6 border-t border-slate-100 space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-red-600"><Fuel size={16} /> Operasional Alat Berat & Voucher BBM</div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-red-600"><Fuel size={16} /> Operasional Alat Berat & BBM</div>
                   <div className="space-y-4">
                     {form.watch(`tasks.${taskIndex}.heavyEquipment`)?.map((_, heIdx) => (
                       <div key={heIdx} className="p-4 border rounded-lg bg-slate-50 space-y-4">
@@ -418,20 +412,20 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
                           <div className="md:col-span-1 flex justify-end"><Button type="button" variant="destructive" size="icon" className={cn("h-10 w-10", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`); form.setValue(`tasks.${taskIndex}.heavyEquipment`, current.filter((_, i) => i !== heIdx)); }}><Trash2 className="h-4 w-4" /></Button></div>
                         </div>
                         <div className="grid grid-cols-3 gap-4 p-3 bg-white rounded border border-red-100">
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.pertamax`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Pertamax (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} placeholder="Voucher Rp" /></FormControl></FormItem>)} />
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.dexlite`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Dexlite (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} placeholder="Voucher Rp" /></FormControl></FormItem>)} />
-                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.solar`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Solar (Rp)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} placeholder="Voucher Rp" /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.pertamax`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Pertamax (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.dexlite`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Dexlite (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
+                          <FormField control={form.control} name={`tasks.${taskIndex}.heavyEquipment.${heIdx}.fuel.solar`} render={({ field }) => (<FormItem><FormLabel className="text-[10px]">Solar (L)</FormLabel><FormControl><Input type="number" className="h-8 text-xs" {...field} /></FormControl></FormItem>)} />
                         </div>
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed px-2" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`) || []; form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", vehicle: "", fuel: { pertamax: 0, dexlite: 0, solar: 0 } }]); }}><Plus className="h-3 w-3 md:mr-2" /> <span className="hidden md:inline">Tambah Alat Berat</span></Button>
+                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.heavyEquipment`) || []; form.setValue(`tasks.${taskIndex}.heavyEquipment`, [...current, { type: "", vehicle: "", fuel: { pertamax: 0, dexlite: 0, solar: 0 } }]); }}><Plus className="h-3 w-3 mr-2" /> Tambah Alat Berat</Button>
                   </div>
                 </div>
                 <div className="pt-6 border-t border-slate-100 space-y-4">
                   <div className="flex items-center gap-2 text-sm font-bold text-purple-600"><Wrench size={16} /> Peralatan Lainnya</div>
                   <div className="space-y-3">
                     {form.watch(`tasks.${taskIndex}.equipment`)?.map((_, eqIdx) => (<div key={eqIdx} className="flex gap-4 items-end"><div className="flex-1"><FormField control={form.control} name={`tasks.${taskIndex}.equipment.${eqIdx}.type`} render={({ field }) => (<FormItem><FormLabel>Jenis Alat</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div><div className="w-24"><FormField control={form.control} name={`tasks.${taskIndex}.equipment.${eqIdx}.quantity`} render={({ field }) => (<FormItem><FormLabel>Jumlah</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div><Button type="button" variant="destructive" size="icon" className={cn(isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={() => { const current = form.getValues(`tasks.${taskIndex}.equipment`); form.setValue(`tasks.${taskIndex}.equipment`, current.filter((_, i) => i !== eqIdx)); }}><Trash2 className="h-4 w-4" /></Button></div>))}
-                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed px-2" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.equipment`) || []; form.setValue(`tasks.${taskIndex}.equipment`, [...current, { type: "", quantity: 1 }]); }}><Plus className="h-3 w-3 md:mr-2" /> <span className="hidden md:inline">Tambah Alat</span></Button>
+                    <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => { const current = form.getValues(`tasks.${taskIndex}.equipment`) || []; form.setValue(`tasks.${taskIndex}.equipment`, [...current, { type: "", quantity: 1 }]); }}><Plus className="h-3 w-3 mr-2" /> Tambah Alat</Button>
                   </div>
                 </div>
                 <div className="pt-6 border-t border-slate-100 space-y-4">
@@ -442,19 +436,13 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               </CardContent>
             </Card>
           ))}
-          <Button type="button" variant="outline" className="w-full border-dashed py-8 bg-white text-blue-600 font-bold border-blue-200 hover:bg-blue-50 px-4" onClick={() => {
+          <Button type="button" variant="outline" className="w-full border-dashed py-8 bg-white text-blue-600 font-bold border-blue-200 hover:bg-blue-50" onClick={() => {
             const defaultDesc = defaultActivityMapping[selectedCategory] || "";
             appendTask({ description: defaultDesc, location: { street: "", village: [""], subDistrict: "" }, photos: { zero: "", fifty: "", hundred: "" }, volume: 0, equipment: [{ type: "", quantity: 1 }], heavyEquipment: [], personnel: { coordinator: form.getValues("tasks.0.personnel.coordinator") || "", members: 0 }, vehicle: "", remarks: "" });
-          }}><Plus className="h-5 w-5 md:mr-2" /> <span className="hidden md:inline">Tambah Kegiatan & Lokasi Baru</span></Button>
+          }}><Plus className="mr-2 h-5 w-5" /> Tambah Kegiatan & Lokasi Baru</Button>
         </div>
         <Card className="border-t-4 border-t-slate-400"><CardHeader><CardTitle className="text-lg">Keterangan Tambahan</CardTitle></CardHeader><CardContent><FormField control={form.control} name="remarks" render={({ field }) => (<FormItem><FormLabel>Catatan Laporan (Opsional)</FormLabel><FormControl><Input {...field} placeholder="Catatan umum..." /></FormControl></FormItem>)} /></CardContent></Card>
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate(-1)} className="px-4">Batal</Button>
-          <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-4 md:px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>
-            {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin md:mr-2" /> <span className="hidden md:inline">{uploadProgress || "Menyimpan..."}</span></> : <span className="hidden md:inline">{isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan Laporan"}</span>}
-            {!isSubmitting && <Save className="h-4 w-4 md:hidden" />}
-          </Button>
-        </div>
+        <div className="flex justify-end gap-4"><Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button><Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || "Menyimpan..."}</> : isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan Laporan"}</Button></div>
       </form>
       
       <Dialog open={showWorkPlanPrompt} onOpenChange={setShowWorkPlanPrompt}><DialogContent className="sm:max-w-[450px]"><DialogHeader><DialogTitle className="flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-6 w-6" /> Sinkronisasi Rencana Kerja</DialogTitle><DialogDescription className="pt-2">Ditemukan Rencana Kerja untuk kategori {selectedCategory} pada tanggal {selectedDate}. Apakah Anda ingin mengisi data laporan secara otomatis?</DialogDescription></DialogHeader><div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-2"><p className="text-[10px] font-bold text-blue-700 uppercase">Data yang akan disinkronkan:</p><ul className="text-[11px] text-blue-800 space-y-1"><li>• Uraian Kegiatan & Lokasi</li><li>• Jenis Alat Berat</li><li>• Koordinator & Jumlah Anggota</li><li>• Keterangan Kegiatan</li></ul></div><DialogFooter className="gap-2 sm:gap-0"><Button variant="ghost" onClick={() => setShowWorkPlanPrompt(false)}>Tidak, Input Manual</Button><Button onClick={applyWorkPlan} className="bg-blue-600 hover:bg-blue-700"><HelpCircle className="mr-2 h-4 w-4" /> Ya, Sinkronkan Data</Button></DialogFooter></DialogContent></Dialog>

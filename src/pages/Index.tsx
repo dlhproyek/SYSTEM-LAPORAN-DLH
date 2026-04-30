@@ -279,7 +279,7 @@ const Index = () => {
                   <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 md:h-9 md:w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-4 w-4 md:h-5 md:w-5" /></Button></TooltipTrigger><TooltipContent><p>Keluar Sistem</p></TooltipContent></Tooltip>
                 </div>
               ) : (
-                !authLoading && <Button onClick={() => navigate('/login')} size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-8 md:h-9 px-2 md:px-4"><LogIn className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk Sistem</span></Button>
+                !authLoading && <Button onClick={() => navigate('/login')} size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-8 md:h-9 px-2 md:px-4"><LogIn className="md:mr-2 h-4 w-4" /> <span className="hidden md:inline">Masuk Sistem</span></Button>
               )}
             </TooltipProvider>
           </div>
@@ -339,12 +339,8 @@ const Index = () => {
             <TabsList className="grid w-full md:w-[400px] grid-cols-2 h-12 bg-white border shadow-sm p-1"><TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><FileText size={16} /> Laporan Harian</TabsTrigger><TabsTrigger value="workplans" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><ClipboardList size={16} /> Rencana Kerja</TabsTrigger></TabsList>
             {isLoggedIn && (
               <div className="flex gap-2">
-                <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700 h-10 font-bold shadow-sm flex-1 md:flex-none px-2 md:px-4">
-                  <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Input Laporan</span>
-                </Button>
-                <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-10 font-bold flex-1 md:flex-none px-2 md:px-4">
-                  <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Buat Rencana</span>
-                </Button>
+                <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700 h-10 font-bold shadow-sm flex-1 md:flex-none"><Plus className="mr-2 h-4 w-4" /> Input Laporan</Button>
+                <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-10 font-bold flex-1 md:flex-none"><Plus className="mr-2 h-4 w-4" /> Buat Rencana</Button>
               </div>
             )}
           </div>
@@ -397,7 +393,7 @@ const Index = () => {
                 ))}
               </div>
             ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada rencana kerja ditemukan</p><Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Filter</Button></div>}
-            <div className="flex justify-center pt-4"><Button variant="outline" onClick={() => navigate('/work-plans')} className="text-blue-600 border-blue-200 px-4">Lihat Semua Rencana Kerja <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
+            <div className="flex justify-center pt-4"><Button variant="outline" onClick={() => navigate('/work-plans')} className="text-blue-600 border-blue-200">Lihat Semua Rencana Kerja <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
           </TabsContent>
         </Tabs>
       </main>
