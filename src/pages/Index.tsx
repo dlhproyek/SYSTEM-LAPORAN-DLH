@@ -8,21 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Plus, FileText, MapPin, Calendar, 
-  Trash2, Eye, Search, Edit, Cloud, Printer,
-  LogOut, LogIn, FilterX, Database, ChevronDown,
-  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays, Fuel, Truck, Users, Globe, RefreshCw
+  Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
+  LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronDown,
+  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays, Fuel
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { WorkPlan } from '@/types/workPlan';
-import { FuelSpj } from '@/types/fuelSpj';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from '@/utils/toast';
 import { reportService } from '@/services/reportService';
 import { workPlanService } from '@/services/workPlanService';
-import { fuelSpjService } from '@/services/fuelSpjService';
 import { useAuth } from '@/context/AuthContext';
-import { getUnitByCategory } from '@/utils/report-helpers';
+import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { auditLogService } from '@/services/auditLogService';
 import TrashDialog from '@/components/TrashDialog';
 import { cn } from "@/lib/utils";
@@ -62,9 +60,9 @@ const Index = () => {
   const { session, profile, signOut, loading: authLoading } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [workPlans, setWorkPlans] = useState<WorkPlan[]>([]);
-  const [spjs, setSpjs] = useState<FuelSpj[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("reports");
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   
   const [selectedDate, setSelectedDate] = useState("");
@@ -79,37 +77,22 @@ const Index = () => {
   const isSpjBbm = profile?.role === 'spjbbm' || (session?.user?.email === 'spjbbm@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
-  const [activeTab, setActiveTab] = useState(isSpjBbm ? "fuel_spj" : "reports");
-
-  useEffect(() => {
-    if (profile) {
-      setActiveTab(isSpjBbm ? "fuel_spj" : "reports");
-      if (isUserRestricted && profile.category) {
-        setSelectedCategory(profile.category);
-      }
-    }
-  }, [profile, isSpjBbm, isUserRestricted]);
-
   useEffect(() => {
     loadData();
-  }, [isLoggedIn]);
+    if (isUserRestricted && profile?.category) {
+      setSelectedCategory(profile.category);
+    }
+  }, [profile, isLoggedIn]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const promises: Promise<any>[] = [
+      const [reportsData, workPlansData] = await Promise.all([
         reportService.getAllReports(),
         workPlanService.getAllWorkPlans()
-      ];
-      
-      if (isAdmin || isSpjBbm) {
-        promises.push(fuelSpjService.getAll());
-      }
-
-      const [reportsData, workPlansData, spjsData] = await Promise.all(promises);
+      ]);
       setReports(reportsData);
       setWorkPlans(workPlansData);
-      if (spjsData) setSpjs(spjsData);
     } catch (error) {
       console.error(error);
       showError("Gagal memuat data");
@@ -135,28 +118,38 @@ const Index = () => {
     if (window.confirm(`Pindahkan laporan "${report.description}" ke tempat sampah?`)) {
       try {
         await reportService.deleteReport(report.id);
+        
         if (session?.user) {
           await auditLogService.logAction({
-            action: 'DELETE', entityType: 'REPORT', entityId: report.id,
+            action: 'DELETE',
+            entityType: 'REPORT',
+            entityId: report.id,
             details: { title: report.description, date: report.date, category: report.category },
-            userId: session.user.id, username: profile?.username || session.user.email || "User"
+            userId: session.user.id,
+            username: profile?.username || session.user.email || "User"
           });
         }
+
         setReports(reports.filter(r => r.id !== report.id));
         showSuccess("Laporan dipindahkan ke tempat sampah");
-      } catch (error) { showError("Gagal menghapus"); }
+      } catch (error) {
+        showError("Gagal menghapus");
+      }
     }
   };
 
   const handleToggleWorkPlanVisibility = async (e: React.MouseEvent, plan: WorkPlan) => {
     e.stopPropagation();
     if (!isLoggedIn || isPimpinan || isSpjBbm) return;
+    
     const newVisibility = plan.is_visible === false ? true : false;
     try {
       await workPlanService.updateWorkPlan(plan.id, { is_visible: newVisibility });
       setWorkPlans(prev => prev.map(p => p.id === plan.id ? { ...p, is_visible: newVisibility } : p));
       showSuccess(newVisibility ? "Rencana akan muncul di rekap" : "Rencana disembunyikan dari rekap");
-    } catch (error) { showError("Gagal mengubah status visibilitas"); }
+    } catch (error) {
+      showError("Gagal mengubah status visibilitas");
+    }
   };
 
   const handleDeleteWorkPlan = async (e: React.MouseEvent, plan: WorkPlan) => {
@@ -165,27 +158,24 @@ const Index = () => {
     if (window.confirm(`Pindahkan rencana kerja "${plan.items[0]?.description}" ke tempat sampah?`)) {
       try {
         await workPlanService.deleteWorkPlan(plan.id);
+
         if (session?.user) {
           await auditLogService.logAction({
-            action: 'DELETE', entityType: 'WORK_PLAN', entityId: plan.id,
+            action: 'DELETE',
+            entityType: 'WORK_PLAN',
+            entityId: plan.id,
             details: { title: plan.items[0]?.description, date: plan.date, category: plan.category },
-            userId: session.user.id, username: profile?.username || session.user.email || "User"
+            userId: session.user.id,
+            username: profile?.username || session.user.email || "User"
           });
         }
+
         setWorkPlans(prev => prev.filter(p => p.id !== plan.id));
         showSuccess("Rencana kerja dipindahkan ke tempat sampah");
-      } catch (error) { showError("Gagal menghapus data"); }
+      } catch (error) {
+        showError("Gagal menghapus data");
+      }
     }
-  };
-
-  const handleDeleteSpj = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!confirm("Pindahkan ke tempat sampah?")) return;
-    try {
-      await fuelSpjService.delete(id);
-      setSpjs(prev => prev.filter(s => s.id !== id));
-      showSuccess("Data dipindahkan ke tempat sampah");
-    } catch (error) { showError("Gagal menghapus data"); }
   };
 
   const resetFilters = () => {
@@ -196,22 +186,24 @@ const Index = () => {
     setSearchQuery("");
   };
 
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
-  };
-
   const filteredReports = reports.filter(report => {
     const search = searchQuery.toLowerCase();
     const reportDate = new Date(report.date);
     const m = (reportDate.getMonth() + 1).toString();
     const y = reportDate.getFullYear().toString();
+    
     const matchSearch = report.description.toLowerCase().includes(search) || report.location.street.toLowerCase().includes(search);
     const matchSpecificDate = !selectedDate || report.date === selectedDate;
     const matchMonth = selectedMonth === "semua" || m === selectedMonth;
     const matchYear = selectedYear === "semua" || y === selectedYear;
     const matchCategory = selectedCategory === "semua" || report.category === selectedCategory;
     const restrictionMatch = !isUserRestricted || report.category === profile?.category;
-    return selectedDate ? (matchSearch && matchSpecificDate && matchCategory && restrictionMatch) : (matchSearch && matchMonth && matchYear && matchCategory && restrictionMatch);
+    
+    if (selectedDate) {
+      return matchSearch && matchSpecificDate && matchCategory && restrictionMatch;
+    }
+    
+    return matchSearch && matchMonth && matchYear && matchCategory && restrictionMatch;
   });
 
   const filteredWorkPlans = workPlans.filter(plan => {
@@ -219,25 +211,19 @@ const Index = () => {
     const planDate = new Date(plan.date);
     const m = (planDate.getMonth() + 1).toString();
     const y = planDate.getFullYear().toString();
+    
     const matchSearch = plan.items?.some(item => item.description.toLowerCase().includes(search) || item.location.street.toLowerCase().includes(search));
     const matchSpecificDate = !selectedDate || plan.date === selectedDate;
     const matchMonth = selectedMonth === "semua" || m === selectedMonth;
     const matchYear = selectedYear === "semua" || y === selectedYear;
     const matchCategory = selectedCategory === "semua" || plan.category === selectedCategory;
     const restrictionMatch = !isUserRestricted || plan.category === profile?.category;
-    return selectedDate ? (matchSearch && matchSpecificDate && matchCategory && restrictionMatch) : (matchSearch && matchMonth && matchYear && matchCategory && restrictionMatch);
-  });
-
-  const filteredSpjs = spjs.filter(spj => {
-    const search = searchQuery.toLowerCase();
-    const spjDate = new Date(spj.date);
-    const m = (spjDate.getMonth() + 1).toString();
-    const y = spjDate.getFullYear().toString();
-    const matchSearch = spj.spj_number.toLowerCase().includes(search) || spj.vehicle.toLowerCase().includes(search) || spj.location_street.toLowerCase().includes(search);
-    const matchSpecificDate = !selectedDate || spj.date === selectedDate;
-    const matchMonth = selectedMonth === "semua" || m === selectedMonth;
-    const matchYear = selectedYear === "semua" || y === selectedYear;
-    return selectedDate ? (matchSearch && matchSpecificDate) : (matchSearch && matchMonth && matchYear);
+    
+    if (selectedDate) {
+      return matchSearch && matchSpecificDate && matchCategory && restrictionMatch;
+    }
+    
+    return matchSearch && matchMonth && matchYear && matchCategory && restrictionMatch;
   });
 
   return (
@@ -253,6 +239,15 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
             <TooltipProvider>
+              {(isAdmin || isSpjBbm) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/fuel-spj')} className="bg-blue-50 text-blue-700 border-blue-200 px-2 md:px-3"><Fuel className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">SPJ BBM</span></Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Manajemen SPJ BBM</p></TooltipContent>
+                </Tooltip>
+              )}
+
               {isAdmin && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -273,21 +268,18 @@ const Index = () => {
                 </Tooltip>
               )}
 
-              {!isSpjBbm && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200 px-2 md:px-3"><Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak {activeTab === "reports" ? "Laporan" : "Rencana"}</span><ChevronDown className="ml-1 h-3 w-3 opacity-50" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {activeTab === "reports" ? (
-                      <><DropdownMenuItem onClick={() => navigate(`/print-rekap?category=semua`)} className="cursor-pointer py-2"><Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Harian Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/daily-rekap?categories=semua&date=semua`)} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Harian Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/weekly-rekap?categories=semua&date=${new Date().toISOString().split('T')[0]}`)} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-purple-600" /> Rekap Mingguan Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/monthly-rekap`)} className="cursor-pointer py-2"><FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan Laporan</DropdownMenuItem></>
-                    ) : (
-                      <><DropdownMenuItem onClick={() => navigate('/work-plans/daily-rekap')} className="cursor-pointer py-2"><Calendar className="mr-2 h-4 w-4 text-blue-600" /> Rekap Harian Rencana</DropdownMenuItem><DropdownMenuItem onClick={() => navigate('/work-plans/weekly-rekap')} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan Rencana</DropdownMenuItem><DropdownMenuItem onClick={() => navigate('/work-plans/monthly-rekap')} className="cursor-pointer py-2"><FileText className="mr-2 h-4 w-4 text-purple-600" /> Rekap Bulanan Rencana</DropdownMenuItem></>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="bg-slate-50 text-slate-700 border-slate-200 px-2 md:px-3"><Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak {activeTab === "reports" ? "Laporan" : "Rencana"}</span><ChevronDown className="ml-1 h-3 w-3 opacity-50" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {activeTab === "reports" ? (
+                    <><DropdownMenuItem onClick={() => navigate(`/print-rekap?category=semua`)} className="cursor-pointer py-2"><Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Harian Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/daily-rekap?categories=semua&date=semua`)} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Harian Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/weekly-rekap?categories=semua&date=${new Date().toISOString().split('T')[0]}`)} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-purple-600" /> Rekap Mingguan Laporan</DropdownMenuItem><DropdownMenuItem onClick={() => navigate(`/monthly-rekap`)} className="cursor-pointer py-2"><FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan Laporan</DropdownMenuItem></>
+                  ) : (
+                    <><DropdownMenuItem onClick={() => navigate('/work-plans/daily-rekap')} className="cursor-pointer py-2"><Calendar className="mr-2 h-4 w-4 text-blue-600" /> Rekap Harian Rencana</DropdownMenuItem><DropdownMenuItem onClick={() => navigate('/work-plans/weekly-rekap')} className="cursor-pointer py-2"><Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan Rencana</DropdownMenuItem><DropdownMenuItem onClick={() => navigate('/work-plans/monthly-rekap')} className="cursor-pointer py-2"><FileText className="mr-2 h-4 w-4 text-purple-600" /> Rekap Bulanan Rencana</DropdownMenuItem></>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               {isLoggedIn ? (
                 <div className="flex items-center gap-1 border-l pl-1.5 md:pl-2 ml-0.5 md:ml-1">
                   <div className="hidden sm:flex flex-col items-end mr-2"><p className="text-[10px] font-bold text-slate-900 leading-none">{profile?.role === 'spjbbm' ? 'SPJ BBM' : isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}</p><p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian || profile?.role === 'spjbbm' ? 'Semua Kategori' : (profile?.category || 'Semua')}</p></div>
@@ -311,23 +303,21 @@ const Index = () => {
                 <Input placeholder="Ketik kata kunci..." className="pl-10 bg-slate-50 border-slate-200 h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
-            {!isSpjBbm && (
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isUserRestricted}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
-                  <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className={cn("space-y-1.5", isSpjBbm ? "md:col-span-3" : "md:col-span-2")}>
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isUserRestricted}>
+                <SelectTrigger className="bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
+                <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
               <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Tanggal</label>
               <div className="relative">
                 <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input type="date" className="pl-10 bg-slate-50 border-slate-200 h-10" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
               </div>
             </div>
-            <div className={cn("space-y-1.5", isSpjBbm ? "md:col-span-3" : "md:col-span-2")}>
+            <div className="md:col-span-2 space-y-1.5">
               <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Bulan</label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth} disabled={!!selectedDate}>
                 <SelectTrigger className={cn("bg-slate-50 border-slate-200 h-10", selectedDate && "opacity-50")}>
@@ -351,119 +341,67 @@ const Index = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+        <Tabs defaultValue="reports" onValueChange={setActiveTab} className="w-full space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <TabsList className={cn("grid h-12 bg-white border shadow-sm p-1", isSpjBbm ? "w-[200px] grid-cols-1" : "w-[400px] grid-cols-2")}>
-              {!isSpjBbm && <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><FileText size={16} /> Laporan Harian</TabsTrigger>}
-              {!isSpjBbm && <TabsTrigger value="workplans" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><ClipboardList size={16} /> Rencana Kerja</TabsTrigger>}
-              {(isAdmin || isSpjBbm) && <TabsTrigger value="fuel_spj" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><Fuel size={16} /> Manajemen SPJ BBM</TabsTrigger>}
-            </TabsList>
+            <TabsList className="grid w-full md:w-[400px] grid-cols-2 h-12 bg-white border shadow-sm p-1"><TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><FileText size={16} /> Laporan Harian</TabsTrigger><TabsTrigger value="workplans" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"><ClipboardList size={16} /> Rencana Kerja</TabsTrigger></TabsList>
             {isLoggedIn && !isSpjBbm && (
               <div className="flex gap-2">
                 <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700 h-10 font-bold shadow-sm flex-1 md:flex-none"><Plus className="mr-2 h-4 w-4" /> Input Laporan</Button>
                 <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-10 font-bold flex-1 md:flex-none"><Plus className="mr-2 h-4 w-4" /> Buat Rencana</Button>
               </div>
             )}
-            {isLoggedIn && isSpjBbm && (
-              <Button onClick={() => navigate('/fuel-spj/create')} className="bg-blue-600 hover:bg-blue-700 h-10 font-bold shadow-sm"><Plus className="mr-2 h-4 w-4" /> Input SPJ Baru</Button>
-            )}
           </div>
 
-          {!isSpjBbm && (
-            <>
-              <TabsContent value="reports" className="space-y-4">
-                {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredReports.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredReports.map((report) => (
-                      <Card key={report.id} className="group hover:shadow-md transition-all cursor-pointer overflow-hidden border-l-4 border-l-blue-500 relative" onClick={() => navigate(`/report/${report.id}`)}>
-                        <CardHeader className="p-4 pb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="flex flex-col gap-1"><div className="flex items-center text-[10px] text-slate-500 font-medium"><Calendar className="h-3 w-3 mr-1" />{new Date(report.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div><Badge variant="outline" className="w-fit text-[9px] py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">{report.category}</Badge></div>
-                            {isLoggedIn && (
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigate(`/edit/${report.id}`); }}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-red-500", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => handleDeleteReport(e, report)}><Trash2 className="h-4 w-4" /></Button>
-                              </div>
-                            )}
+          <TabsContent value="reports" className="space-y-4">
+            {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredReports.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredReports.map((report) => (
+                  <Card key={report.id} className="group hover:shadow-md transition-all cursor-pointer overflow-hidden border-l-4 border-l-blue-500 relative" onClick={() => navigate(`/report/${report.id}`)}>
+                    <CardHeader className="p-4 pb-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1"><div className="flex items-center text-[10px] text-slate-500 font-medium"><Calendar className="h-3 w-3 mr-1" />{new Date(report.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div><Badge variant="outline" className="w-fit text-[9px] py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">{report.category}</Badge></div>
+                        {isLoggedIn && !isSpjBbm && (
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigate(`/edit/${report.id}`); }}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-red-500", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => handleDeleteReport(e, report)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
-                          <CardTitle className="text-base line-clamp-1 group-hover:text-blue-600 transition-colors mt-2">{report.description}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-2">{report.location.street}, {Array.isArray(report.location.village) ? report.location.village.join(", ") : report.location.village}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">Vol: {report.volume} {getUnitByCategory(report.category)}</span><div className="flex items-center text-blue-600 font-bold">Lihat Detail <Eye className="ml-1 h-3 w-3" /></div></div></CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada laporan ditemukan</p><Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Filter</Button></div>}
-              </TabsContent>
+                        )}
+                      </div>
+                      <CardTitle className="text-base line-clamp-1 group-hover:text-blue-600 transition-colors mt-2">{report.description}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-2">{report.location.street}, {Array.isArray(report.location.village) ? report.location.village.join(", ") : report.location.village}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">Vol: {report.volume} {getUnitByCategory(report.category)}</span><div className="flex items-center text-blue-600 font-bold">Lihat Detail <Eye className="ml-1 h-3 w-3" /></div></div></CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada laporan ditemukan</p><Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Filter</Button></div>}
+          </TabsContent>
 
-              <TabsContent value="workplans" className="space-y-4">
-                {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredWorkPlans.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredWorkPlans.map((plan) => (
-                      <Card key={plan.id} className={cn("group hover:shadow-md transition-all cursor-pointer border-l-4 overflow-hidden relative", plan.is_visible === false ? "border-l-slate-300 opacity-75" : "border-l-green-500")} onClick={() => navigate(`/work-plans/print/${plan.id}`)}>
-                        <CardHeader className="p-4 pb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="flex flex-col gap-1"><div className="flex items-center text-[10px] text-slate-500 font-medium"><Calendar className="h-3 w-3 mr-1" />{new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div><div className="flex items-center gap-2"><Badge variant="outline" className="w-fit text-[9px] py-0 h-4 bg-green-50 text-green-700 border-green-200">{plan.category}</Badge>{plan.is_visible === false && <Badge variant="outline" className="text-[8px] bg-red-50 text-red-600 border-red-100">Sembunyi</Badge>}</div></div>
-                            {isLoggedIn && (
-                              <div className="flex items-center gap-1">
-                                <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className={cn("h-8 w-8", plan.is_visible === false ? "text-slate-400 hover:text-blue-600" : "text-blue-600 hover:bg-blue-50")} onClick={(e) => handleToggleWorkPlanVisibility(e, plan)} disabled={isPimpinan}>{plan.is_visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>{plan.is_visible === false ? "Tampilkan di Rekap" : "Sembunyikan dari Rekap"}</p></TooltipContent></Tooltip></TooltipProvider>
-                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-blue-600", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => { e.stopPropagation(); if(!isPimpinan) navigate(`/work-plans/edit/${plan.id}`); }}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-red-500", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => handleDeleteWorkPlan(e, plan)}><Trash2 className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigate(`/work-plans/print/${plan.id}`); }}><Printer className="h-4 w-4" /></Button>
-                              </div>
-                            )}
+          <TabsContent value="workplans" className="space-y-4">
+            {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredWorkPlans.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredWorkPlans.map((plan) => (
+                  <Card key={plan.id} className={cn("group hover:shadow-md transition-all cursor-pointer border-l-4 overflow-hidden relative", plan.is_visible === false ? "border-l-slate-300 opacity-75" : "border-l-green-500")} onClick={() => navigate(`/work-plans/print/${plan.id}`)}>
+                    <CardHeader className="p-4 pb-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1"><div className="flex items-center text-[10px] text-slate-500 font-medium"><Calendar className="h-3 w-3 mr-1" />{new Date(plan.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div><div className="flex items-center gap-2"><Badge variant="outline" className="w-fit text-[9px] py-0 h-4 bg-green-50 text-green-700 border-green-200">{plan.category}</Badge>{plan.is_visible === false && <Badge variant="outline" className="text-[8px] bg-red-50 text-red-600 border-red-100">Sembunyi</Badge>}</div></div>
+                        {isLoggedIn && !isSpjBbm && (
+                          <div className="flex items-center gap-1">
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className={cn("h-8 w-8", plan.is_visible === false ? "text-slate-400 hover:text-blue-600" : "text-blue-600 hover:bg-blue-50")} onClick={(e) => handleToggleWorkPlanVisibility(e, plan)} disabled={isPimpinan}>{plan.is_visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>{plan.is_visible === false ? "Tampilkan di Rekap" : "Sembunyikan dari Rekap"}</p></TooltipContent></Tooltip></TooltipProvider>
+                            <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-blue-600", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => { e.stopPropagation(); if(!isPimpinan) navigate(`/work-plans/edit/${plan.id}`); }}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-slate-400 hover:text-red-500", isPimpinan && "opacity-50 cursor-not-allowed")} disabled={isPimpinan} onClick={(e) => handleDeleteWorkPlan(e, plan)}><Trash2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigate(`/work-plans/print/${plan.id}`); }}><Printer className="h-4 w-4" /></Button>
                           </div>
-                          <CardTitle className="text-base line-clamp-1 group-hover:text-green-600 transition-colors mt-2">{plan.items?.[0]?.description || "Rencana Kerja"}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-1">{plan.items?.[0]?.location?.street || "Lokasi Kerja"}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">{plan.items?.length || 0} Lokasi Kerja</span><div className="flex items-center text-green-600 font-bold">Lihat Rencana <ArrowRight className="ml-1 h-3 w-3" /></div></div></CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada rencana kerja ditemukan</p><Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Filter</Button></div>}
-                <div className="flex justify-center pt-4"><Button variant="outline" onClick={() => navigate('/work-plans')} className="text-blue-600 border-blue-200">Lihat Semua Rencana Kerja <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
-              </TabsContent>
-            </>
-          )}
-
-          {(isAdmin || isSpjBbm) && (
-            <TabsContent value="fuel_spj" className="space-y-4">
-              {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredSpjs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredSpjs.map((spj) => (
-                    <Card key={spj.id} className="hover:shadow-md transition-all border-l-4 border-l-blue-500 group">
-                      <CardHeader className="p-4 pb-2">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-1">
-                            <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase"><Calendar className="h-3 w-3 mr-1" /> {spj.date}</div>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">{spj.spj_number}</Badge>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => navigate(`/fuel-spj/edit/${spj.id}`)}><Edit className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={(e) => handleDeleteSpj(e, spj.id)}><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                        </div>
-                        <CardTitle className="text-base mt-2 flex items-center gap-2"><Truck size={16} className="text-slate-400" /> {spj.vehicle}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-3">
-                        <div className="text-xs text-slate-600 flex items-start gap-2"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /> <span className="line-clamp-1">{spj.location_street}, {spj.location_village}</span></div>
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-                          <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><Users size={12} /> {spj.team}</div>
-                          <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1"><Globe size={12} /> {spj.region}</div>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded space-y-2 mt-2">
-                          <div className="grid grid-cols-1 gap-1 text-[10px]">
-                            {spj.usage_pertamax > 0 && <div className="flex justify-between"><span>Pertamax:</span><span className="font-black text-blue-600">{formatRupiah(spj.usage_pertamax)}</span></div>}
-                            {spj.usage_dexlite > 0 && <div className="flex justify-between"><span>Dexlite:</span><span className="font-black text-orange-600">{formatRupiah(spj.usage_dexlite)}</span></div>}
-                            {spj.usage_solar > 0 && <div className="flex justify-between"><span>Solar:</span><span className="font-black text-green-600">{formatRupiah(spj.usage_solar)}</span></div>}
-                            {spj.usage_oil > 0 && <div className="flex justify-between border-t pt-1 mt-1"><span>Oli:</span><span className="font-black text-purple-600">{spj.usage_oil} L</span></div>}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada data SPJ BBM ditemukan</p></div>}
-            </TabsContent>
-          )}
+                        )}
+                      </div>
+                      <CardTitle className="text-base line-clamp-1 group-hover:text-green-600 transition-colors mt-2">{plan.items?.[0]?.description || "Rencana Kerja"}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-1">{plan.items?.[0]?.location?.street || "Lokasi Kerja"}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">{plan.items?.length || 0} Lokasi Kerja</span><div className="flex items-center text-green-600 font-bold">Lihat Rencana <ArrowRight className="ml-1 h-3 w-3" /></div></div></CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"><p className="text-slate-500 font-medium">Tidak ada rencana kerja ditemukan</p><Button variant="link" onClick={resetFilters} className="mt-2 text-blue-600">Reset Filter</Button></div>}
+            <div className="flex justify-center pt-4"><Button variant="outline" onClick={() => navigate('/work-plans')} className="text-blue-600 border-blue-200">Lihat Semua Rencana Kerja <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
+          </TabsContent>
         </Tabs>
       </main>
       
