@@ -10,7 +10,7 @@ import {
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
   LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronDown,
-  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays, Fuel
+  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -74,7 +74,6 @@ const Index = () => {
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
   const isAdmin = profile?.role === 'admin' || (session?.user?.email === 'admin@gmail.com');
   const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
-  const isSpjBbm = profile?.role === 'spjbbm' || (session?.user?.email === 'spjbbm@gmail.com');
   const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
   useEffect(() => {
@@ -119,6 +118,7 @@ const Index = () => {
       try {
         await reportService.deleteReport(report.id);
         
+        // Catat Log
         if (session?.user) {
           await auditLogService.logAction({
             action: 'DELETE',
@@ -159,6 +159,7 @@ const Index = () => {
       try {
         await workPlanService.deleteWorkPlan(plan.id);
 
+        // Catat Log
         if (session?.user) {
           await auditLogService.logAction({
             action: 'DELETE',
@@ -199,6 +200,7 @@ const Index = () => {
     const matchCategory = selectedCategory === "semua" || report.category === selectedCategory;
     const restrictionMatch = !isUserRestricted || report.category === profile?.category;
     
+    // Jika tanggal dipilih, abaikan filter bulan/tahun agar lebih akurat
     if (selectedDate) {
       return matchSearch && matchSpecificDate && matchCategory && restrictionMatch;
     }
@@ -239,15 +241,6 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
             <TooltipProvider>
-              {(isAdmin || isSpjBbm) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/fuel-spj')} className="bg-blue-50 text-blue-700 border-blue-200 px-2 md:px-3"><Fuel className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">SPJ BBM</span></Button>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Manajemen SPJ BBM</p></TooltipContent>
-                </Tooltip>
-              )}
-
               {isAdmin && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -282,7 +275,7 @@ const Index = () => {
               </DropdownMenu>
               {isLoggedIn ? (
                 <div className="flex items-center gap-1 border-l pl-1.5 md:pl-2 ml-0.5 md:ml-1">
-                  <div className="hidden sm:flex flex-col items-end mr-2"><p className="text-[10px] font-bold text-slate-900 leading-none">{profile?.role === 'spjbbm' ? 'SPJ BBM' : isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}</p><p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian || profile?.role === 'spjbbm' ? 'Semua Kategori' : (profile?.category || 'Semua')}</p></div>
+                  <div className="hidden sm:flex flex-col items-end mr-2"><p className="text-[10px] font-bold text-slate-900 leading-none">{isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}</p><p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian ? 'Semua Kategori' : (profile?.category || 'Semua')}</p></div>
                   <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 md:h-9 md:w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-4 w-4 md:h-5 md:w-5" /></Button></TooltipTrigger><TooltipContent><p>Keluar Sistem</p></TooltipContent></Tooltip>
                 </div>
               ) : (
