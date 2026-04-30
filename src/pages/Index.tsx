@@ -76,11 +76,8 @@ const Index = () => {
   const isPimpinan = profile?.role === 'pimpinan' || (session?.user?.email === 'pimpinan@gmail.com');
   const isAdmin = profile?.role === 'admin' || (session?.user?.email === 'admin@gmail.com');
   const isAdminHarian = profile?.role === 'admin_harian' || (session?.user?.email === 'sakinah@gmail.com');
-  
-  // Deteksi SPJ BBM lebih fleksibel: Cek Role ATAU Kategori "Admin BBM"
-  const isSpjBbm = profile?.role === 'spjbbm' || profile?.category === 'Admin BBM' || (session?.user?.email === 'spjbbm@gmail.com');
-  
-  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian && !isSpjBbm;
+  const isSpjBbm = profile?.role === 'spjbbm' || (session?.user?.email === 'spjbbm@gmail.com');
+  const isUserRestricted = isLoggedIn && profile?.role === 'user' && !isPimpinan && !isAdminHarian;
 
   const [activeTab, setActiveTab] = useState("reports");
 
@@ -120,7 +117,7 @@ const Index = () => {
       if (results[2]) setSpjs(results[2]);
     } catch (error) {
       console.error(error);
-      // Jangan tampilkan error jika hanya tabel fuel_spj yang gagal (mungkin belum dibuat)
+      showError("Gagal memuat data");
     } finally {
       setLoading(false);
     }
@@ -298,7 +295,7 @@ const Index = () => {
 
               {isLoggedIn ? (
                 <div className="flex items-center gap-1 border-l pl-1.5 md:pl-2 ml-0.5 md:ml-1">
-                  <div className="hidden sm:flex flex-col items-end mr-2"><p className="text-[10px] font-bold text-slate-900 leading-none">{isSpjBbm ? 'Admin BBM' : isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}</p><p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian || isSpjBbm ? 'Semua Kategori' : (profile?.category || 'Semua')}</p></div>
+                  <div className="hidden sm:flex flex-col items-end mr-2"><p className="text-[10px] font-bold text-slate-900 leading-none">{profile?.role === 'spjbbm' ? 'SPJ BBM' : isAdminHarian ? 'Admin Harian' : isPimpinan ? 'Pimpinan' : isAdmin ? 'Admin' : 'User'}</p><p className="text-[8px] text-slate-500">{isPimpinan || isAdminHarian || profile?.role === 'spjbbm' ? 'Semua Kategori' : (profile?.category || 'Semua')}</p></div>
                   <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 md:h-9 md:w-9 text-red-500 hover:bg-red-50 rounded-full"><LogOut className="h-4 w-4 md:h-5 md:w-5" /></Button></TooltipTrigger><TooltipContent><p>Keluar Sistem</p></TooltipContent></Tooltip>
                 </div>
               ) : (
@@ -467,7 +464,7 @@ const Index = () => {
                         </div>
                         <CardTitle className="text-base line-clamp-1 group-hover:text-green-600 transition-colors mt-2">{plan.items?.[0]?.description || "Rencana Kerja"}</CardTitle>
                       </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-1">{plan.items?.[0]?.location?.street || "Lokasi Kerja"}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">Vol: {plan.items?.length || 0} Lokasi Kerja</span><div className="flex items-center text-green-600 font-bold">Lihat Rencana <ArrowRight className="ml-1 h-3 w-3" /></div></div></CardContent>
+                      <CardContent className="p-4 pt-0 space-y-3"><div className="flex items-start gap-2 text-xs text-slate-600"><MapPin className="h-3.5 w-3.5 mt-0.5 text-red-500 shrink-0" /><span className="line-clamp-1">{plan.items?.[0]?.location?.street || "Lokasi Kerja"}</span></div><div className="pt-3 flex justify-between items-center border-t text-[10px]"><span className="text-slate-400 font-medium">{plan.items?.length || 0} Lokasi Kerja</span><div className="flex items-center text-green-600 font-bold">Lihat Rencana <ArrowRight className="ml-1 h-3 w-3" /></div></div></CardContent>
                     </Card>
                   ))}
                 </div>
