@@ -159,7 +159,8 @@ const WorkPlanList = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" onClick={() => navigate('/')} className="px-2 md:px-3">
-              <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Beranda</span>
+              <ArrowLeft className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Beranda</span>
             </Button>
             <div className="flex flex-col">
               <h1 className="text-lg md:text-2xl font-bold flex items-center gap-2">
@@ -188,7 +189,9 @@ const WorkPlanList = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="bg-white px-2 md:px-3 h-8 md:h-10 border-slate-200">
-                  <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Rekap</span> <ChevronDown className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 opacity-50" />
+                  <Printer className="h-4 w-4 md:mr-2" /> 
+                  <span className="hidden md:inline">Cetak Rekap</span> 
+                  <ChevronDown className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -206,11 +209,13 @@ const WorkPlanList = () => {
 
             {isLoggedIn ? (
               <Button onClick={() => navigate('/work-plans/create')} className="bg-blue-600 hover:bg-blue-700 px-2 md:px-4 h-8 md:h-10 shadow-sm">
-                <Plus className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Buat Rencana Baru</span>
+                <Plus className="h-4 w-4 md:mr-2" /> 
+                <span className="hidden md:inline">Buat Rencana Baru</span>
               </Button>
             ) : (
               <Button onClick={() => navigate('/login')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 h-8 md:h-9 px-2 md:px-4">
-                <LogIn className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk Sistem</span>
+                <LogIn className="h-4 w-4 md:mr-2" /> 
+                <span className="hidden md:inline">Masuk Sistem</span>
               </Button>
             )}
           </div>
@@ -273,7 +278,8 @@ const WorkPlanList = () => {
 
             <div className="md:col-span-2 flex justify-end">
               <Button variant="ghost" onClick={resetFilters} className="h-10 text-slate-400 hover:text-red-500 hover:bg-red-50 w-full md:w-auto">
-                <FilterX className="h-4 w-4 mr-2" /> Reset Filter
+                <FilterX className="h-4 w-4 md:mr-2" /> 
+                <span className="hidden md:inline">Reset Filter</span>
               </Button>
             </div>
           </div>

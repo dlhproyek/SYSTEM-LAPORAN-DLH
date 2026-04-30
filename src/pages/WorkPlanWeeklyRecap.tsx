@@ -112,18 +112,22 @@ const WorkPlanWeeklyRecap = () => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4">
-              <ArrowLeft className="h-4 w-4 md:mr-2" /> Kembali
+              <ArrowLeft className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Kembali</span>
             </Button>
             <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[180px]" />
+              <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
+              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
             </div>
-            <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-100">
+            <div className="text-[10px] md:text-xs font-bold text-blue-600 bg-blue-50 px-2 md:px-3 py-2 rounded-md border border-blue-100">
               {format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}
             </div>
             <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium">
-                <SelectValue placeholder="Tanda Tangan" />
+              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <PenTool size={16} />
+                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
@@ -131,14 +135,16 @@ const WorkPlanWeeklyRecap = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
             {isLoggedIn && (
-              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                <Plus className="mr-2 h-4 w-4" /> Tambah Baru
+              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
+                <Plus className="h-4 w-4 md:mr-2" /> 
+                <span className="hidden md:inline">Tambah Baru</span>
               </Button>
             )}
-            <Button onClick={() => window.print()} className="bg-blue-600">
-              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
+            <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-10">
+              <Printer className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Cetak Rekap</span>
             </Button>
           </div>
         </div>
