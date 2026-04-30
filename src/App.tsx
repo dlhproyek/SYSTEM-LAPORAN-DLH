@@ -32,17 +32,15 @@ import EditFuelSpj from "./pages/EditFuelSpj";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children, allowedRoles, allowAdminBbm = false }: { children: React.ReactNode, allowedRoles?: string[], allowAdminBbm?: boolean }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { session, profile, loading } = useAuth();
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
   if (!session) return <Navigate to="/login" />;
   
-  const isSpjBbm = profile?.role === 'spjbbm' || profile?.category === 'Admin BBM';
-  const hasAllowedRole = allowedRoles && profile && allowedRoles.includes(profile.role);
-  
-  if (allowAdminBbm && isSpjBbm) return <>{children}</>;
-  if (allowedRoles && !hasAllowedRole) return <Navigate to="/" />;
+  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+    return <Navigate to="/" />;
+  }
   
   return <>{children}</>;
 };
@@ -69,16 +67,16 @@ const App = () => (
             <Route path="/work-plans/weekly-rekap" element={<WorkPlanWeeklyRecap />} />
             <Route path="/work-plans/monthly-rekap" element={<WorkPlanMonthlyRecap />} />
             
-            {/* Fuel SPJ Routes - Restricted to admin and spjbbm / Admin BBM Category */}
-            <Route path="/fuel-spj" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><FuelSpjList /></ProtectedRoute>} />
-            <Route path="/fuel-spj/create" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><CreateFuelSpj /></ProtectedRoute>} />
-            <Route path="/fuel-spj/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']} allowAdminBbm={true}><EditFuelSpj /></ProtectedRoute>} />
+            {/* Fuel SPJ Routes - Restricted to admin and spjbbm */}
+            <Route path="/fuel-spj" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']}><FuelSpjList /></ProtectedRoute>} />
+            <Route path="/fuel-spj/create" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']}><CreateFuelSpj /></ProtectedRoute>} />
+            <Route path="/fuel-spj/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'spjbbm']}><EditFuelSpj /></ProtectedRoute>} />
             
-            {/* Work Plan Creation/Edit */}
+            {/* Work Plan Creation/Edit - Restricted to exclude spjbbm */}
             <Route path="/work-plans/create" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><EditWorkPlan /></ProtectedRoute>} />
             
-            {/* Report Creation/Edit */}
+            {/* Report Creation/Edit - Restricted to exclude spjbbm */}
             <Route path="/create" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute allowedRoles={['admin', 'user', 'pimpinan', 'admin_harian']}><EditReport /></ProtectedRoute>} />
             
