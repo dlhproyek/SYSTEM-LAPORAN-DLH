@@ -66,7 +66,6 @@ const WorkPlanDailyRecap = () => {
         setSelectedDate("semua");
       }
 
-      // FILTER: Hanya tampilkan yang is_visible !== false
       const filtered = data.filter(p => 
         (targetDate === "semua" || p.date === targetDate) && 
         p.is_visible !== false
@@ -216,6 +215,19 @@ const WorkPlanDailyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
+                if (plan.has_no_activity) {
+                  return (
+                    <tr key={plan.id}>
+                      <td className="border-2 border-black p-1 text-center">{pIdx + 1}</td>
+                      <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>
+                      <td colSpan={8} className="border-2 border-black p-4 text-center font-black text-sm tracking-widest">
+                        TIDAK ADA RENCANA KERJA/ KEGIATAN
+                      </td>
+                      {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{plan.items[0]?.remarks || "-"}</td>}
+                    </tr>
+                  );
+                }
+
                 const resourceGroups = groupPlanResources(plan);
                 const totalPlanRows = resourceGroups.reduce((acc, group) => 
                   acc + Math.max(group.items.length, group.tools.length, 1), 0

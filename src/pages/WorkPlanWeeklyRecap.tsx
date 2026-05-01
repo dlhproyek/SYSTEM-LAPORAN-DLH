@@ -133,12 +133,12 @@ const WorkPlanWeeklyRecap = () => {
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn && (
-              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                <Plus className="mr-2 h-4 w-4" /> Tambah Baru
+              <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
+                <Plus className="mr-2 h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Tambah Baru</span>
               </Button>
             )}
-            <Button onClick={() => window.print()} className="bg-blue-600">
-              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
+            <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-10">
+              <Printer className="mr-2 h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Rekap</span>
             </Button>
           </div>
         </div>
@@ -180,6 +180,24 @@ const WorkPlanWeeklyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
+                if (plan.has_no_activity) {
+                  return (
+                    <tr key={plan.id}>
+                      <td className="border-2 border-black p-1 text-center">
+                        {pIdx + 1}
+                      </td>
+                      <td className="border-2 border-black p-1 text-center text-[8px]">
+                        {format(parseISO(plan.date), 'eee, dd/MM', { locale: localeId })}
+                      </td>
+                      <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>
+                      <td colSpan={8} className="border-2 border-black p-4 text-center font-black text-sm tracking-widest">
+                        TIDAK ADA RENCANA KERJA/ KEGIATAN
+                      </td>
+                      {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{plan.items[0]?.remarks || "-"}</td>}
+                    </tr>
+                  );
+                }
+
                 const resourceGroups = groupPlanResources(plan);
                 const totalPlanRows = resourceGroups.reduce((acc, group) => 
                   acc + Math.max(group.items.length, group.tools.length, 1), 0
@@ -280,7 +298,7 @@ const WorkPlanWeeklyRecap = () => {
             padding: 0 !important; 
             margin: 0 !important; 
             width: 100% !important; 
-            max-width: none !important;
+            max-width: none !important; 
           }
           @page { size: landscape; margin: 1cm; }
         }

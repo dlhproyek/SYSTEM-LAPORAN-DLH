@@ -111,7 +111,16 @@ const PrintWorkPlan = () => {
             </tr>
           </thead>
           <tbody>
-            {isGlobalStyle ? (
+            {plan.has_no_activity ? (
+              <tr>
+                <td className="border-2 border-black p-1 text-center">1</td>
+                <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>
+                <td colSpan={8} className="border-2 border-black p-4 text-center font-black text-sm tracking-widest">
+                  TIDAK ADA RENCANA KERJA/ KEGIATAN
+                </td>
+                {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{plan.items[0]?.remarks || "-"}</td>}
+              </tr>
+            ) : isGlobalStyle ? (
               (() => {
                 const allTools = plan.items[0].tools;
                 const allItems = plan.items;

@@ -26,5 +26,6 @@ export interface WorkPlan {
   category: string;
   items: WorkPlanItem[];
   created_at: string;
-  is_visible: boolean; // Properti baru untuk kontrol visibilitas di rekap
+  is_visible: boolean;
+  has_no_activity?: boolean; // Properti baru untuk kondisi tidak ada kegiatan
 }

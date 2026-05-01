@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Users, Wrench, FileText, MessageSquare, ClipboardList, ShieldAlert, Check, HelpCircle, Copy, AlertCircle } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Users, Wrench, FileText, MessageSquare, ClipboardList, ShieldAlert, Check, HelpCircle, Copy, AlertCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { WorkPlan, WorkPlanItem } from '@/types/workPlan';
@@ -82,11 +83,15 @@ const itemSchema = z.object({
 const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   category: z.string().min(1, "Kategori wajib dipilih"),
+  has_no_activity: z.boolean().default(false),
+  no_activity_remarks: z.string().optional().default(""),
   items: z.array(itemSchema).min(1),
   globalTools: z.array(toolSchema).optional().default([{ name: "", unit: 1, usage: "" }]),
   globalCoordinator: z.string().optional().default(""),
   globalMembers: z.coerce.number().optional().default(0),
 }).superRefine((data, ctx) => {
+  if (data.has_no_activity) return; // Skip validation if no activity
+
   const isGlobalStyle = data.category === "Tim Pohon" || data.category === "Tim Babat";
   if (isGlobalStyle && (!data.globalCoordinator || data.globalCoordinator.trim() === "")) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Koordinator tim wajib diisi", path: ['globalCoordinator'] });
@@ -123,6 +128,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     defaultValues: initialData ? {
       date: initialData.date,
       category: initialData.category,
+      has_no_activity: initialData.has_no_activity || false,
+      no_activity_remarks: initialData.has_no_activity ? initialData.items[0]?.remarks : "",
       items: initialData.items.map(item => ({ ...item, uiMode: 'full' })),
       globalTools: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
       globalCoordinator: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].coordinator : "",
@@ -130,6 +137,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     } : {
       date: getTomorrowDate(),
       category: profile?.role === 'user' ? (profile?.category || "") : "",
+      has_no_activity: false,
+      no_activity_remarks: "",
       items: [{ description: "", location: { street: "", village: [""], subDistrict: "" }, tools: [{ name: "", unit: 1, usage: "" }], coordinator: "", personnel: { members: 0 }, basis: "", remarks: "", uiMode: 'full' }],
       globalTools: [{ name: "", unit: 1, usage: "" }],
       globalCoordinator: "",
@@ -139,16 +148,15 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
 
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({ control: form.control, name: "items" });
   const selectedCategory = form.watch("category");
+  const hasNoActivity = form.watch("has_no_activity");
   const isGlobalStyle = selectedCategory === "Tim Pohon" || selectedCategory === "Tim Babat";
   const useWizard = selectedCategory === "Tim Siram";
 
   useEffect(() => {
     if (!isEditing && !isDuplicateMode && selectedCategory) {
-      // Auto-fill coordinator
       const autoCoord = categoryCoordinatorMapping[selectedCategory];
       if (autoCoord && isGlobalStyle) form.setValue("globalCoordinator", autoCoord);
       
-      // Auto-fill description for specific categories
       const defaultDesc = defaultActivityMapping[selectedCategory];
       if (defaultDesc) {
         const currentItems = form.getValues("items");
@@ -165,8 +173,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     const items = form.getValues("items");
     const lastItem = items[items.length - 1];
     let defaultCoord = isGlobalStyle ? form.getValues("globalCoordinator") : (categoryCoordinatorMapping[selectedCategory] || lastItem?.coordinator || "");
-    
-    // Default description based on category
     const defaultDesc = defaultActivityMapping[selectedCategory] || "";
 
     if (mode === 'full') {
@@ -201,16 +207,36 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     if (isPimpinan) { showError("Akses ditolak"); return; }
     setIsSubmitting(true);
     try {
-      const cleanGlobalTools = values.globalTools?.filter(t => t.name && t.name.trim() !== "") || [];
-      const processedItems = values.items.map(item => {
-        const { uiMode, ...rest } = item;
-        if (isGlobalStyle) return { ...rest, tools: cleanGlobalTools, coordinator: values.globalCoordinator || "", personnel: { members: values.globalMembers || 0 } };
-        return { ...rest, tools: item.tools.filter(t => t.name && t.name.trim() !== "") };
-      });
-
-      const finalValues = { date: values.date, category: values.category, items: processedItems };
-      let result;
+      let processedItems;
       
+      if (values.has_no_activity) {
+        // Jika tidak ada kegiatan, buat satu item dummy dengan keterangan bantuan
+        processedItems = [{
+          description: "TIDAK ADA RENCANA KERJA/ KEGIATAN",
+          location: { street: "-", village: ["-"], subDistrict: "-" },
+          tools: [],
+          coordinator: "-",
+          personnel: { members: 0 },
+          basis: "-",
+          remarks: values.no_activity_remarks || ""
+        }];
+      } else {
+        const cleanGlobalTools = values.globalTools?.filter(t => t.name && t.name.trim() !== "") || [];
+        processedItems = values.items.map(item => {
+          const { uiMode, ...rest } = item;
+          if (isGlobalStyle) return { ...rest, tools: cleanGlobalTools, coordinator: values.globalCoordinator || "", personnel: { members: values.globalMembers || 0 } };
+          return { ...rest, tools: item.tools.filter(t => t.name && t.name.trim() !== "") };
+        });
+      }
+
+      const finalValues = { 
+        date: values.date, 
+        category: values.category, 
+        items: processedItems,
+        has_no_activity: values.has_no_activity 
+      };
+      
+      let result;
       if (isEditing && initialData && !isDuplicateMode) {
         result = await workPlanService.updateWorkPlan(initialData.id, finalValues as Partial<WorkPlan>);
         if (session?.user) {
@@ -260,14 +286,16 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-5xl mx-auto pb-20">
         <datalist id="workplan-tools">{Object.keys(toolUsageMapping).map(tool => <option key={tool} value={tool} />)}</datalist>
         <div className="flex items-center justify-between mb-6">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="px-2 md:px-4">
+            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
+          </Button>
           <div className="flex flex-col items-center">
-            <h1 className="text-2xl font-bold text-primary">{isEditing && !isDuplicateMode ? "Edit Rencana Kerja" : "Buat Rencana Kerja Baru"}</h1>
+            <h1 className="text-lg md:text-2xl font-bold text-primary">{isEditing && !isDuplicateMode ? "Edit Rencana Kerja" : "Buat Rencana Kerja Baru"}</h1>
             {isDuplicateMode && <Badge className="bg-amber-100 text-amber-700 border-amber-200 mt-1 animate-pulse"><Copy size={10} className="mr-1" /> Mode Duplikat: Belum Tersimpan</Badge>}
           </div>
           <div className="flex gap-2">
-            {isEditing && !isDuplicateMode && <Button type="button" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50" onClick={() => { setDuplicateDate(getTomorrowDate()); setShowDuplicateDialog(true); }}><Copy className="mr-2 h-4 w-4" /> Duplikat</Button>}
-            <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan"}</Button>
+            {isEditing && !isDuplicateMode && <Button type="button" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4" onClick={() => { setDuplicateDate(getTomorrowDate()); setShowDuplicateDialog(true); }}><Copy className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Duplikat</span></Button>}
+            <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-2 md:px-4", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin md:mr-2" /> : <Save className="h-4 w-4 md:mr-2" />} <span className="hidden md:inline">{isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan"}</span></Button>
           </div>
         </div>
 
@@ -283,58 +311,102 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
 
         <Card className="border-t-4 border-t-blue-500">
           <CardHeader><CardTitle className="text-lg">Informasi Umum</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="date" render={({ field }) => (<FormItem><FormLabel>Tanggal Rencana</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>)} />
-            <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Kategori / Tim</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={profile?.role === 'user'}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="date" render={({ field }) => (<FormItem><FormLabel>Tanggal Rencana</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>)} />
+              <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Kategori / Tim</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={profile?.role === 'user'}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori..." /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+            </div>
+
+            {selectedCategory === "Tim Pohon" && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-lg"><Info className="h-5 w-5 text-blue-600" /></div>
+                  <div>
+                    <p className="font-bold text-sm text-blue-900">Mode Bantuan Wilayah Lain</p>
+                    <p className="text-xs text-blue-700">Aktifkan jika tidak ada kegiatan internal dan armada digunakan untuk membantu wilayah lain.</p>
+                  </div>
+                </div>
+                <FormField control={form.control} name="has_no_activity" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  </FormItem>
+                )} />
+              </div>
+            )}
           </CardContent>
         </Card>
-        {isGlobalStyle && (
-          <Card className="border-t-4 border-t-orange-500 bg-orange-50/30">
-            <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2 text-orange-700"><ShieldAlert className="h-5 w-5" /> Sumber Daya Tim (Global)</CardTitle></CardHeader>
-            <CardContent className="space-y-6 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="globalCoordinator" render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Users size={16} /> Koordinator Tim</FormLabel><FormControl><Input {...field} placeholder="Nama Koordinator..." /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="globalMembers" render={({ field }) => (<FormItem><FormLabel>Jumlah Anggota Tim</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-              </div>
-              <div className="space-y-4 pt-4 border-t border-orange-200">
-                <div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2 text-orange-700 font-bold"><Wrench size={16} /> Alat Operasional Tim</FormLabel><Button type="button" variant="outline" size="sm" className="h-8 border-orange-200 text-orange-700 hover:bg-orange-100" onClick={() => { const current = form.getValues("globalTools") || []; form.setValue("globalTools", [...current, { name: "", unit: 1, usage: "" }]); }}><Plus size={14} className="mr-1" /> Tambah Alat</Button></div>
-                {form.watch("globalTools")?.map((_, toolIdx) => (
-                  <div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-white p-3 rounded-lg border border-orange-100">
-                    <div className="md:col-span-5"><FormField control={form.control} name={`globalTools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} list="workplan-tools" onChange={(e) => { field.onChange(e); const usage = toolUsageMapping[e.target.value]; if (usage) form.setValue(`globalTools.${toolIdx}.usage`, usage); }} /></FormControl></FormItem>)} /></div>
-                    <div className="md:col-span-2"><FormField control={form.control} name={`globalTools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div>
-                    <div className="md:col-span-4"><FormField control={form.control} name={`globalTools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div>
-                    <div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues("globalTools") || []; form.setValue("globalTools", current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div>
-                  </div>
-                ))}
+
+        {hasNoActivity ? (
+          <Card className="border-t-4 border-t-amber-500 shadow-md">
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2 text-amber-700"><ShieldAlert className="h-5 w-5" /> Keterangan Bantuan Wilayah</CardTitle></CardHeader>
+            <CardContent>
+              <FormField control={form.control} name="no_activity_remarks" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Isi Manual Keterangan (Contoh: Membantu Wilayah Medan Amplas)</FormLabel>
+                  <FormControl><Input {...field} placeholder="Ketik keterangan bantuan di sini..." className="h-12 border-amber-200 focus:ring-amber-500" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <div className="mt-4 p-3 bg-slate-50 rounded border text-[10px] text-slate-500 italic">
+                * Kolom Detail Kegiatan, Lokasi, Alat, dan Personil akan otomatis digabung menjadi "TIDAK ADA RENCANA KERJA/ KEGIATAN" pada tampilan cetak.
               </div>
             </CardContent>
           </Card>
-        )}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between"><h2 className="text-xl font-bold flex items-center gap-2"><ClipboardList className="text-blue-600" /> Daftar Lokasi & Kegiatan</h2></div>
-          {itemFields.map((item, index) => {
-            const uiMode = form.watch(`items.${index}.uiMode`);
-            return (
-              <Card key={item.id} className="border-l-4 border-l-blue-400 shadow-md overflow-hidden">
-                <CardHeader className="bg-slate-50/50 py-3 flex flex-row items-center justify-between"><div className="flex items-center gap-3"><Badge className="bg-blue-600">Lokasi #{index + 1}</Badge>{uiMode !== 'full' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]"><Check size={10} className="mr-1" /> {uiMode === 'location_only' ? 'Alat & Kegiatan Sama' : 'Alat Sama'}</Badge>}</div><div className="flex items-center gap-2">{uiMode !== 'full' && <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] text-blue-600" onClick={() => form.setValue(`items.${index}.uiMode`, 'full')}>Tampilkan Semua</Button>}{itemFields.length > 1 && <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeItem(index)}><Trash2 className="h-4 w-4" /></Button>}</div></CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  {uiMode !== 'location_only' && <FormField control={form.control} name={`items.${index}.description`} render={({ field }) => (<FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pembabatan rumput..." /></FormControl></FormItem>)} />}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField control={form.control} name={`items.${index}.location.street`} render={({ field }) => (<FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name={`items.${index}.location.subDistrict`} render={({ field }) => (<FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select></FormItem>)} />
-                    <FormField control={form.control} name={`items.${index}.location.village.0`} render={({ field }) => (<FormItem><FormLabel>Kelurahan</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{form.watch(`items.${index}.location.subDistrict`) && form.watch(`items.${index}.location.subDistrict`) !== " " && medanDistricts[form.watch(`items.${index}.location.subDistrict`)].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+        ) : (
+          <>
+            {isGlobalStyle && (
+              <Card className="border-t-4 border-t-orange-500 bg-orange-50/30">
+                <CardHeader className="pb-2"><CardTitle className="text-lg flex items-center gap-2 text-orange-700"><ShieldAlert className="h-5 w-5" /> Sumber Daya Tim (Global)</CardTitle></CardHeader>
+                <CardContent className="space-y-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="globalCoordinator" render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Users size={16} /> Koordinator Tim</FormLabel><FormControl><Input {...field} placeholder="Nama Koordinator..." /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="globalMembers" render={({ field }) => (<FormItem><FormLabel>Jumlah Anggota Tim</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                   </div>
-                  {uiMode === 'full' && !isGlobalStyle && (
-                    <><div className="pt-4 border-t space-y-4"><div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2 text-blue-700 font-bold"><Wrench size={16} /> Alat Operasional</FormLabel><Button type="button" variant="outline" size="sm" className="h-8" onClick={() => { const current = form.getValues(`items.${index}.tools`); form.setValue(`items.${index}.tools`, [...current, { name: "", unit: 1, usage: "" }]); }}><Plus size={14} className="mr-1" /> Tambah Alat</Button></div>{form.watch(`items.${index}.tools`)?.map((_, toolIdx) => (<div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 p-3 rounded-lg border"><div className="md:col-span-5"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} list="workplan-tools" onChange={(e) => { field.onChange(e); const usage = toolUsageMapping[e.target.value]; if (usage) form.setValue(`items.${index}.tools.${toolIdx}.usage`, usage); if (selectedCategory === "Tim Siram" && toolIdx === 0) { const autoCoord = toolCoordinatorMapping[e.target.value]; if (autoCoord) form.setValue(`items.${index}.coordinator`, autoCoord); } }} /></FormControl></FormItem>)} /></div><div className="md:col-span-2"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div><div className="md:col-span-4"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div><div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues(`items.${index}.tools`); form.setValue(`items.${index}.tools`, current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div></div>))}</div><div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t"><FormField control={form.control} name={`items.${index}.coordinator`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Users size={16} /> Koordinator</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /><FormField control={form.control} name={`items.${index}.personnel.members`} render={({ field }) => (<FormItem><FormLabel>Jumlah Personil</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div></>
-                  )}
-                  {uiMode === 'full' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t"><FormField control={form.control} name={`items.${index}.basis`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><FileText size={16} /> Dasar Pengerjaan</FormLabel><FormControl><Input {...field} placeholder="Contoh: SPT No. 123..." /></FormControl></FormItem>)} /><FormField control={form.control} name={`items.${index}.remarks`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><MessageSquare size={16} /> Keterangan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div>}
+                  <div className="space-y-4 pt-4 border-t border-orange-200">
+                    <div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2 text-orange-700 font-bold"><Wrench size={16} /> Alat Operasional Tim</FormLabel><Button type="button" variant="outline" size="sm" className="h-8 border-orange-200 text-orange-700 hover:bg-orange-100 px-2 md:px-3" onClick={() => { const current = form.getValues("globalTools") || []; form.setValue("globalTools", [...current, { name: "", unit: 1, usage: "" }]); }}><Plus size={14} className="md:mr-1" /> <span className="hidden md:inline">Tambah Alat</span></Button></div>
+                    {form.watch("globalTools")?.map((_, toolIdx) => (
+                      <div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-white p-3 rounded-lg border border-orange-100">
+                        <div className="md:col-span-5"><FormField control={form.control} name={`globalTools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} list="workplan-tools" onChange={(e) => { field.onChange(e); const usage = toolUsageMapping[e.target.value]; if (usage) form.setValue(`globalTools.${toolIdx}.usage`, usage); }} /></FormControl></FormItem>)} /></div>
+                        <div className="md:col-span-2"><FormField control={form.control} name={`globalTools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div>
+                        <div className="md:col-span-4"><FormField control={form.control} name={`globalTools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div>
+                        <div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues("globalTools") || []; form.setValue("globalTools", current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-          <Button type="button" variant="outline" className="w-full border-dashed py-8 text-blue-600 font-bold bg-white hover:bg-blue-50" onClick={handleAddClick}><Plus className="mr-2 h-5 w-5" /> Tambah Lokasi Kerja Baru</Button>
+            )}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between"><h2 className="text-xl font-bold flex items-center gap-2"><ClipboardList className="text-blue-600" /> Daftar Lokasi & Kegiatan</h2></div>
+              {itemFields.map((item, index) => {
+                const uiMode = form.watch(`items.${index}.uiMode`);
+                return (
+                  <Card key={item.id} className="border-l-4 border-l-blue-400 shadow-md overflow-hidden">
+                    <CardHeader className="bg-slate-50/50 py-3 flex flex-row items-center justify-between"><div className="flex items-center gap-3"><Badge className="bg-blue-600">Lokasi #{index + 1}</Badge>{uiMode !== 'full' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]"><Check size={10} className="mr-1" /> {uiMode === 'location_only' ? 'Alat & Kegiatan Sama' : 'Alat Sama'}</Badge>}</div><div className="flex items-center gap-2">{uiMode !== 'full' && <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] text-blue-600" onClick={() => form.setValue(`items.${index}.uiMode`, 'full')}>Tampilkan Semua</Button>}{itemFields.length > 1 && <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeItem(index)}><Trash2 className="h-4 w-4" /></Button>}</div></CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                      {uiMode !== 'location_only' && <FormField control={form.control} name={`items.${index}.description`} render={({ field }) => (<FormItem><FormLabel className="font-bold">Detail Kegiatan</FormLabel><FormControl><Input {...field} placeholder="Contoh: Pembabatan rumput..." /></FormControl></FormItem>)} />}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField control={form.control} name={`items.${index}.location.street`} render={({ field }) => (<FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name={`items.${index}.location.subDistrict`} render={({ field }) => (<FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                        <FormField control={form.control} name={`items.${index}.location.village.0`} render={({ field }) => (<FormItem><FormLabel>Kelurahan</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">Abaikan / Kosong</SelectItem>{form.watch(`items.${index}.location.subDistrict`) && form.watch(`items.${index}.location.subDistrict`) !== " " && medanDistricts[form.watch(`items.${index}.location.subDistrict`)].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select></FormItem>)} />
+                      </div>
+                      {uiMode === 'full' && !isGlobalStyle && (
+                        <><div className="pt-4 border-t space-y-4"><div className="flex items-center justify-between"><FormLabel className="flex items-center gap-2 text-blue-700 font-bold"><Wrench size={16} /> Alat Operasional</FormLabel><Button type="button" variant="outline" size="sm" className="h-8 px-2 md:px-3" onClick={() => { const current = form.getValues(`items.${index}.tools`); form.setValue(`items.${index}.tools`, [...current, { name: "", unit: 1, usage: "" }]); }}><Plus size={14} className="md:mr-1" /> <span className="hidden md:inline">Tambah Alat</span></Button></div>{form.watch(`items.${index}.tools`)?.map((_, toolIdx) => (<div key={toolIdx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 p-3 rounded-lg border"><div className="md:col-span-5"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.name`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Nama Alat</FormLabel><FormControl><Input className="h-9" {...field} list="workplan-tools" onChange={(e) => { field.onChange(e); const usage = toolUsageMapping[e.target.value]; if (usage) form.setValue(`items.${index}.tools.${toolIdx}.usage`, usage); if (selectedCategory === "Tim Siram" && toolIdx === 0) { const autoCoord = toolCoordinatorMapping[e.target.value]; if (autoCoord) form.setValue(`items.${index}.coordinator`, autoCoord); } }} /></FormControl></FormItem>)} /></div><div className="md:col-span-2"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.unit`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Unit</FormLabel><FormControl><Input type="number" className="h-9" {...field} /></FormControl></FormItem>)} /></div><div className="md:col-span-4"><FormField control={form.control} name={`items.${index}.tools.${toolIdx}.usage`} render={({ field }) => (<FormItem><FormLabel className="text-[10px] uppercase">Kegunaan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl></FormItem>)} /></div><div className="md:col-span-1 flex justify-end"><Button type="button" variant="ghost" size="icon" className="text-red-400 h-9 w-9" onClick={() => { const current = form.getValues(`items.${index}.tools`); form.setValue(`items.${index}.tools`, current.filter((_, i) => i !== toolIdx)); }}><Trash2 size={16} /></Button></div></div>))}</div><div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t"><FormField control={form.control} name={`items.${index}.coordinator`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Users size={16} /> Koordinator</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /><FormField control={form.control} name={`items.${index}.personnel.members`} render={({ field }) => (<FormItem><FormLabel>Jumlah Personil</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} /></div></>
+                      )}
+                      {uiMode === 'full' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t"><FormField control={form.control} name={`items.${index}.basis`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><FileText size={16} /> Dasar Pengerjaan</FormLabel><FormControl><Input {...field} placeholder="Contoh: SPT No. 123..." /></FormControl></FormItem>)} /><FormField control={form.control} name={`items.${index}.remarks`} render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><MessageSquare size={16} /> Keterangan</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} /></div>}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              <Button type="button" variant="outline" className="w-full border-dashed py-8 text-blue-600 font-bold bg-white hover:bg-blue-50 px-2 md:px-4" onClick={handleAddClick}><Plus className="mr-2 h-5 w-5" /> <span className="hidden md:inline">Tambah Lokasi Kerja Baru</span></Button>
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate(-1)} className="px-2 md:px-4">Batal</Button>
+          <Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-2 md:px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? "Menyimpan..." : isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan Rencana Kerja"}</Button>
         </div>
-        <div className="flex justify-end gap-4"><Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button><Button type="submit" disabled={isSubmitting || isPimpinan} className={cn("bg-blue-600 hover:bg-blue-700 px-8", isPimpinan && "opacity-50 cursor-not-allowed")}>{isSubmitting ? "Menyimpan..." : isDuplicateMode ? "Simpan Sebagai Baru" : "Simpan Rencana Kerja"}</Button></div>
       </form>
       <Dialog open={showWizard} onOpenChange={setShowWizard}><DialogContent className="sm:max-w-[450px]"><DialogHeader><DialogTitle className="flex items-center gap-2"><HelpCircle className="text-blue-600 h-5 w-5" /> {wizardStep === 1 ? "Alat Operasional" : "Detail Kegiatan"}</DialogTitle><DialogDescription>{wizardStep === 1 ? "Apakah lokasi baru ini menggunakan Alat Operasional yang sama?" : "Apakah Detail Kegiatannya juga sama?"}</DialogDescription></DialogHeader><div className="py-6 flex flex-col gap-3">{wizardStep === 1 ? (<><Button onClick={() => setWizardStep(2)} className="h-12 justify-start px-6 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"><Check className="mr-3 h-5 w-5" /> Ya, Alat Sama</Button><Button onClick={() => performAppend('full')} variant="outline" className="h-12 justify-start px-6"><Plus className="mr-3 h-5 w-5" /> Tidak, Alat Berbeda</Button></>) : (<><Button onClick={() => performAppend('location_only')} className="h-12 justify-start px-6 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"><Check className="mr-3 h-5 w-5" /> Ya, Kegiatan Sama</Button><Button onClick={() => performAppend('activity_location')} variant="outline" className="h-12 justify-start px-6"><Plus className="mr-3 h-5 w-5" /> Tidak, Kegiatan Berbeda</Button></>)}</div><DialogFooter><Button variant="ghost" onClick={() => setShowWizard(false)}>Batal</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}><DialogContent className="sm:max-w-[400px]"><DialogHeader><DialogTitle className="flex items-center gap-2"><Copy className="text-blue-600 h-5 w-5" /> Duplikat Rencana Kerja</DialogTitle><DialogDescription>Pilih tanggal baru untuk menyalin data ini ke formulir.</DialogDescription></DialogHeader><div className="py-4 space-y-4"><div className="space-y-2"><FormLabel>Tanggal Baru</FormLabel><Input type="date" value={duplicateDate} onChange={(e) => setDuplicateDate(e.target.value)} className="h-11" /></div></div><DialogFooter className="gap-2 sm:gap-0"><Button variant="ghost" onClick={() => setShowDuplicateDialog(false)}>Batal</Button><Button onClick={handleDuplicate} disabled={!duplicateDate} className="bg-blue-600 hover:bg-blue-700"><Copy className="h-4 w-4 mr-2" /> Salin ke Form</Button></DialogFooter></DialogContent></Dialog>
