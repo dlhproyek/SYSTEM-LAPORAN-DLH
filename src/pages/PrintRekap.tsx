@@ -55,7 +55,7 @@ const PrintRekap = () => {
             <p className="text-xs text-slate-500">Kategori: {category === 'semua' ? 'Semua Kategori' : category}</p>
           </div>
           <Button onClick={() => window.print()} className="bg-blue-600">
-            <Printer className="mr-2 h-4 w-4" /> Cetak
+            <Printer className="mr-2 h-4 w-4" /> Cetak Sekarang
           </Button>
         </div>
       </div>

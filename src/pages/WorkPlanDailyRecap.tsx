@@ -120,13 +120,48 @@ const WorkPlanDailyRecap = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
-      <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
-        {/* Baris 1: Navigasi & Aksi Utama */}
-        <div className="flex items-center justify-between gap-4 border-b pb-4">
-          <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4 h-9">
-            <ArrowLeft className="h-4 w-4 md:mr-2" /> 
-            <span className="hidden md:inline">Kembali</span>
-          </Button>
+      <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4 h-9">
+              <ArrowLeft className="h-4 w-4 md:mr-2" /> 
+              <span className="hidden md:inline">Kembali</span>
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Select value={selectedDate === "semua" ? "semua" : selectedDate === "" ? "" : "custom"} onValueChange={(v) => {
+                if (v === "semua") setSelectedDate("semua");
+                else if (v === "custom") setSelectedDate(new Date().toISOString().split('T')[0]);
+              }}>
+                <SelectTrigger className="w-[110px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-xs md:text-sm">
+                  <SelectValue placeholder="Pilih Tanggal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua</SelectItem>
+                  <SelectItem value="custom">Pilih...</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedDate !== "semua" && selectedDate !== "" && (
+                <div className="relative">
+                  <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
+                  <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
+                </div>
+              )}
+            </div>
+
+            <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
+              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <PenTool size={16} />
+                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="flex items-center gap-1.5 md:gap-2">
             {isLoggedIn && (
@@ -140,43 +175,6 @@ const WorkPlanDailyRecap = () => {
               <span className="hidden md:inline">Cetak Rekap</span>
             </Button>
           </div>
-        </div>
-
-        {/* Baris 2: Filter & Pencarian (Dipisahkan) */}
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <div className="flex items-center gap-2">
-            <Select value={selectedDate === "semua" ? "semua" : selectedDate === "" ? "" : "custom"} onValueChange={(v) => {
-              if (v === "semua") setSelectedDate("semua");
-              else if (v === "custom") setSelectedDate(new Date().toISOString().split('T')[0]);
-            }}>
-              <SelectTrigger className="w-[110px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-xs md:text-sm">
-                <SelectValue placeholder="Pilih Tanggal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua</SelectItem>
-                <SelectItem value="custom">Pilih...</SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedDate !== "semua" && selectedDate !== "" && (
-              <div className="relative">
-                <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
-                <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
-              </div>
-            )}
-          </div>
-
-          <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-            <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
-              <div className="flex items-center gap-2">
-                <PenTool size={16} />
-                <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
-              <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
