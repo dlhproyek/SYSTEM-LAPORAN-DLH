@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
-  Search, FilterX, ArrowLeft, RefreshCw, Truck, User, ChevronRight
+  Search, FilterX, ArrowLeft, RefreshCw, Truck, User, ChevronRight, MessageSquare
 } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
@@ -120,6 +120,11 @@ const FuelReportList = () => {
                           <MapPin size={10} className="mt-0.5 shrink-0 text-red-400" />
                           <span className="line-clamp-1">{item.location.street}</span>
                         </div>
+                        {item.item_remarks && (
+                          <div className="flex items-center gap-1.5 text-[9px] text-blue-600 italic bg-blue-50/50 px-1.5 py-0.5 rounded">
+                            <MessageSquare size={8} /> {item.item_remarks}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {report.items?.length > 2 && (

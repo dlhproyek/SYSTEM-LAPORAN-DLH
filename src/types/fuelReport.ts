@@ -6,6 +6,7 @@ export interface FuelUsageItem {
   vehicle_operator: string;
   fuel_type: FuelType;
   amount: number;
+  item_remarks?: string; // Keterangan khusus per item
   location: {
     street: string;
     subDistrict?: string;
@@ -19,7 +20,7 @@ export interface FuelReport {
   region: string;
   team: string;
   items: FuelUsageItem[];
-  remarks: string;
+  remarks: string; // Keterangan umum laporan
   created_at?: string;
   deleted_at?: string | null;
 }

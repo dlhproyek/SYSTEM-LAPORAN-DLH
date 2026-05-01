@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, Fuel, MapPin, Info, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Fuel, MapPin, Info, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { FuelReport, FuelType } from '@/types/fuelReport';
@@ -32,9 +32,10 @@ const teamOptions: Record<string, string[]> = {
 };
 
 const usageItemSchema = z.object({
-  vehicle_operator: z.string().default("-"),
+  vehicle_operator: z.string().min(1, "Wajib diisi"),
   fuel_type: z.string().min(1, "Jenis wajib dipilih"),
   amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+  item_remarks: z.string().optional().default(""),
   location: z.object({
     street: z.string().min(1, "Jalan wajib diisi"),
     subDistrict: z.string().optional().default(""),
@@ -75,6 +76,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         vehicle_operator: "", 
         fuel_type: "Pertamax", 
         amount: 0,
+        item_remarks: "",
         location: { street: "", subDistrict: "", village: "" }
       }],
       remarks: "",
@@ -87,6 +89,18 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   });
 
   const selectedRegion = form.watch("region");
+  const selectedTeam = form.watch("team");
+
+  // Logika pilihan kendaraan otomatis
+  const getVehicleSuggestions = () => {
+    if (selectedRegion === "Wilayah 4 Kota") {
+      if (selectedTeam === "Tim Siram") return ["Truk Siram (BK 8128 A)", "Truk Siram (BK 9031 J)"];
+      if (selectedTeam === "Tim Pohon") return ["Mobil Tangga (BK 9044 J)", "Dump Truck (BK8559 J)"];
+    }
+    return [];
+  };
+
+  const vehicleSuggestions = getVehicleSuggestions();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (profile?.role !== 'admin') {
@@ -126,6 +140,10 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto pb-20">
+        <datalist id="vehicle-suggestions">
+          {vehicleSuggestions.map(v => <option key={v} value={v} />)}
+        </datalist>
+
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
@@ -189,6 +207,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
               vehicle_operator: "", 
               fuel_type: "Pertamax", 
               amount: 0,
+              item_remarks: "",
               location: { street: "", subDistrict: "", village: "" }
             })} className="border-blue-600 text-blue-600">
               <Plus className="h-4 w-4 mr-1" /> Tambah Pemakaian
@@ -210,50 +229,72 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
                   </Button>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Jenis BBM / Oli</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          <SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem>
-                          <SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem>
-                          <SelectItem value="Oli">Oli (Liter)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-4">
+                    <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold">Kendaraan / Alat Operasional</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="BK 1234 XX / Nama" 
+                            list="vehicle-suggestions"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
 
-                  <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jumlah (Liter)" : "Jumlah Voucher (Rp)"}</FormLabel>
-                      <FormControl><Input type="number" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <div className="md:col-span-3">
+                    <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold">Jenis BBM / Oli</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem>
+                            <SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem>
+                            <SelectItem value="Oli">Oli (Liter)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
 
-                  <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kendaraan / Operator</FormLabel>
-                      <FormControl><Input placeholder="BK 1234 XX / Nama" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <div className="md:col-span-2">
+                    <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold">{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jml (L)" : "Voucher (Rp)"}</FormLabel>
+                        <FormControl><Input type="number" className="h-10" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <FormField control={form.control} name={`items.${index}.item_remarks`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold">Keterangan Item</FormLabel>
+                        <FormControl><Input placeholder="Catatan item..." className="h-10" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-green-600">
-                    <MapPin size={16} /> Lokasi Kerja Item Ini
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase text-green-600 tracking-wider">
+                    <MapPin size={14} /> Lokasi Kerja Item Ini
                   </div>
                   <FormField control={form.control} name={`items.${index}.location.street`} render={({ field }) => (
-                    <FormItem><FormLabel className="text-xs">Nama Jalan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="text-[10px] uppercase text-slate-500">Nama Jalan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name={`items.${index}.location.subDistrict`} render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Kecamatan (Opsional)</FormLabel>
+                        <FormLabel className="text-[10px] uppercase text-slate-500">Kecamatan (Opsional)</FormLabel>
                         <Select onValueChange={(val) => { field.onChange(val); form.setValue(`items.${index}.location.village`, ""); }} value={field.value}>
                           <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl>
                           <SelectContent>
@@ -265,7 +306,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
                     )} />
                     <FormField control={form.control} name={`items.${index}.location.village`} render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Kelurahan (Opsional)</FormLabel>
+                        <FormLabel className="text-[10px] uppercase text-slate-500">Kelurahan (Opsional)</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} disabled={!form.watch(`items.${index}.location.subDistrict`) || form.watch(`items.${index}.location.subDistrict`) === " "}>
                           <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Pilih Kelurahan" /></SelectTrigger></FormControl>
                           <SelectContent>
@@ -283,7 +324,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         </div>
 
         <Card>
-          <CardHeader><CardTitle className="text-lg">Keterangan Tambahan (Umum)</CardTitle></CardHeader>
+          <CardHeader className="py-3"><CardTitle className="text-sm flex items-center gap-2"><MessageSquare size={16} className="text-slate-400" /> Keterangan Tambahan (Umum)</CardTitle></CardHeader>
           <CardContent>
             <FormField control={form.control} name="remarks" render={({ field }) => (
               <FormItem><FormControl><Input placeholder="Catatan tambahan untuk seluruh laporan..." {...field} /></FormControl><FormMessage /></FormItem>
