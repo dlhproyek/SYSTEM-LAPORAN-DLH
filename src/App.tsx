@@ -37,10 +37,13 @@ import FuelYearlyRecap from "./pages/FuelYearlyRecap";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
   if (!session) return <Navigate to="/login" />;
+  
+  // Admin BBM tidak boleh akses Laporan Harian & Rencana Kerja
+  if (profile?.role === 'admin_bbm') return <Navigate to="/fuel-reports" />;
   
   return <>{children}</>;
 };
@@ -50,7 +53,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
   if (!session) return <Navigate to="/login" />;
-  if (profile?.role !== 'admin' && session?.user?.email !== 'admin@gmail.com') return <Navigate to="/" />;
+  
+  // Admin Utama & Admin BBM boleh akses
+  const isAllowed = profile?.role === 'admin' || profile?.role === 'admin_bbm' || session?.user?.email === 'admin@gmail.com';
+  if (!isAllowed) return <Navigate to="/" />;
   
   return <>{children}</>;
 };
@@ -79,7 +85,7 @@ const App = () => (
             <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
             
-            {/* Fuel Report Routes - Admin Only */}
+            {/* Fuel Report Routes - Admin & Admin BBM Only */}
             <Route path="/fuel-reports" element={<AdminRoute><FuelReportList /></AdminRoute>} />
             <Route path="/fuel-reports/create" element={<AdminRoute><CreateFuelReport /></AdminRoute>} />
             <Route path="/fuel-reports/edit/:id" element={<AdminRoute><EditFuelReport /></AdminRoute>} />
@@ -91,7 +97,7 @@ const App = () => (
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
             <Route path="/print-rekap" element={<ProtectedRoute><PrintRekap /></ProtectedRoute>} />
-            <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+            <Route path="/maintenance" element={<AdminRoute><Maintenance /></AdminRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

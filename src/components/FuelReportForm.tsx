@@ -125,7 +125,6 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   };
 
   const performAppend = (isSame: boolean) => {
-    const lastItem = fields[fields.length - 1];
     const lastLocation = form.getValues(`items.${fields.length - 1}.location`);
 
     append({ 
@@ -140,8 +139,9 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (profile?.role !== 'admin') {
-      showError("Hanya Administrator yang dapat menyimpan laporan ini");
+    const isAllowed = profile?.role === 'admin' || profile?.role === 'admin_bbm';
+    if (!isAllowed) {
+      showError("Anda tidak memiliki izin untuk menyimpan laporan ini");
       return;
     }
 

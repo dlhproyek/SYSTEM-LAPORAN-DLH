@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 
-const roles = ['admin', 'user', 'pimpinan', 'admin_harian'];
+const roles = ['admin', 'user', 'pimpinan', 'admin_harian', 'admin_bbm'];
 const categories = ["Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"];
 
 interface Profile {
@@ -169,6 +169,7 @@ const UserManagement = () => {
                           profile.role === 'admin' ? "text-red-600 border-red-200 bg-red-50" :
                           profile.role === 'pimpinan' ? "text-amber-600 border-amber-200 bg-amber-50" :
                           profile.role === 'admin_harian' ? "text-purple-600 border-purple-200 bg-purple-50" :
+                          profile.role === 'admin_bbm' ? "text-orange-600 border-orange-200 bg-orange-50" :
                           "text-blue-600 border-blue-200 bg-blue-50"
                         )}>
                           <div className="flex items-center gap-2">
@@ -239,7 +240,7 @@ const UserManagement = () => {
           <ul className="list-disc ml-4 space-y-1">
             <li>Daftar ini menampilkan semua pengguna yang memiliki profil di sistem.</li>
             <li>Perubahan <strong>Role</strong> akan langsung berdampak pada hak akses pengguna tersebut.</li>
-            <li>Role <strong>User</strong> wajib memiliki <strong>Kategori</strong> agar input laporan mereka otomatis terkunci ke timnya.</li>
+            <li>Role <strong>Admin BBM</strong> hanya dapat mengelola Laporan BBM & Oli.</li>
             <li>Menghapus profil di sini hanya menghapus data tambahan (role/kategori), bukan akun login Supabase-nya.</li>
           </ul>
         </div>
