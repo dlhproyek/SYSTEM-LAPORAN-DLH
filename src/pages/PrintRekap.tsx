@@ -47,15 +47,15 @@ const PrintRekap = () => {
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1000px] mx-auto space-y-6 no-print mb-8 p-4">
         <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+          <Button variant="ghost" onClick={() => navigate('/')} className="px-2 md:px-4 h-9">
+            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
           </Button>
           <div className="text-center">
-            <h1 className="font-bold">Preview Cetak Rekap</h1>
-            <p className="text-xs text-slate-500">Kategori: {category === 'semua' ? 'Semua Kategori' : category}</p>
+            <h1 className="font-bold text-sm md:text-base">Preview Cetak Rekap</h1>
+            <p className="text-[10px] text-slate-500">Kategori: {category === 'semua' ? 'Semua Kategori' : category}</p>
           </div>
-          <Button onClick={() => window.print()} className="bg-blue-600">
-            <Printer className="mr-2 h-4 w-4" /> Cetak Sekarang
+          <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-9">
+            <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak</span>
           </Button>
         </div>
       </div>

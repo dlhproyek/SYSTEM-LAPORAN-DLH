@@ -69,12 +69,12 @@ const PrintWorkPlan = () => {
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4 bg-white rounded-lg shadow-sm border">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/work-plans')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+          <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4 h-9">
+            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
           </Button>
-          <h1 className="font-bold">Preview Cetak Rencana Kerja</h1>
-          <Button onClick={() => window.print()} className="bg-blue-600">
-            <Printer className="mr-2 h-4 w-4" /> Cetak Sekarang
+          <h1 className="font-bold text-sm md:text-base">Preview Cetak Rencana Kerja</h1>
+          <Button onClick={() => window.print()} className="bg-blue-600 px-2 md:px-4 h-9">
+            <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak</span>
           </Button>
         </div>
       </div>
