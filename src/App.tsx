@@ -29,10 +29,6 @@ import WorkPlanMonthlyRecap from "./pages/WorkPlanMonthlyRecap";
 import FuelReportList from "./pages/FuelReportList";
 import CreateFuelReport from "./pages/CreateFuelReport";
 import EditFuelReport from "./pages/EditFuelReport";
-import FuelDailyRecap from "./pages/FuelDailyRecap";
-import FuelWeeklyRecap from "./pages/FuelWeeklyRecap";
-import FuelMonthlyRecap from "./pages/FuelMonthlyRecap";
-import FuelYearlyRecap from "./pages/FuelYearlyRecap";
 
 const queryClient = new QueryClient();
 
@@ -83,10 +79,6 @@ const App = () => (
             <Route path="/fuel-reports" element={<AdminRoute><FuelReportList /></AdminRoute>} />
             <Route path="/fuel-reports/create" element={<AdminRoute><CreateFuelReport /></AdminRoute>} />
             <Route path="/fuel-reports/edit/:id" element={<AdminRoute><EditFuelReport /></AdminRoute>} />
-            <Route path="/fuel-reports/daily-rekap" element={<AdminRoute><FuelDailyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/weekly-rekap" element={<AdminRoute><FuelWeeklyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/monthly-rekap" element={<AdminRoute><FuelMonthlyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/yearly-rekap" element={<AdminRoute><FuelYearlyRecap /></AdminRoute>} />
             
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
