@@ -65,7 +65,6 @@ const toolSchema = z.object({
   usage: z.string().optional().default(""),
 });
 
-// Schema dibuat lebih fleksibel (allow empty) agar tidak memblokir submit saat mode 'No Activity'
 const itemSchema = z.object({
   description: z.string().default(""),
   location: z.object({
@@ -91,7 +90,6 @@ const formSchema = z.object({
   globalCoordinator: z.string().optional().default(""),
   globalMembers: z.coerce.number().optional().default(0),
 }).superRefine((data, ctx) => {
-  // Jika mode 'Tidak Ada Kegiatan' aktif, lewati semua validasi item
   if (data.has_no_activity) {
     if (!data.no_activity_remarks || data.no_activity_remarks.trim() === "") {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Keterangan bantuan wajib diisi", path: ['no_activity_remarks'] });
@@ -100,7 +98,6 @@ const formSchema = z.object({
   }
 
   const isGlobalStyle = data.category === "Tim Pohon" || data.category === "Tim Babat";
-  
   if (isGlobalStyle && (!data.globalCoordinator || data.globalCoordinator.trim() === "")) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Koordinator tim wajib diisi", path: ['globalCoordinator'] });
   }
@@ -115,7 +112,6 @@ const formSchema = z.object({
     if (!item.basis || item.basis.trim() === "") {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Dasar pengerjaan wajib diisi", path: ['items', index, 'basis'] });
     }
-    
     if (data.category !== "Tim Siram" && data.category !== "Tim Babat") {
       if (!item.location.subDistrict || item.location.subDistrict.trim() === "" || item.location.subDistrict === " ") {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Kecamatan wajib diisi", path: ['items', index, 'location', 'subDistrict'] });
@@ -147,8 +143,8 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
     defaultValues: initialData ? {
       date: initialData.date,
       category: initialData.category,
-      has_no_activity: initialData.has_no_activity || false,
-      no_activity_remarks: initialData.has_no_activity ? initialData.items[0]?.remarks : "",
+      has_no_activity: initialData.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN",
+      no_activity_remarks: initialData.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN" ? initialData.items[0]?.remarks : "",
       items: initialData.items.map(item => ({ ...item, uiMode: 'full' })),
       globalTools: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].tools : [{ name: "", unit: 1, usage: "" }],
       globalCoordinator: (initialData.category === "Tim Pohon" || initialData.category === "Tim Babat") ? initialData.items[0].coordinator : "",
@@ -247,11 +243,11 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         });
       }
 
+      // JANGAN kirim has_no_activity ke database karena kolomnya tidak ada
       const finalValues = { 
         date: values.date, 
         category: values.category, 
-        items: processedItems,
-        has_no_activity: values.has_no_activity 
+        items: processedItems
       };
       
       let result;

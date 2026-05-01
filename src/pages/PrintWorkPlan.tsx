@@ -41,6 +41,7 @@ const PrintWorkPlan = () => {
   if (loading) return <div className="p-20 text-center">Menyiapkan dokumen...</div>;
   if (!plan) return null;
 
+  const isNoActivity = plan.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN";
   const hasRemarks = plan.items.some(item => item.remarks && item.remarks.trim() !== "");
   const isGlobalStyle = plan.category === "Tim Pohon" || plan.category === "Tim Babat";
 
@@ -111,7 +112,7 @@ const PrintWorkPlan = () => {
             </tr>
           </thead>
           <tbody>
-            {plan.has_no_activity ? (
+            {isNoActivity ? (
               <tr>
                 <td className="border-2 border-black p-1 text-center">1</td>
                 <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>

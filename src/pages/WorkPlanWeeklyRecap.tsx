@@ -180,7 +180,8 @@ const WorkPlanWeeklyRecap = () => {
           <tbody>
             {plans.length > 0 ? (
               plans.flatMap((plan, pIdx) => {
-                if (plan.has_no_activity) {
+                const isNoActivity = plan.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN";
+                if (isNoActivity) {
                   return (
                     <tr key={plan.id}>
                       <td className="border-2 border-black p-1 text-center">
