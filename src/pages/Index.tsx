@@ -15,7 +15,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
 import { WorkPlan } from '@/types/workPlan';
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from '@/utils/toast';
 import { reportService } from '@/services/reportService';
 import { workPlanService } from '@/services/workPlanService';
@@ -421,8 +420,6 @@ const Index = () => {
         onClose={() => setIsTrashOpen(false)} 
         onRefresh={loadData} 
       />
-      
-      <MadeWithDyad />
     </div>
   );
 };
