@@ -7,13 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
-  Search, FilterX, ArrowLeft, RefreshCw, Truck, User, ChevronRight, MessageSquare
+  Search, FilterX, ArrowLeft, RefreshCw, Printer, ChevronDown,
+  Table, FileText, CalendarDays
 } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
 import { useAuth } from '@/context/AuthContext';
 import { showSuccess, showError } from '@/utils/toast';
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const FuelReportList = () => {
   const navigate = useNavigate();
@@ -73,6 +80,27 @@ const FuelReportList = () => {
             <h1 className="text-2xl font-bold flex items-center gap-2"><Fuel className="text-orange-600" /> Laporan BBM & Oli</h1>
           </div>
           <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="bg-white border-slate-200">
+                  <Printer className="h-4 w-4 mr-2" /> Cetak Rekap <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/daily-rekap')} className="cursor-pointer py-2">
+                  <Calendar className="mr-2 h-4 w-4 text-blue-600" /> Rekap Harian
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/weekly-rekap')} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/monthly-rekap')} className="cursor-pointer py-2">
+                  <FileText className="mr-2 h-4 w-4 text-purple-600" /> Rekap Bulanan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/yearly-rekap')} className="cursor-pointer py-2">
+                  <CalendarDays className="mr-2 h-4 w-4 text-orange-600" /> Rekap Tahunan
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="icon" onClick={loadReports} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} size={18} /></Button>
             <Button onClick={() => navigate('/fuel-reports/create')} className="bg-blue-600 hover:bg-blue-700"><Plus className="mr-2 h-4 w-4" /> Input Baru</Button>
           </div>
@@ -120,11 +148,6 @@ const FuelReportList = () => {
                           <MapPin size={10} className="mt-0.5 shrink-0 text-red-400" />
                           <span className="line-clamp-1">{item.location.street}</span>
                         </div>
-                        {item.item_remarks && (
-                          <div className="flex items-center gap-1.5 text-[9px] text-blue-600 italic bg-blue-50/50 px-1.5 py-0.5 rounded">
-                            <MessageSquare size={8} /> {item.item_remarks}
-                          </div>
-                        )}
                       </div>
                     ))}
                     {report.items?.length > 2 && (
