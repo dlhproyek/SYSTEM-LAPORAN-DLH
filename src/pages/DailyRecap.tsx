@@ -517,18 +517,18 @@ const DailyRecap = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1600px] border-collapse border-2 border-black text-[11px] table-fixed">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
-              <col style={{ width: '65px' }} />
+              <col style={{ width: '75px' }} />
               <col style={{ width: '105px' }} />
               <col style={{ width: '110px' }} />
               {photoMode === "with-photo" && (
                 <>
-                  <col style={{ width: '180px' }} />
-                  <col style={{ width: '180px' }} />
-                  <col style={{ width: '180px' }} />
+                  <col style={{ width: '145px' }} />
+                  <col style={{ width: '145px' }} />
+                  <col style={{ width: '145px' }} />
                 </>
               )}
               <col style={{ width: '65px' }} />
@@ -537,9 +537,9 @@ const DailyRecap = () => {
               <col style={{ width: '120px' }} />
               {recapMode === "with-fuel" && (
                 <>
-                  <col style={{ width: '45px' }} />
-                  <col style={{ width: '45px' }} />
-                  <col style={{ width: '45px' }} />
+                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '40px' }} />
                 </>
               )}
               <col style={{ width: '90px' }} />
@@ -593,9 +593,9 @@ const DailyRecap = () => {
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
                           {photoMode === "with-photo" && (
                             <>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
                             </>
                           )}
                           <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
@@ -651,16 +651,14 @@ const DailyRecap = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { 
-            background: white !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-          }
+          body { background: white !important; }
           .no-print, 
           [data-radix-portal], 
           [role="menu"], 
           [data-radix-popper-content-wrapper] { 
             display: none !important; 
+            visibility: hidden !important;
+            opacity: 0 !important;
           }
           .print-area { 
             box-shadow: none !important; 
@@ -670,29 +668,10 @@ const DailyRecap = () => {
             width: 100% !important; 
             max-width: none !important; 
             background-color: white !important;
-            overflow: visible !important;
-            box-sizing: border-box !important;
           }
-          @page { 
-            size: A3 landscape; 
-            margin: 1cm; 
-          }
-          table { 
-            width: 100% !important; 
-            table-layout: auto !important;
-            border-collapse: collapse !important;
-            border: 2px solid black !important;
-            page-break-inside: auto;
-            box-sizing: border-box !important;
-          }
-          th, td {
-            border: 2px solid black !important;
-            box-sizing: border-box !important;
-          }
-          tr { 
-            page-break-inside: avoid; 
-            page-break-after: auto; 
-          }
+          @page { size: A3 landscape; margin: 1.5cm; }
+          table { page-break-inside: auto; width: 100% !important; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }

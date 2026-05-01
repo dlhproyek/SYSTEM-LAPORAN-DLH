@@ -7,7 +7,7 @@ import { reportService } from '@/services/reportService';
 import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { 
   ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
-  Table, Image as ImageIcon, LogOut, LogIn, CloudUpload, 
+  Table, Image as ImageIcon, ImageOff, LogOut, LogIn, CloudUpload, 
   Loader2, Lock, ChevronDown, PenTool 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,7 @@ const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
 type RecapMode = "with-fuel" | "without-fuel";
+type PhotoMode = "with-photo" | "without-photo";
 type SignatureMode = "with-signature" | "without-signature";
 
 const MonthlyRecap = () => {
@@ -65,9 +66,10 @@ const MonthlyRecap = () => {
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
-  const [selectedMonth, setSelectedMonth] = useState("semua");
-  const [selectedYear, setSelectedYear] = useState("semua");
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [recapMode, setRecapMode] = useState<RecapMode>("without-fuel");
+  const [photoMode, setPhotoMode] = useState<PhotoMode>("with-photo");
   const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
@@ -257,14 +259,11 @@ const MonthlyRecap = () => {
         { header: 'Tim/Kec.', key: 'category', width: 15 },
         { header: 'Uraian Kegiatan', key: 'desc', width: 30 },
         { header: 'Lokasi', key: 'loc', width: 40 },
-        { header: '0%', key: 'p0', width: 22 },
-        { header: '50%', key: 'p50', width: 22 },
-        { header: '100%', key: 'p100', width: 22 },
-        { header: 'Vol', key: 'vol', width: 10 },
-        { header: 'Jenis Alat', key: 'eq_type', width: 20 },
-        { header: 'Jumlah Alat', key: 'eq_qty', width: 10 },
-        { header: 'Alat Berat', key: 'he', width: 25 },
       ];
+      if (photoMode === "with-photo") {
+        columns.push({ header: '0%', key: 'p0', width: 22 }, { header: '50%', key: 'p50', width: 22 }, { header: '100%', key: 'p100', width: 22 });
+      }
+      columns.push({ header: 'Vol', key: 'vol', width: 10 }, { header: 'Jenis Alat', key: 'eq_type', width: 20 }, { header: 'Jumlah Alat', key: 'eq_qty', width: 10 }, { header: 'Alat Berat', key: 'he', width: 25 });
       if (recapMode === "with-fuel") {
         columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
       }
@@ -315,7 +314,7 @@ const MonthlyRecap = () => {
             rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
           }
           const row = worksheet.addRow(rowData);
-          row.height = 100;
+          if (photoMode === "with-photo") row.height = 100;
           row.eachCell(cell => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
@@ -349,7 +348,7 @@ const MonthlyRecap = () => {
   const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
   const subHeaderStyle = { backgroundColor: '#f8fafc', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
 
-  const totalCols = 15 + (recapMode === "with-fuel" ? 3 : 0);
+  const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 3 : 0);
 
   if (isAdminHarian) return null;
 
@@ -409,6 +408,15 @@ const MonthlyRecap = () => {
               </Popover>
               {isUserRestricted && <div className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 p-1 rounded-full border border-amber-200 shadow-sm"><Lock size={10} /></div>}
             </div>
+            <Select value={photoMode} onValueChange={(v) => setPhotoMode(v as PhotoMode)}>
+              <SelectTrigger className="w-[40px] md:w-[160px] bg-slate-50 border-slate-200 h-10 text-slate-700 font-medium p-0 md:px-3 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={16} />
+                  <span className="hidden md:inline"><SelectValue placeholder="Mode Foto" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent><SelectItem value="with-photo"><div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div></SelectItem><SelectItem value="without-photo"><div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div></SelectItem></SelectContent>
+            </Select>
             <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
               <SelectTrigger className="w-[40px] md:w-[200px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium p-0 md:px-3 flex justify-center">
                 <div className="flex items-center gap-2">
@@ -484,18 +492,22 @@ const MonthlyRecap = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1600px] border-collapse border-2 border-black text-[11px] table-fixed">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
-              <col style={{ width: '65px' }} />
+              <col style={{ width: '75px' }} />
               <col style={{ width: '105px' }} />
-              <col style={{ width: '115px' }} />
-              <col style={{ width: '180px' }} />
-              <col style={{ width: '180px' }} />
-              <col style={{ width: '180px' }} />
+              <col style={{ width: '110px' }} />
+              {photoMode === "with-photo" && (
+                <>
+                  <col style={{ width: '145px' }} />
+                  <col style={{ width: '145px' }} />
+                  <col style={{ width: '145px' }} />
+                </>
+              )}
               <col style={{ width: '65px' }} />
-              <col style={{ width: '95px' }} />
+              <col style={{ width: '90px' }} />
               <col style={{ width: '25px' }} />
               <col style={{ width: '120px' }} />
               {recapMode === "with-fuel" && (
@@ -505,9 +517,9 @@ const MonthlyRecap = () => {
                   <col style={{ width: '40px' }} />
                 </>
               )}
-              <col style={{ width: '95px' }} />
+              <col style={{ width: '90px' }} />
               <col style={{ width: '50px' }} />
-              <col style={{ width: '165px' }} />
+              <col style={{ width: '160px' }} />
             </colgroup>
             <thead className="pdf-table-header">
               <tr style={{ height: '40px' }}>
@@ -516,7 +528,7 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Tim/Kec.</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Uraian Kegiatan</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Lokasi</div></th>
-                <th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>
+                {photoMode === "with-photo" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>Dokumentasi</th>)}
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
                 <th style={headerStyle} className="border-2 border-black p-2" colSpan={2}>Peralatan</th>
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
@@ -525,9 +537,7 @@ const MonthlyRecap = () => {
                 <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
               </tr>
               <tr style={{ height: '30px' }}>
-                <th style={subHeaderStyle} className="border-2 border-black p-1">0%</th>
-                <th style={subHeaderStyle} className="border-2 border-black p-1">50%</th>
-                <th style={subHeaderStyle} className="border-2 border-black p-1">100%</th>
+                {photoMode === "with-photo" && (<><th style={subHeaderStyle} className="border-2 border-black p-1">0%</th><th style={subHeaderStyle} className="border-2 border-black p-1">50%</th><th style={subHeaderStyle} className="border-2 border-black p-1">100%</th></>)}
                 <th style={subHeaderStyle} className="border-2 border-black p-1">Jenis Alat</th>
                 <th style={subHeaderStyle} className="border-2 border-black p-1 px-0">Jml</th>
                 {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">S</th></>)}
@@ -556,9 +566,13 @@ const MonthlyRecap = () => {
                           ) : null}
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-                          <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[140px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+                          {photoMode === "with-photo" && (
+                            <>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+                              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+                            </>
+                          )}
                           <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
                           <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
                           <td className="border-2 border-black p-1.5 px-0 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
@@ -615,9 +629,8 @@ const MonthlyRecap = () => {
           body { background: white !important; margin: 0 !important; padding: 0 !important; }
           .no-print, [data-radix-portal], [role="menu"], [data-radix-popper-content-wrapper] { display: none !important; }
           .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; background-color: white !important; overflow: visible !important; box-sizing: border-box !important; }
-          @page { size: A3 landscape; margin: 1cm; }
-          table { width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; border: 2px solid black !important; page-break-inside: auto; box-sizing: border-box !important; }
-          th, td { border: 2px solid black !important; box-sizing: border-box !important; }
+          @page { size: A3 landscape; margin: 1.5cm; }
+          table { page-break-inside: auto; width: 100% !important; }
           tr { page-break-inside: avoid; page-break-after: auto; }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
