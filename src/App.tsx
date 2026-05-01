@@ -25,6 +25,11 @@ import WorkPlanDailyRecap from "./pages/WorkPlanDailyRecap";
 import WorkPlanWeeklyRecap from "./pages/WorkPlanWeeklyRecap";
 import WorkPlanMonthlyRecap from "./pages/WorkPlanMonthlyRecap";
 
+// Fuel Report Pages
+import FuelReportList from "./pages/FuelReportList";
+import CreateFuelReport from "./pages/CreateFuelReport";
+import EditFuelReport from "./pages/EditFuelReport";
+
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,6 +37,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
   if (!session) return <Navigate to="/login" />;
+  
+  return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, profile, loading } = useAuth();
+  
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
+  if (!session) return <Navigate to="/login" />;
+  if (profile?.role !== 'admin' && session?.user?.email !== 'admin@gmail.com') return <Navigate to="/" />;
   
   return <>{children}</>;
 };
@@ -51,16 +66,19 @@ const App = () => (
             <Route path="/daily-rekap" element={<DailyRecap />} />
             <Route path="/weekly-rekap" element={<WeeklyRecap />} />
             
-            {/* Work Plan Routes - All are now Public for viewing */}
+            {/* Work Plan Routes */}
             <Route path="/work-plans" element={<WorkPlanList />} />
             <Route path="/work-plans/print/:id" element={<PrintWorkPlan />} />
             <Route path="/work-plans/daily-rekap" element={<WorkPlanDailyRecap />} />
             <Route path="/work-plans/weekly-rekap" element={<WorkPlanWeeklyRecap />} />
             <Route path="/work-plans/monthly-rekap" element={<WorkPlanMonthlyRecap />} />
-            
-            {/* Protected Work Plan Routes - Only for management */}
             <Route path="/work-plans/create" element={<ProtectedRoute><CreateWorkPlan /></ProtectedRoute>} />
             <Route path="/work-plans/edit/:id" element={<ProtectedRoute><EditWorkPlan /></ProtectedRoute>} />
+            
+            {/* Fuel Report Routes - Admin Only */}
+            <Route path="/fuel-reports" element={<AdminRoute><FuelReportList /></AdminRoute>} />
+            <Route path="/fuel-reports/create" element={<AdminRoute><CreateFuelReport /></AdminRoute>} />
+            <Route path="/fuel-reports/edit/:id" element={<AdminRoute><EditFuelReport /></AdminRoute>} />
             
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />

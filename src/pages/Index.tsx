@@ -10,7 +10,7 @@ import {
   Plus, FileText, MapPin, Calendar, 
   Trash2, Eye, Search, Edit, Cloud, Printer, FileBarChart,
   LogOut, LogIn, FilterX, ShieldCheck, Database, ChevronDown,
-  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays
+  Table, ClipboardList, EyeOff, ArrowRight, CalendarDays, Fuel
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Report } from '@/types/report';
@@ -238,6 +238,17 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
             <TooltipProvider>
+              {isAdmin && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/fuel-reports')} className="bg-orange-50 text-orange-700 border-orange-200 px-2 md:px-3 h-9">
+                      <Fuel className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Laporan BBM</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Manajemen BBM & Oli</p></TooltipContent>
+                </Tooltip>
+              )}
+
               {isAdmin && (
                 <Tooltip>
                   <TooltipTrigger asChild>
