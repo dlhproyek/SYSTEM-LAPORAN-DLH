@@ -29,16 +29,17 @@ const FuelReportList = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isAdmin = profile?.role === 'admin';
+  // Izinkan Admin Utama dan Admin BBM
+  const isAllowed = profile?.role === 'admin' || profile?.role === 'admin_bbm';
 
   useEffect(() => {
-    if (!isAdmin && profile) {
+    if (!isAllowed && profile) {
       showError("Akses ditolak. Hanya Administrator yang dapat mengakses halaman ini.");
       navigate('/');
       return;
     }
     loadReports();
-  }, [profile]);
+  }, [profile, isAllowed]);
 
   const loadReports = async () => {
     try {
@@ -69,7 +70,7 @@ const FuelReportList = () => {
     r.items?.some(item => item.location.street.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  if (!isAdmin) return null;
+  if (!isAllowed) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
