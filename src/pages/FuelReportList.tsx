@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
-  Search, FilterX, ArrowLeft, RefreshCw, Truck, User
+  Search, FilterX, ArrowLeft, RefreshCw, Truck, User, ChevronRight
 } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
@@ -106,20 +106,30 @@ const FuelReportList = () => {
                   <CardTitle className="text-base mt-2">{report.team}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <User className="h-3.5 w-3.5 text-slate-400" /> <span>{report.vehicle_operator}</span>
-                  </div>
                   <div className="flex items-start gap-2 text-xs text-slate-600">
                     <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
-                    <span className="line-clamp-1">{report.location.street}, {report.location.village}</span>
-                  </div>
-                  <div className="pt-3 border-t flex justify-between items-center">
-                    <Badge className={report.fuel_type === 'Oli' ? "bg-purple-100 text-purple-700" : "bg-orange-100 text-orange-700"}>
-                      {report.fuel_type}
-                    </Badge>
-                    <span className="font-bold text-sm">
-                      {report.fuel_type === 'Oli' ? `${report.amount} L` : `Rp ${report.amount.toLocaleString('id-ID')}`}
+                    <span className="line-clamp-1">
+                      {report.location.street}
+                      {report.location.village && report.location.village !== " " && `, ${report.location.village}`}
                     </span>
+                  </div>
+                  
+                  <div className="space-y-2 pt-2 border-t">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Daftar Pemakaian ({report.items?.length || 0})</p>
+                    {report.items?.slice(0, 2).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-[11px] bg-slate-50 p-1.5 rounded border border-slate-100">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-700">{item.vehicle_operator}</span>
+                          <span className="text-slate-500">{item.fuel_type}</span>
+                        </div>
+                        <span className="font-black text-orange-700">
+                          {item.fuel_type === 'Oli' ? `${item.amount} L` : `Rp ${item.amount.toLocaleString('id-ID')}`}
+                        </span>
+                      </div>
+                    ))}
+                    {report.items?.length > 2 && (
+                      <p className="text-[10px] text-center text-blue-600 font-medium italic">+{report.items.length - 2} item lainnya...</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

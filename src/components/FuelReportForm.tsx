@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, Fuel, MapPin, Info } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Fuel, MapPin, Info, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { FuelReport, FuelType } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
 import { medanDistricts } from '@/data/medan-districts';
 import { useAuth } from '@/context/AuthContext';
+import { cn } from "@/lib/utils";
 
 const regions = [
   "Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"
@@ -30,18 +31,22 @@ const teamOptions: Record<string, string[]> = {
   "Wilayah 5 Selatan": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah"],
 };
 
+const usageItemSchema = z.object({
+  vehicle_operator: z.string().default("-"),
+  fuel_type: z.string().min(1, "Jenis wajib dipilih"),
+  amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+});
+
 const formSchema = z.object({
   date: z.string().min(1, "Tanggal wajib diisi"),
   region: z.string().min(1, "Wilayah wajib dipilih"),
   team: z.string().min(1, "Tim wajib dipilih"),
   customTeam: z.string().optional(),
-  vehicle_operator: z.string().optional(),
-  fuel_type: z.string().min(1, "Jenis BBM wajib dipilih"),
-  amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+  items: z.array(usageItemSchema).min(1, "Minimal satu detail pemakaian"),
   location: z.object({
     street: z.string().min(1, "Jalan wajib diisi"),
-    subDistrict: z.string().min(1, "Kecamatan wajib diisi"),
-    village: z.string().min(1, "Kelurahan wajib diisi"),
+    subDistrict: z.string().optional().default(""),
+    village: z.string().optional().default(""),
   }),
   remarks: z.string().optional().default(""),
 });
@@ -61,25 +66,25 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
-      fuel_type: initialData.fuel_type as string,
+      items: initialData.items.map(item => ({ ...item, fuel_type: item.fuel_type as string })),
     } : {
       date: new Date().toISOString().split('T')[0],
       region: "",
       team: "",
-      fuel_type: "Pertamax",
-      amount: 0,
+      items: [{ vehicle_operator: "", fuel_type: "Pertamax", amount: 0 }],
       location: { street: "", subDistrict: "", village: "" },
       remarks: "",
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items"
+  });
+
   const selectedRegion = form.watch("region");
   const selectedTeam = form.watch("team");
-  const selectedFuelType = form.watch("fuel_type");
   const selectedSubDistrict = form.watch("location.subDistrict");
-
-  // Logika visibilitas input kendaraan
-  const showVehicleInput = selectedTeam !== "Tim Babat" || customTeamMode;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (profile?.role !== 'admin') {
@@ -93,9 +98,11 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         date: values.date,
         region: values.region,
         team: customTeamMode ? values.customTeam || values.team : values.team,
-        vehicle_operator: values.vehicle_operator || "-",
-        fuel_type: values.fuel_type as FuelType,
-        amount: values.amount,
+        items: values.items.map(item => ({
+          ...item,
+          fuel_type: item.fuel_type as FuelType,
+          vehicle_operator: item.vehicle_operator || "-"
+        })),
         location: values.location,
         remarks: values.remarks,
       };
@@ -117,7 +124,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-3xl mx-auto pb-20">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto pb-20">
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
@@ -151,7 +158,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
 
             <FormField control={form.control} name="team" render={({ field }) => (
               <FormItem>
-                <FormLabel>Tim / Operator</FormLabel>
+                <FormLabel>Tim / Operator Utama</FormLabel>
                 <Select onValueChange={(val) => { 
                   if (val === "custom") { setCustomTeamMode(true); field.onChange(""); }
                   else { setCustomTeamMode(false); field.onChange(val); }
@@ -174,45 +181,65 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
           </CardContent>
         </Card>
 
-        <Card className="border-t-4 border-t-orange-500">
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Fuel className="h-5 w-5 text-orange-500" /> Detail Pemakaian</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="fuel_type" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Jenis BBM / Oli</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem>
-                      <SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem>
-                      <SelectItem value="Oli">Oli (Liter)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center gap-2"><Fuel className="text-orange-600" /> Detail Pemakaian</h2>
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ vehicle_operator: "", fuel_type: "Pertamax", amount: 0 })} className="border-blue-600 text-blue-600">
+              <Plus className="h-4 w-4 mr-1" /> Tambah Pemakaian
+            </Button>
+          </div>
 
-              <FormField control={form.control} name="amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{selectedFuelType === "Oli" ? "Jumlah (Liter)" : "Jumlah Voucher (Rupiah)"}</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
+          {fields.map((field, index) => (
+            <Card key={field.id} className="border-l-4 border-l-orange-500 relative">
+              <CardContent className="pt-6 space-y-4">
+                {fields.length > 1 && (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Jenis BBM / Oli</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem>
+                          <SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem>
+                          <SelectItem value="Oli">Oli (Liter)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
 
-            {showVehicleInput && (
-              <FormField control={form.control} name="vehicle_operator" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kendaraan / Operator</FormLabel>
-                  <FormControl><Input placeholder="Contoh: BK 1234 XX atau Nama Operator" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            )}
-          </CardContent>
-        </Card>
+                  <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jumlah (Liter)" : "Jumlah Voucher (Rp)"}</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kendaraan / Operator {selectedTeam === "Tim Babat" && <span className="text-[10px] text-slate-400">(Opsional)</span>}</FormLabel>
+                      <FormControl><Input placeholder="BK 1234 XX / Nama" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         <Card className="border-t-4 border-t-green-500">
           <CardHeader><CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-green-500" /> Lokasi Kerja</CardTitle></CardHeader>
@@ -223,21 +250,25 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="location.subDistrict" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Kecamatan</FormLabel>
+                  <FormLabel>Kecamatan <span className="text-[10px] text-slate-400">(Opsional)</span></FormLabel>
                   <Select onValueChange={(val) => { field.onChange(val); form.setValue("location.village", ""); }} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl>
-                    <SelectContent>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan (Opsional)" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                      {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="location.village" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Kelurahan</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSubDistrict}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan" /></SelectTrigger></FormControl>
+                  <FormLabel>Kelurahan <span className="text-[10px] text-slate-400">(Opsional)</span></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSubDistrict || selectedSubDistrict === " "}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan (Opsional)" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {selectedSubDistrict && medanDistricts[selectedSubDistrict]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                      {selectedSubDistrict && selectedSubDistrict !== " " && medanDistricts[selectedSubDistrict]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -248,7 +279,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-lg">Keterangan</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">Keterangan Tambahan</CardTitle></CardHeader>
           <CardContent>
             <FormField control={form.control} name="remarks" render={({ field }) => (
               <FormItem><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>
