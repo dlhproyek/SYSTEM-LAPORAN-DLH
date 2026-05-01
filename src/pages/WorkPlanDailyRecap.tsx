@@ -11,9 +11,8 @@ import { ArrowLeft, Printer, Calendar as CalendarIcon, PenTool, Plus } from 'luc
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
-import { sortByCategory, allCategories } from '@/utils/report-helpers';
+import { sortByCategory } from '@/utils/report-helpers';
 import { useAuth } from '@/context/AuthContext';
-import { cn } from "@/lib/utils";
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -67,44 +66,19 @@ const WorkPlanDailyRecap = () => {
         setSelectedDate("semua");
       }
 
+      // FILTER: Hanya tampilkan yang is_visible !== false
       const filtered = data.filter(p => 
         (targetDate === "semua" || p.date === targetDate) && 
         p.is_visible !== false
       );
       
-      // Logika NIHIL: Pastikan semua kategori muncul jika tanggal spesifik dipilih
-      const finalPlans: WorkPlan[] = [];
-      if (targetDate !== "semua") {
-        allCategories.forEach(cat => {
-          const catPlans = filtered.filter(p => p.category === cat);
-          if (catPlans.length > 0) {
-            finalPlans.push(...catPlans);
-          } else {
-            // Tambahkan baris NIHIL
-            finalPlans.push({
-              id: `nihil-${cat}`,
-              date: targetDate,
-              category: cat,
-              items: [{
-                description: "NIHIL / TIDAK ADA RENCANA",
-                location: { street: "-", village: ["-"], subDistrict: "-" },
-                tools: [],
-                coordinator: "-",
-                personnel: { members: 0 },
-                basis: "-",
-                remarks: "-"
-              }],
-              created_at: new Date().toISOString(),
-              is_visible: true
-            } as WorkPlan);
-          }
-        });
-      } else {
-        finalPlans.push(...filtered);
-      }
-
-      finalPlans.sort((a, b) => sortByCategory(a.category, b.category));
-      setPlans(finalPlans);
+      filtered.sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return sortByCategory(a.category, b.category);
+      });
+      
+      setPlans(filtered);
     } catch (error) {
       console.error(error);
     } finally {
@@ -248,7 +222,6 @@ const WorkPlanDailyRecap = () => {
                 );
 
                 let currentPlanRow = 0;
-                const isNihil = plan.id.startsWith('nihil');
 
                 return resourceGroups.flatMap((group, gIdx) => {
                   const maxGroupRows = Math.max(group.items.length, group.tools.length, 1);
@@ -260,7 +233,7 @@ const WorkPlanDailyRecap = () => {
                     currentPlanRow++;
 
                     return (
-                      <tr key={`${plan.id}-${gIdx}-${rowIndex}`} className={cn(isNihil && "bg-slate-50/50")}>
+                      <tr key={`${plan.id}-${gIdx}-${rowIndex}`}>
                         {isFirstInPlan && (
                           <>
                             <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalPlanRows}>{pIdx + 1}</td>
@@ -270,14 +243,14 @@ const WorkPlanDailyRecap = () => {
                         
                         {rowIndex < group.items.length - 1 ? (
                           <>
-                            <td className={cn("border-2 border-black p-1 align-top break-words", isNihil && "text-slate-400 italic font-bold")}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
                             <td className="border-2 border-black p-1 align-top break-words">
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>
                           </>
                         ) : rowIndex === group.items.length - 1 ? (
                           <>
-                            <td className={cn("border-2 border-black p-1 align-top break-words", isNihil && "text-slate-400 italic font-bold")} rowSpan={maxGroupRows - rowIndex}>{item.description}</td>
+                            <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{item.description}</td>
                             <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>
                               {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
                             </td>

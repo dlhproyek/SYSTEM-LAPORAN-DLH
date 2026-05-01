@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Report, Task } from '@/types/report';
+import { Report } from '@/types/report';
 import { reportService } from '@/services/reportService';
-import { getUnitByCategory, sortByCategory, allCategories } from '@/utils/report-helpers';
+import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { 
   ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
   Table, LogOut, LogIn, CloudUpload, 
@@ -37,6 +37,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const allCategories = [
+  "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
+];
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -118,45 +122,14 @@ const DailyRecap = () => {
         return matchDate && matchCategory;
       });
       
-      // Logika NIHIL: Jika kategori dipilih (atau semua), pastikan kategori tersebut ada di list
-      const finalData: Report[] = [];
-      const targetCategories = selectedCategories.includes('semua') ? allCategories : selectedCategories;
-
-      targetCategories.forEach(cat => {
-        const catReports = data.filter(r => r.category === cat);
-        if (catReports.length > 0) {
-          finalData.push(...catReports);
-        } else if (selectedDate !== "semua") {
-          // Tambahkan baris NIHIL jika tidak ada data untuk kategori ini di tanggal spesifik
-          finalData.push({
-            id: `nihil-${cat}`,
-            date: selectedDate,
-            category: cat as any,
-            description: "NIHIL / TIDAK ADA KEGIATAN",
-            location: { street: "-", village: ["-"], subDistrict: "-" },
-            tasks: [{
-              description: "NIHIL / TIDAK ADA KEGIATAN",
-              location: { street: "-", village: ["-"], subDistrict: "-" },
-              photos: { zero: "", fifty: "", hundred: "" },
-              volume: 0,
-              equipment: [],
-              heavyEquipment: [],
-              personnel: { coordinator: "-", members: 0 }
-            }],
-            volume: 0,
-            unit: getUnitByCategory(cat),
-            equipment: [],
-            heavyEquipment: [],
-            fuel: { pertamax: 0, dexlite: 0, solar: 0 },
-            personnel: { coordinator: "-", members: 0 },
-            remarks: "-",
-            createdAt: new Date().toISOString()
-          } as Report);
-        }
+      // Urutkan berdasarkan tanggal dari awal ke akhir (ascending)
+      data.sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return sortByCategory(a.category, b.category);
       });
-
-      finalData.sort((a, b) => sortByCategory(a.category, b.category));
-      setReports(finalData);
+      
+      setReports(data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -353,7 +326,7 @@ const DailyRecap = () => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
           });
-          if (photoMode === "with-photo" && !report.id.startsWith('nihil')) {
+          if (photoMode === "with-photo") {
             const addImageToCell = async (url: string, colIndex: number) => {
               if (!url) return;
               try {
@@ -604,9 +577,8 @@ const DailyRecap = () => {
                   <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
                     {report.tasks.map((task, taskIdx) => {
                       const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
-                      const isNihil = report.id.startsWith('nihil');
                       return (
-                        <tr key={`${report.id}-${taskIdx}`} className={cn(isNihil && "bg-slate-50/50")}>
+                        <tr key={`${report.id}-${taskIdx}`}>
                           {taskIdx === 0 ? (
                             <>
                               <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
@@ -618,7 +590,7 @@ const DailyRecap = () => {
                               </td>
                             </>
                           ) : null}
-                          <td className={cn("border-2 border-black p-2 align-top whitespace-normal break-words leading-tight", isNihil && "text-slate-400 italic font-bold")}>{task.description}</td>
+                          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
                           <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
                           {photoMode === "with-photo" && (
                             <>
