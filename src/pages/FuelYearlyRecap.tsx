@@ -38,7 +38,7 @@ const FuelYearlyRecap = () => {
         const rDate = parseISO(r.date);
         return rDate.getFullYear().toString() === selectedYear;
       });
-      filtered.sort((a, b) => a.date.localeCompare(b.date));
+      filtered.sort((a, b) => a.date.localeCompare(b.date) || a.region.localeCompare(b.region));
       setReports(filtered);
     } catch (error) {
       console.error(error);
@@ -46,6 +46,31 @@ const FuelYearlyRecap = () => {
       setLoading(false);
     }
   };
+
+  const getFlatData = () => {
+    const flatItems = reports.flatMap(r => r.items.map(item => ({ ...item, date: r.date, region: r.region, team: r.team, remarks: r.remarks })));
+    const spans: number[] = [];
+    let currentRegion = "";
+    let count = 0;
+    let startIndex = 0;
+
+    flatItems.forEach((item, index) => {
+      const key = `${item.date}-${item.region}`;
+      if (key !== currentRegion) {
+        if (count > 0) spans[startIndex] = count;
+        currentRegion = key;
+        count = 1;
+        startIndex = index;
+      } else {
+        count++;
+        spans[index] = 0;
+      }
+    });
+    if (count > 0) spans[startIndex] = count;
+    return { flatItems, spans };
+  };
+
+  const { flatItems, spans } = getFlatData();
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -82,42 +107,44 @@ const FuelYearlyRecap = () => {
           <thead>
             <tr className="bg-slate-100">
               <th className="border-2 border-black p-1 w-[30px]" rowSpan={2}>No</th>
-              <th className="border-2 border-black p-1 w-[70px]" rowSpan={2}>Tanggal</th>
-              <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Wilayah</th>
-              <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Tim / Operator</th>
-              <th className="border-2 border-black p-1 w-auto whitespace-nowrap" rowSpan={2}>Kendaraan / Alat Operasional</th>
+              <th className="border-2 border-black p-1 w-[65px]" rowSpan={2}>Tanggal</th>
+              <th className="border-2 border-black p-1 w-[85px]" rowSpan={2}>Wilayah</th>
+              <th className="border-2 border-black p-1 w-[90px]" rowSpan={2}>Tim / Operator</th>
+              <th className="border-2 border-black p-1 w-auto" rowSpan={2}>Kendaraan / Alat Operasional</th>
               <th className="border-2 border-black p-1" colSpan={3}>Jenis BBM / Oli</th>
               <th className="border-2 border-black p-1 w-[180px]" rowSpan={2}>Lokasi Kerja</th>
               <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Keterangan</th>
             </tr>
             <tr className="bg-slate-50">
-              <th className="border-2 border-black p-1 w-[60px]">Pertamax</th>
-              <th className="border-2 border-black p-1 w-[60px]">Dexlite</th>
-              <th className="border-2 border-black p-1 w-[40px]">Oli</th>
+              <th className="border-2 border-black p-1 w-[65px]">Pertamax</th>
+              <th className="border-2 border-black p-1 w-[65px]">Dexlite</th>
+              <th className="border-2 border-black p-1 w-[35px]">Oli</th>
             </tr>
           </thead>
           <tbody>
-            {reports.length > 0 ? (
-              reports.flatMap((report, rIdx) => 
-                report.items.map((item, iIdx) => (
-                  <tr key={`${rIdx}-${iIdx}`}>
-                    <td className="border-2 border-black p-1 text-center">{iIdx === 0 ? rIdx + 1 : ""}</td>
-                    <td className="border-2 border-black p-1 text-center">{iIdx === 0 ? report.date : ""}</td>
-                    <td className="border-2 border-black p-1 text-center">{iIdx === 0 ? report.region : ""}</td>
-                    <td className="border-2 border-black p-1 text-center">{iIdx === 0 ? report.team : ""}</td>
-                    <td className="border-2 border-black p-1 whitespace-nowrap overflow-hidden">{item.vehicle_operator}</td>
-                    <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Pertamax' ? item.amount.toLocaleString('id-ID') : "-"}</td>
-                    <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Dexlite' ? item.amount.toLocaleString('id-ID') : "-"}</td>
-                    <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Oli' ? item.amount : "-"}</td>
-                    <td className="border-2 border-black p-1 break-words">
-                      {item.location.street}{item.location.subDistrict ? `, ${item.location.subDistrict}` : ""}{item.location.village ? `, ${item.location.village}` : ""}
+            {flatItems.length > 0 ? (
+              flatItems.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
+                  <td className="border-2 border-black p-1 text-center">{item.date}</td>
+                  {spans[idx] > 0 && (
+                    <td className="border-2 border-black p-1 text-center font-bold align-middle" rowSpan={spans[idx]}>
+                      {item.region}
                     </td>
-                    <td className="border-2 border-black p-1 italic">
-                      {item.item_remarks || (iIdx === 0 ? report.remarks : "") || "-"}
-                    </td>
-                  </tr>
-                ))
-              )
+                  )}
+                  <td className="border-2 border-black p-1 text-center">{item.team}</td>
+                  <td className="border-2 border-black p-1 whitespace-nowrap overflow-visible font-medium">{item.vehicle_operator}</td>
+                  <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Pertamax' ? item.amount.toLocaleString('id-ID') : "-"}</td>
+                  <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Dexlite' ? item.amount.toLocaleString('id-ID') : "-"}</td>
+                  <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Oli' ? item.amount : "-"}</td>
+                  <td className="border-2 border-black p-1 break-words">
+                    {item.location.street}{item.location.subDistrict && item.location.subDistrict !== " " ? `, ${item.location.subDistrict}` : ""}{item.location.village && item.location.village !== " " ? `, ${item.location.village}` : ""}
+                  </td>
+                  <td className="border-2 border-black p-1 italic">
+                    {item.item_remarks || item.remarks || "-"}
+                  </td>
+                </tr>
+              ))
             ) : (
               <tr><td colSpan={10} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk tahun ini</td></tr>
             )}
