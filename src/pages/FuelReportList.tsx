@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
   Search, FilterX, ArrowLeft, RefreshCw, Printer, ChevronDown,
-  Table, FileText, CalendarDays
+  Table, FileText, CalendarDays, LogOut
 } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
@@ -21,16 +21,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const FuelReportList = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
   const [reports, setReports] = useState<FuelReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Izinkan Admin Utama dan Admin BBM
-  const isAllowed = profile?.role === 'admin' || profile?.role === 'admin_bbm';
+  const isAdminBbm = profile?.role === 'admin_bbm';
+  const isAllowed = profile?.role === 'admin' || isAdminBbm;
 
   useEffect(() => {
     if (!isAllowed && profile) {
@@ -50,6 +56,18 @@ const FuelReportList = () => {
       showError("Gagal memuat data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+      try {
+        await signOut();
+        navigate('/login');
+        showSuccess("Berhasil keluar");
+      } catch (error) {
+        showError("Gagal keluar");
+      }
     }
   };
 
@@ -77,14 +95,20 @@ const FuelReportList = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/')}><ArrowLeft className="mr-2 h-4 w-4" /> Beranda</Button>
-            <h1 className="text-2xl font-bold flex items-center gap-2"><Fuel className="text-orange-600" /> Laporan BBM & Oli</h1>
+            {!isAdminBbm && (
+              <Button variant="ghost" onClick={() => navigate('/')}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Beranda
+              </Button>
+            )}
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <Fuel className="text-orange-600" /> Laporan BBM & Oli
+            </h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-white border-slate-200">
-                  <Printer className="h-4 w-4 mr-2" /> Cetak Rekap <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                <Button variant="outline" className="bg-white border-slate-200 h-10 px-2 md:px-4">
+                  <Printer className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Rekap</span> <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -102,8 +126,34 @@ const FuelReportList = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="icon" onClick={loadReports} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} size={18} /></Button>
-            <Button onClick={() => navigate('/fuel-reports/create')} className="bg-blue-600 hover:bg-blue-700"><Plus className="mr-2 h-4 w-4" /> Input Baru</Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" onClick={loadReports} disabled={loading} className="h-10 w-10 bg-white border-slate-200">
+                    <RefreshCw className={loading ? "animate-spin" : ""} size={18} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Segarkan Data</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Button onClick={() => navigate('/fuel-reports/create')} className="bg-blue-600 hover:bg-blue-700 h-10 px-2 md:px-4">
+              <Plus className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Input Baru</span>
+            </Button>
+
+            <div className="border-l pl-2 ml-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="h-10 w-10 text-red-500 hover:bg-red-50 rounded-full">
+                      <LogOut size={20} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Keluar Sistem</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
 
@@ -112,7 +162,9 @@ const FuelReportList = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input placeholder="Cari tim, wilayah, atau lokasi..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
-          <Button variant="ghost" onClick={() => setSearchQuery("")}><FilterX className="mr-2 h-4 w-4" /> Reset</Button>
+          <Button variant="ghost" onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-red-500">
+            <FilterX className="mr-2 h-4 w-4" /> Reset
+          </Button>
         </div>
 
         {loading ? (
