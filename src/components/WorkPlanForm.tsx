@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Users, Wrench, FileText, MessageSquare, ClipboardList, ShieldAlert, Check, HelpCircle, Copy, AlertCircle, Info } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, MapPin, Users, Wrench, FileText, MessageSquare, ClipboardList, ShieldAlert, Check, HelpCircle, Copy, AlertCircle, Info, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { WorkPlan, WorkPlanItem } from '@/types/workPlan';
@@ -65,17 +65,18 @@ const toolSchema = z.object({
   usage: z.string().optional().default(""),
 });
 
+// Schema dibuat lebih fleksibel (allow empty) agar tidak memblokir submit saat mode 'No Activity'
 const itemSchema = z.object({
-  description: z.string().min(1, "Detail kegiatan wajib diisi"),
+  description: z.string().default(""),
   location: z.object({
-    street: z.string().min(1, "Jalan wajib diisi"),
+    street: z.string().default(""),
     village: z.array(z.string()).default([""]),
     subDistrict: z.string().default(""),
   }),
   tools: z.array(toolSchema).default([]),
   coordinator: z.string().optional().default(""),
   personnel: z.object({ members: z.coerce.number().min(0) }),
-  basis: z.string().min(1, "Dasar pengerjaan wajib diisi"),
+  basis: z.string().default(""),
   remarks: z.string().optional().default(""),
   uiMode: z.enum(['full', 'activity_location', 'location_only']).default('full'),
 });
@@ -90,15 +91,33 @@ const formSchema = z.object({
   globalCoordinator: z.string().optional().default(""),
   globalMembers: z.coerce.number().optional().default(0),
 }).superRefine((data, ctx) => {
-  if (data.has_no_activity) return; // Skip validation if no activity
+  // Jika mode 'Tidak Ada Kegiatan' aktif, lewati semua validasi item
+  if (data.has_no_activity) {
+    if (!data.no_activity_remarks || data.no_activity_remarks.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Keterangan bantuan wajib diisi", path: ['no_activity_remarks'] });
+    }
+    return;
+  }
 
   const isGlobalStyle = data.category === "Tim Pohon" || data.category === "Tim Babat";
+  
   if (isGlobalStyle && (!data.globalCoordinator || data.globalCoordinator.trim() === "")) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Koordinator tim wajib diisi", path: ['globalCoordinator'] });
   }
+
   data.items.forEach((item, index) => {
+    if (!item.description || item.description.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Detail kegiatan wajib diisi", path: ['items', index, 'description'] });
+    }
+    if (!item.location.street || item.location.street.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Jalan wajib diisi", path: ['items', index, 'location', 'street'] });
+    }
+    if (!item.basis || item.basis.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Dasar pengerjaan wajib diisi", path: ['items', index, 'basis'] });
+    }
+    
     if (data.category !== "Tim Siram" && data.category !== "Tim Babat") {
-      if (!item.location.subDistrict || item.location.subDistrict.trim() === "") {
+      if (!item.location.subDistrict || item.location.subDistrict.trim() === "" || item.location.subDistrict === " ") {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Kecamatan wajib diisi", path: ['items', index, 'location', 'subDistrict'] });
       }
     }
@@ -210,7 +229,6 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
       let processedItems;
       
       if (values.has_no_activity) {
-        // Jika tidak ada kegiatan, buat satu item dummy dengan keterangan bantuan
         processedItems = [{
           description: "TIDAK ADA RENCANA KERJA/ KEGIATAN",
           location: { street: "-", village: ["-"], subDistrict: "-" },
@@ -265,9 +283,9 @@ const WorkPlanForm = ({ initialData, isEditing = false }: { initialData?: WorkPl
         showSuccess(isDuplicateMode ? "Rencana Kerja baru berhasil dibuat dari duplikat!" : "Rencana Kerja disimpan!");
       }
       navigate('/work-plans');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      showError("Gagal menyimpan");
+      showError("Gagal menyimpan: " + (error.message || "Terjadi kesalahan database"));
     } finally {
       setIsSubmitting(false);
     }
