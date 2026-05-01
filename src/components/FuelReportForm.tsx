@@ -35,6 +35,11 @@ const usageItemSchema = z.object({
   vehicle_operator: z.string().default("-"),
   fuel_type: z.string().min(1, "Jenis wajib dipilih"),
   amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+  location: z.object({
+    street: z.string().min(1, "Jalan wajib diisi"),
+    subDistrict: z.string().optional().default(""),
+    village: z.string().optional().default(""),
+  }),
 });
 
 const formSchema = z.object({
@@ -43,11 +48,6 @@ const formSchema = z.object({
   team: z.string().min(1, "Tim wajib dipilih"),
   customTeam: z.string().optional(),
   items: z.array(usageItemSchema).min(1, "Minimal satu detail pemakaian"),
-  location: z.object({
-    street: z.string().min(1, "Jalan wajib diisi"),
-    subDistrict: z.string().optional().default(""),
-    village: z.string().optional().default(""),
-  }),
   remarks: z.string().optional().default(""),
 });
 
@@ -71,8 +71,12 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
       date: new Date().toISOString().split('T')[0],
       region: "",
       team: "",
-      items: [{ vehicle_operator: "", fuel_type: "Pertamax", amount: 0 }],
-      location: { street: "", subDistrict: "", village: "" },
+      items: [{ 
+        vehicle_operator: "", 
+        fuel_type: "Pertamax", 
+        amount: 0,
+        location: { street: "", subDistrict: "", village: "" }
+      }],
       remarks: "",
     },
   });
@@ -83,8 +87,6 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   });
 
   const selectedRegion = form.watch("region");
-  const selectedTeam = form.watch("team");
-  const selectedSubDistrict = form.watch("location.subDistrict");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (profile?.role !== 'admin') {
@@ -103,7 +105,6 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
           fuel_type: item.fuel_type as FuelType,
           vehicle_operator: item.vehicle_operator || "-"
         })),
-        location: values.location,
         remarks: values.remarks,
       };
 
@@ -183,15 +184,20 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2"><Fuel className="text-orange-600" /> Detail Pemakaian</h2>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ vehicle_operator: "", fuel_type: "Pertamax", amount: 0 })} className="border-blue-600 text-blue-600">
+            <h2 className="text-xl font-bold flex items-center gap-2"><Fuel className="text-orange-600" /> Detail Pemakaian & Lokasi</h2>
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ 
+              vehicle_operator: "", 
+              fuel_type: "Pertamax", 
+              amount: 0,
+              location: { street: "", subDistrict: "", village: "" }
+            })} className="border-blue-600 text-blue-600">
               <Plus className="h-4 w-4 mr-1" /> Tambah Pemakaian
             </Button>
           </div>
 
           {fields.map((field, index) => (
-            <Card key={field.id} className="border-l-4 border-l-orange-500 relative">
-              <CardContent className="pt-6 space-y-4">
+            <Card key={field.id} className="border-l-4 border-l-orange-500 relative overflow-hidden">
+              <CardContent className="pt-6 space-y-6">
                 {fields.length > 1 && (
                   <Button 
                     type="button" 
@@ -230,59 +236,57 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
 
                   <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kendaraan / Operator {selectedTeam === "Tim Babat" && <span className="text-[10px] text-slate-400">(Opsional)</span>}</FormLabel>
+                      <FormLabel>Kendaraan / Operator</FormLabel>
                       <FormControl><Input placeholder="BK 1234 XX / Nama" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-bold text-green-600">
+                    <MapPin size={16} /> Lokasi Kerja Item Ini
+                  </div>
+                  <FormField control={form.control} name={`items.${index}.location.street`} render={({ field }) => (
+                    <FormItem><FormLabel className="text-xs">Nama Jalan</FormLabel><FormControl><Input className="h-9" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name={`items.${index}.location.subDistrict`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Kecamatan (Opsional)</FormLabel>
+                        <Select onValueChange={(val) => { field.onChange(val); form.setValue(`items.${index}.location.village`, ""); }} value={field.value}>
+                          <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                            {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name={`items.${index}.location.village`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Kelurahan (Opsional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!form.watch(`items.${index}.location.subDistrict`) || form.watch(`items.${index}.location.subDistrict`) === " "}>
+                          <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Pilih Kelurahan" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                            {form.watch(`items.${index}.location.subDistrict`) && form.watch(`items.${index}.location.subDistrict`) !== " " && medanDistricts[form.watch(`items.${index}.location.subDistrict`)]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <Card className="border-t-4 border-t-green-500">
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-green-500" /> Lokasi Kerja</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <FormField control={form.control} name="location.street" render={({ field }) => (
-              <FormItem><FormLabel>Nama Jalan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="location.subDistrict" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kecamatan <span className="text-[10px] text-slate-400">(Opsional)</span></FormLabel>
-                  <Select onValueChange={(val) => { field.onChange(val); form.setValue("location.village", ""); }} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan (Opsional)" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
-                      {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="location.village" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kelurahan <span className="text-[10px] text-slate-400">(Opsional)</span></FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSubDistrict || selectedSubDistrict === " "}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan (Opsional)" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value=" ">Abaikan / Kosong</SelectItem>
-                      {selectedSubDistrict && selectedSubDistrict !== " " && medanDistricts[selectedSubDistrict]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-          </CardContent>
-        </Card>
-
         <Card>
-          <CardHeader><CardTitle className="text-lg">Keterangan Tambahan</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">Keterangan Tambahan (Umum)</CardTitle></CardHeader>
           <CardContent>
             <FormField control={form.control} name="remarks" render={({ field }) => (
-              <FormItem><FormControl><Input placeholder="Catatan tambahan..." {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormControl><Input placeholder="Catatan tambahan untuk seluruh laporan..." {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </CardContent>
         </Card>

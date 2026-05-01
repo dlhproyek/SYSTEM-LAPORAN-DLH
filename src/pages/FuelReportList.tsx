@@ -59,7 +59,7 @@ const FuelReportList = () => {
   const filteredReports = reports.filter(r => 
     r.team.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.location.street.toLowerCase().includes(searchQuery.toLowerCase())
+    r.items?.some(item => item.location.street.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (!isAdmin) return null;
@@ -106,25 +106,20 @@ const FuelReportList = () => {
                   <CardTitle className="text-base mt-2">{report.team}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
-                  <div className="flex items-start gap-2 text-xs text-slate-600">
-                    <MapPin className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
-                    <span className="line-clamp-1">
-                      {report.location.street}
-                      {report.location.village && report.location.village !== " " && `, ${report.location.village}`}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 pt-2 border-t">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Daftar Pemakaian ({report.items?.length || 0})</p>
+                  <div className="space-y-3 pt-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Daftar Pemakaian & Lokasi ({report.items?.length || 0})</p>
                     {report.items?.slice(0, 2).map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-[11px] bg-slate-50 p-1.5 rounded border border-slate-100">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-700">{item.vehicle_operator}</span>
-                          <span className="text-slate-500">{item.fuel_type}</span>
+                      <div key={idx} className="bg-slate-50 p-2 rounded border border-slate-100 space-y-1.5">
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="font-bold text-slate-700">{item.vehicle_operator} ({item.fuel_type})</span>
+                          <span className="font-black text-orange-700">
+                            {item.fuel_type === 'Oli' ? `${item.amount} L` : `Rp ${item.amount.toLocaleString('id-ID')}`}
+                          </span>
                         </div>
-                        <span className="font-black text-orange-700">
-                          {item.fuel_type === 'Oli' ? `${item.amount} L` : `Rp ${item.amount.toLocaleString('id-ID')}`}
-                        </span>
+                        <div className="flex items-start gap-1.5 text-[10px] text-slate-500">
+                          <MapPin size={10} className="mt-0.5 shrink-0 text-red-400" />
+                          <span className="line-clamp-1">{item.location.street}</span>
+                        </div>
                       </div>
                     ))}
                     {report.items?.length > 2 && (

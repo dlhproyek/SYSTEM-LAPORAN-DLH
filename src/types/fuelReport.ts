@@ -6,6 +6,11 @@ export interface FuelUsageItem {
   vehicle_operator: string;
   fuel_type: FuelType;
   amount: number;
+  location: {
+    street: string;
+    subDistrict?: string;
+    village?: string;
+  };
 }
 
 export interface FuelReport {
@@ -14,11 +19,6 @@ export interface FuelReport {
   region: string;
   team: string;
   items: FuelUsageItem[];
-  location: {
-    street: string;
-    subDistrict?: string;
-    village?: string;
-  };
   remarks: string;
   created_at?: string;
   deleted_at?: string | null;
