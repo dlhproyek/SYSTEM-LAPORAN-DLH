@@ -114,33 +114,13 @@ const WorkPlanMonthlyRecap = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
-      <div className="max-w-[1200px] mx-auto space-y-6 no-print mb-8 p-4bg-white rounded-xl shadow-sm border">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4 h-9">
-              <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
-            </Button>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[110px] md:w-[150px] h-10 text-xs md:text-sm"><SelectValue placeholder="Bulan" /></SelectTrigger>
-              <SelectContent>{months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[80px] md:w-[100px] h-10 text-xs md:text-sm"><SelectValue placeholder="Tahun" /></SelectTrigger>
-              <SelectContent>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <PenTool size={16} />
-                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
-                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
+        {/* Baris 1: Navigasi & Aksi Utama */}
+        <div className="flex items-center justify-between gap-4 border-b pb-4">
+          <Button variant="ghost" onClick={() => navigate('/work-plans')} className="px-2 md:px-4 h-9">
+            <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
+          </Button>
+          
           <div className="flex items-center gap-2">
             {isLoggedIn && (
               <Button onClick={() => navigate('/work-plans/create')} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-2 md:px-4 h-10">
@@ -151,6 +131,30 @@ const WorkPlanMonthlyRecap = () => {
               <Printer className="mr-2 h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cetak Rekap</span>
             </Button>
           </div>
+        </div>
+
+        {/* Baris 2: Filter & Pencarian (Dipisahkan) */}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[110px] md:w-[150px] h-10 text-xs md:text-sm"><SelectValue placeholder="Bulan" /></SelectTrigger>
+            <SelectContent>{months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[80px] md:w-[100px] h-10 text-xs md:text-sm"><SelectValue placeholder="Tahun" /></SelectTrigger>
+            <SelectContent>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
+            <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
+              <div className="flex items-center gap-2">
+                <PenTool size={16} />
+                <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+              <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
