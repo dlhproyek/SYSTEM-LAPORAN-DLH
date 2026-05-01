@@ -12,7 +12,7 @@ import { Loader2, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { showError } from '@/utils/toast';
 
 const Login = () => {
-  const { session } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
@@ -20,10 +20,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      navigate('/');
+    if (session && profile && !authLoading) {
+      if (profile.role === 'admin_bbm') {
+        navigate('/fuel-reports');
+      } else {
+        navigate('/');
+      }
     }
-  }, [session, navigate]);
+  }, [session, profile, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +38,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Otomatis menambahkan @gmail.com di belakang username jika belum ada
       const email = username.includes('@') ? username : `${username}@gmail.com`;
-      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -48,7 +50,6 @@ const Login = () => {
       showError(error.message === "Invalid login credentials" 
         ? "Username atau Password salah" 
         : "Gagal masuk ke sistem");
-    } finally {
       setLoading(false);
     }
   };
