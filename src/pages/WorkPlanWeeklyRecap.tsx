@@ -106,93 +106,47 @@ const WorkPlanWeeklyRecap = () => {
     return groups;
   };
 
-  const renderPlanRows = (plan: WorkPlan, pIdx: number) => {
-    const isNoActivity = plan.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN";
-    if (isNoActivity) {
-      return (
-        <tr key={plan.id}>
-          <td className="border-2 border-black p-1 text-center">{pIdx + 1}</td>
-          <td className="border-2 border-black p-1 text-center text-[8px]">{format(parseISO(plan.date), 'eee, dd/MM', { locale: localeId })}</td>
-          <td className="border-2 border-black p-1 text-center font-bold">{plan.category}</td>
-          <td colSpan={8} className="border-2 border-black p-4 text-center font-black text-sm tracking-widest">
-            TIDAK ADA RENCANA KERJA/ KEGIATAN
-          </td>
-          {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{plan.items[0]?.remarks || "-"}</td>}
-        </tr>
-      );
-    }
-
-    const resourceGroups = groupPlanResources(plan);
-    const totalPlanRows = resourceGroups.reduce((acc, group) => 
-      acc + Math.max(group.items.length, group.tools.length, 1), 0
-    );
-
-    let currentPlanRow = 0;
-
-    return resourceGroups.flatMap((group, gIdx) => {
-      const maxGroupRows = Math.max(group.items.length, group.tools.length, 1);
-      
-      return Array.from({ length: maxGroupRows }).map((_, rowIndex) => {
-        const item = group.items[rowIndex];
-        const tool = group.tools[rowIndex];
-        const isFirstInPlan = currentPlanRow === 0;
-        currentPlanRow++;
-
-        return (
-          <tr key={`${plan.id}-${gIdx}-${rowIndex}`}>
-            {isFirstInPlan && (
-              <>
-                <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={totalPlanRows}>{pIdx + 1}</td>
-                <td className="border-2 border-black p-1 text-center align-top text-[8px]" rowSpan={totalPlanRows}>
-                  {format(parseISO(plan.date), 'eee, dd/MM', { locale: localeId })}
-                </td>
-                <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={totalPlanRows}>{plan.category}</td>
-              </>
-            )}
-            
-            {rowIndex < group.items.length - 1 ? (
-              <>
-                <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
-                <td className="border-2 border-black p-1 align-top break-words">
-                  {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                </td>
-              </>
-            ) : rowIndex === group.items.length - 1 ? (
-              <>
-                <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{item.description}</td>
-                <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>
-                  {item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}
-                </td>
-              </>
-            ) : null}
-
-            {rowIndex < group.tools.length - 1 ? (
-              <>
-                <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
-                <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
-                <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
-              </>
-            ) : rowIndex === group.tools.length - 1 || (group.tools.length === 0 && rowIndex === 0) ? (
-              <>
-                <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.name ? `• ${tool.name}` : ""}</td>
-                <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows - rowIndex}>{tool?.unit || ""}</td>
-                <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.usage || ""}</td>
-              </>
-            ) : null}
-
-            {rowIndex === 0 && (
-              <>
-                <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.coordinator}</td>
-                <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.members}</td>
-                <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows}>{group.basis}</td>
-                {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxGroupRows}>{group.remarks || "-"}</td>}
-              </>
-            )}
-          </tr>
-        );
-      });
+  // Hitung Spans untuk No dan Tanggal
+  const getTableSpans = () => {
+    const noSpans: number[] = [];
+    const dateSpans: number[] = [];
+    let currentNo = 0;
+    let lastDate = "";
+    
+    // Flatten plans to rows
+    const rows: any[] = [];
+    plans.forEach((plan) => {
+      const isNoActivity = plan.items[0]?.description === "TIDAK ADA RENCANA KERJA/ KEGIATAN";
+      if (isNoActivity) {
+        rows.push({ plan, isNoActivity: true, date: plan.date });
+      } else {
+        const resourceGroups = groupPlanResources(plan);
+        resourceGroups.forEach((group) => {
+          const maxGroupRows = Math.max(group.items.length, group.tools.length, 1);
+          for (let i = 0; i < maxGroupRows; i++) {
+            rows.push({ plan, group, rowIndex: i, maxGroupRows, date: plan.date });
+          }
+        });
+      }
     });
+
+    rows.forEach((row, idx) => {
+      if (row.date !== lastDate) {
+        currentNo++;
+        lastDate = row.date;
+        const sameDateRows = rows.filter(r => r.date === row.date);
+        noSpans[idx] = sameDateRows.length;
+        dateSpans[idx] = sameDateRows.length;
+      } else {
+        noSpans[idx] = 0;
+        dateSpans[idx] = 0;
+      }
+    });
+
+    return { rows, noSpans, dateSpans };
   };
+
+  const { rows, noSpans, dateSpans } = getTableSpans();
 
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
@@ -273,29 +227,93 @@ const WorkPlanWeeklyRecap = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {plans.slice(0, -1).map((plan, pIdx) => renderPlanRows(plan, pIdx))}
+                  {(() => {
+                    let currentNo = 0;
+                    let lastDate = "";
+                    return rows.map((row, idx) => {
+                      if (row.date !== lastDate) {
+                        currentNo++;
+                        lastDate = row.date;
+                      }
+                      
+                      if (row.isNoActivity) {
+                        return (
+                          <tr key={`no-act-${idx}`}>
+                            {noSpans[idx] > 0 && <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={noSpans[idx]}>{currentNo}</td>}
+                            {dateSpans[idx] > 0 && <td className="border-2 border-black p-1 text-center align-top text-[8px]" rowSpan={dateSpans[idx]}>{format(parseISO(row.date), 'eee, dd/MM', { locale: localeId })}</td>}
+                            <td className="border-2 border-black p-1 text-center font-bold">{row.plan.category}</td>
+                            <td colSpan={8} className="border-2 border-black p-4 text-center font-black text-sm tracking-widest">TIDAK ADA RENCANA KERJA/ KEGIATAN</td>
+                            {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words">{row.plan.items[0]?.remarks || "-"}</td>}
+                          </tr>
+                        );
+                      }
+
+                      const { plan, group, rowIndex, maxGroupRows } = row;
+                      const item = group.items[rowIndex];
+                      const tool = group.tools[rowIndex];
+                      
+                      // Cari apakah ini baris pertama untuk plan tertentu (untuk rowSpan kategori)
+                      const planRows = rows.filter(r => r.plan?.id === plan.id);
+                      const isFirstInPlan = planRows[0] === row;
+
+                      return (
+                        <tr key={`row-${idx}`}>
+                          {noSpans[idx] > 0 && <td className="border-2 border-black p-1 text-center align-top font-bold" rowSpan={noSpans[idx]}>{currentNo}</td>}
+                          {dateSpans[idx] > 0 && <td className="border-2 border-black p-1 text-center align-top text-[8px]" rowSpan={dateSpans[idx]}>{format(parseISO(row.date), 'eee, dd/MM', { locale: localeId })}</td>}
+                          {isFirstInPlan && <td className="border-2 border-black p-1 text-center font-bold align-top" rowSpan={planRows.length}>{plan.category}</td>}
+                          
+                          {rowIndex < group.items.length - 1 ? (
+                            <>
+                              <td className="border-2 border-black p-1 align-top break-words">{item.description}</td>
+                              <td className="border-2 border-black p-1 align-top break-words">{item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}</td>
+                            </>
+                          ) : rowIndex === group.items.length - 1 ? (
+                            <>
+                              <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{item.description}</td>
+                              <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{item.location.street}, {Array.isArray(item.location.village) ? item.location.village.join(", ") : item.location.village}, {item.location.subDistrict}</td>
+                            </>
+                          ) : null}
+
+                          {rowIndex < group.tools.length - 1 ? (
+                            <>
+                              <td className="border-2 border-black p-1 align-top break-words">{tool?.name ? `• ${tool.name}` : ""}</td>
+                              <td className="border-2 border-black p-1 text-center align-top">{tool?.unit || ""}</td>
+                              <td className="border-2 border-black p-1 align-top break-words">{tool?.usage || ""}</td>
+                            </>
+                          ) : rowIndex === group.tools.length - 1 || (group.tools.length === 0 && rowIndex === 0) ? (
+                            <>
+                              <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.name ? `• ${tool.name}` : ""}</td>
+                              <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows - rowIndex}>{tool?.unit || ""}</td>
+                              <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows - rowIndex}>{tool?.usage || ""}</td>
+                            </>
+                          ) : null}
+
+                          {rowIndex === 0 && (
+                            <>
+                              <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.coordinator}</td>
+                              <td className="border-2 border-black p-1 text-center align-top" rowSpan={maxGroupRows}>{group.members}</td>
+                              <td className="border-2 border-black p-1 align-top break-words" rowSpan={maxGroupRows}>{group.basis}</td>
+                              {hasRemarks && <td className="border-2 border-black p-1 italic align-top break-words" rowSpan={maxGroupRows}>{group.remarks || "-"}</td>}
+                            </>
+                          )}
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
 
-              <div className="keep-together">
-                <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed print:w-full print:min-w-0 border-t-0">
-                  <tbody>
-                    {renderPlanRows(plans[plans.length - 1], plans.length - 1)}
-                  </tbody>
-                </table>
-
-                {signatureMode === "with-signature" && (
-                  <div className="pdf-footer mt-12">
-                    <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
-                    <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p>{showSignatory4 && !showSignatory5 && (<><p className="font-bold">Kepala Koordinator Taman</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold">Koordinator Tim Pohon & Siram</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory4 && showSignatory5 && (<><p className="font-bold">Koordinator Taman & Tim Pohon/Siram</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}</div><div>{showSignatory4 && !showSignatory5 && (<><p className="font-bold underline">Tiurmaida Silitonga</p><p>NIP. 19690507 200701 2 042</p></>)}{showSignatory5 && !showSignatory4 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}{showSignatory4 && showSignatory5 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}</div></div>
-                    </div>
+              {signatureMode === "with-signature" && (
+                <div className="pdf-footer mt-12 keep-together">
+                  <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+                  <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p>{showSignatory4 && !showSignatory5 && (<><p className="font-bold">Kepala Koordinator Taman</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold">Koordinator Tim Pohon & Siram</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory4 && showSignatory5 && (<><p className="font-bold">Koordinator Taman & Tim Pohon/Siram</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}</div><div>{showSignatory4 && !showSignatory5 && (<><p className="font-bold underline">Tiurmaida Silitonga</p><p>NIP. 19690507 200701 2 042</p></>)}{showSignatory5 && !showSignatory4 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}{showSignatory4 && showSignatory5 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}</div></div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </>
           ) : (
             <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">

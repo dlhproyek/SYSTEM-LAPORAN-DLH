@@ -302,13 +302,21 @@ const WeeklyRecap = () => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.font = { bold: true };
       });
-      let displayIdx = 1;
+
+      let currentNo = 0;
+      let lastDate = "";
+
       for (const report of reports) {
+        if (report.date !== lastDate) {
+          currentNo++;
+          lastDate = report.date;
+        }
+
         for (let i = 0; i < report.tasks.length; i++) {
           const task = report.tasks[i];
           const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
           const rowData: any = {
-            no: i === 0 ? displayIdx : '',
+            no: (i === 0 && report === reports.find(r => r.date === report.date)) ? currentNo : '',
             date: i === 0 ? new Date(report.date).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' }) : '',
             cat: i === 0 ? report.category : '',
             desc: task.description,
@@ -332,23 +340,7 @@ const WeeklyRecap = () => {
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
             cell.alignment = { vertical: 'middle', wrapText: true };
           });
-          if (photoMode === "with-photo") {
-            const addImageToCell = async (url: string, colIndex: number) => {
-              if (!url) return;
-              try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                const imageId = workbook.addImage({ buffer: arrayBuffer, extension: 'jpeg' });
-                worksheet.addImage(imageId, { tl: { col: colIndex - 1, row: row.number - 1 }, ext: { width: 140, height: 130 }, editAs: 'oneCell' });
-              } catch (e) { console.error(e); }
-            };
-            await addImageToCell(task.photos.zero, 6);
-            await addImageToCell(task.photos.fifty, 7);
-            await addImageToCell(task.photos.hundred, 8);
-          }
         }
-        displayIdx++;
       }
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), `Rekap_Mingguan_DLH_${format(weekStart, 'yyyy-MM-dd')}_sd_${format(weekEnd, 'yyyy-MM-dd')}.xlsx`);
@@ -378,58 +370,94 @@ const WeeklyRecap = () => {
 
   const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 3 : 0);
 
-  const renderReportRows = (report: Report, reportIdx: number) => {
-    return report.tasks.map((task, taskIdx) => {
-      const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
-      return (
-        <tr key={`${report.id}-${taskIdx}`}>
-          {taskIdx === 0 ? (
-            <>
-              <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={report.tasks.length}>{reportIdx + 1}</td>
-              <td className="border-2 border-black p-2 text-center align-top font-medium" rowSpan={report.tasks.length}>
-                {new Date(report.date).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}
-              </td>
-              <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={report.tasks.length}>
-                {report.category}
-              </td>
-            </>
-          ) : null}
-          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
-          <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
-          {photoMode === "with-photo" && (
-            <>
-              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
-              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
-              <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
-            </>
-          )}
-          <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(report.category)}</td>
-          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
-          <td className="border-2 border-black p-1.5 px-0 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e, i) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
-          <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
-          {recapMode === "with-fuel" && (
-            <>
-              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
-              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
-              <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he, i) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
-            </>
-          )}
-          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
-          <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
-          <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
-            <div className="space-y-1">
-              {task.remarks && <div>{task.remarks}</div>}
-              {taskIdx === 0 && report.remarks && (
-                <div className={cn("text-blue-700 font-medium", task.remarks && "border-t border-slate-200 pt-1")}>
-                  Catatan: {report.remarks}
-                </div>
-              )}
-              {!task.remarks && (taskIdx !== 0 || !report.remarks) && "-"}
-            </div>
-          </td>
-        </tr>
-      );
+  // Hitung Spans untuk No dan Tanggal
+  const getTableSpans = () => {
+    const noSpans: number[] = [];
+    const dateSpans: number[] = [];
+    let currentNo = 0;
+    let lastDate = "";
+    
+    // Flatten reports to tasks for span calculation
+    const flatTasks = reports.flatMap(r => r.tasks.map(t => ({ ...t, reportDate: r.date, reportId: r.id, category: r.category, reportRemarks: r.remarks })));
+    
+    flatTasks.forEach((task, idx) => {
+      // Date Span
+      if (task.reportDate !== lastDate) {
+        currentNo++;
+        lastDate = task.reportDate;
+        
+        // Hitung berapa baris untuk tanggal ini
+        const sameDateTasks = flatTasks.filter(t => t.reportDate === task.reportDate);
+        noSpans[idx] = sameDateTasks.length;
+        dateSpans[idx] = sameDateTasks.length;
+      } else {
+        noSpans[idx] = 0;
+        dateSpans[idx] = 0;
+      }
     });
+
+    return { flatTasks, noSpans, dateSpans };
+  };
+
+  const { flatTasks, noSpans, dateSpans } = getTableSpans();
+
+  const renderTaskRow = (task: any, idx: number, currentNo: number) => {
+    const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
+    
+    // Cari apakah ini baris pertama untuk laporan tertentu (untuk rowSpan kategori)
+    const reportTasks = flatTasks.filter(t => t.reportId === task.reportId);
+    const isFirstInReport = reportTasks[0] === task;
+
+    return (
+      <tr key={`${task.reportId}-${idx}`}>
+        {noSpans[idx] > 0 && (
+          <td className="border-2 border-black p-2 text-center align-top font-bold" rowSpan={noSpans[idx]}>{currentNo}</td>
+        )}
+        {dateSpans[idx] > 0 && (
+          <td className="border-2 border-black p-2 text-center align-top font-medium" rowSpan={dateSpans[idx]}>
+            {new Date(task.reportDate).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}
+          </td>
+        )}
+        {isFirstInReport && (
+          <td className="border-2 border-black p-2 text-center align-top font-bold text-blue-700" rowSpan={reportTasks.length}>
+            {task.category}
+          </td>
+        )}
+        <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{task.description}</td>
+        <td className="border-2 border-black p-2 align-top whitespace-normal break-words leading-tight">{`${task.location.street}, ${villages}, ${task.location.subDistrict}`}</td>
+        {photoMode === "with-photo" && (
+          <>
+            <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.zero ? <img src={task.photos.zero} className="w-full h-full object-fill" alt="0%" /> : null}</div></td>
+            <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.fifty ? <img src={task.photos.fifty} className="w-full h-full object-fill" alt="50%" /> : null}</div></td>
+            <td className="border-2 border-black p-1 align-middle"><div className="w-full h-[110px] bg-slate-100 border border-slate-300 overflow-hidden">{task.photos?.hundred ? <img src={task.photos.hundred} className="w-full h-full object-fill" alt="100%" /> : null}</div></td>
+          </>
+        )}
+        <td className="border-2 border-black p-2 text-center font-bold align-top">{task.volume} {getUnitByCategory(task.category)}</td>
+        <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight">{task.equipment?.map((e: any, i: number) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {e.type}</div>))}</td>
+        <td className="border-2 border-black p-1.5 px-0 align-top text-[10px] text-center leading-tight">{task.equipment?.map((e: any, i: number) => (<div key={i} className="mb-0.5">{e.quantity}</div>))}</td>
+        <td className="border-2 border-black p-1.5 align-top text-[10px] leading-tight overflow-hidden">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5 whitespace-nowrap">• {he.type} {he.vehicle || ""}</div>))}</td>
+        {recapMode === "with-fuel" && (
+          <>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
+          </>
+        )}
+        <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
+        <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.members}</td>
+        <td className="border-2 border-black p-2 align-top whitespace-normal break-words italic">
+          <div className="space-y-1">
+            {task.remarks && <div>{task.remarks}</div>}
+            {isFirstInReport && task.reportRemarks && (
+              <div className={cn("text-blue-700 font-medium", task.remarks && "border-t border-slate-200 pt-1")}>
+                Catatan: {task.reportRemarks}
+              </div>
+            )}
+            {!task.remarks && (!isFirstInReport || !task.reportRemarks) && "-"}
+          </div>
+        </td>
+      </tr>
+    );
   };
 
   const colGroup = (
@@ -630,33 +658,32 @@ const WeeklyRecap = () => {
               <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0">
                 {colGroup}
                 {tableHeader}
-                {reports.slice(0, -1).map((report, reportIdx) => (
-                  <tbody key={report.id} className="pdf-report-block border-b-2 border-black">
-                    {renderReportRows(report, reportIdx)}
-                  </tbody>
-                ))}
+                <tbody>
+                  {(() => {
+                    let currentNo = 0;
+                    let lastDate = "";
+                    return flatTasks.map((task, idx) => {
+                      if (task.reportDate !== lastDate) {
+                        currentNo++;
+                        lastDate = task.reportDate;
+                      }
+                      return renderTaskRow(task, idx, currentNo);
+                    });
+                  })()}
+                </tbody>
               </table>
 
-              <div className="keep-together">
-                <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0 border-t-0">
-                  {colGroup}
-                  <tbody className="pdf-report-block border-b-2 border-black">
-                    {renderReportRows(reports[reports.length - 1], reports.length - 1)}
-                  </tbody>
-                </table>
-
-                {signatureMode === "with-signature" && (
-                  <div className="pdf-footer mt-12">
-                    <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
-                    <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
-                      <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p>{showSignatory4 && !showSignatory5 && (<><p className="font-bold">Kepala Koordinator Taman</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold">Kepala Koordinator Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory4 && showSignatory5 && (<><p className="font-bold">Koordinator Taman & Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}</div><div>{showSignatory4 && !showSignatory5 && (<><p className="font-bold underline">Tiurmaida Silitonga</p><p>NIP. 19690507 200701 2 042</p></>)}{showSignatory5 && !showSignatory4 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}{showSignatory4 && showSignatory5 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}</div></div>
-                    </div>
+              {signatureMode === "with-signature" && (
+                <div className="pdf-footer mt-12 keep-together">
+                  <div className="flex justify-end mb-4 text-[11px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+                  <div className="grid grid-cols-4 gap-4 text-[11px] leading-normal">
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
+                    <div className="text-center flex flex-col justify-between min-h-[200px] pb-4"><div><p>Diketahui :</p>{showSignatory4 && !showSignatory5 && (<><p className="font-bold">Kepala Koordinator Taman</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory5 && !showSignatory4 && (<><p className="font-bold">Kepala Koordinator Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}{showSignatory4 && showSignatory5 && (<><p className="font-bold">Koordinator Taman & Tim Pohon</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></>)}</div><div>{showSignatory4 && !showSignatory5 && (<><p className="font-bold underline">Tiurmaida Silitonga</p><p>NIP. 19690507 200701 2 042</p></>)}{showSignatory5 && !showSignatory4 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}{showSignatory4 && showSignatory5 && (<div className="flex justify-around gap-2"><div><p className="font-bold underline">Tiurmaida Silitonga</p><p className="text-[9px]">NIP. 19690507 200701 2 042</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p className="text-[9px]">NIP. 19860404 201001 1 015</p></div></div>)}</div></div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </>
           ) : (
             <table className="w-full border-collapse border-2 border-black text-[11px] table-fixed">
