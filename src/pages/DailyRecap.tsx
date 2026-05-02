@@ -371,6 +371,11 @@ const DailyRecap = () => {
 
   const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 3 : 0);
 
+  // Hitung Total BBM
+  const totalPertamax = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.pertamax || 0), 0) || 0), 0), 0);
+  const totalDexlite = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.dexlite || 0), 0) || 0), 0), 0);
+  const totalSolar = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.solar || 0), 0) || 0), 0), 0);
+
   const renderReportRows = (report: Report, reportIdx: number) => {
     return report.tasks.map((task, taskIdx) => {
       const villages = Array.isArray(task.location.village) ? task.location.village.join(", ") : task.location.village;
@@ -641,12 +646,23 @@ const DailyRecap = () => {
                 ))}
               </table>
 
-              {/* Bagian Terakhir: 1 Laporan Terakhir + Tanda Tangan dibungkus agar tidak terpisah */}
+              {/* Bagian Terakhir: 1 Laporan Terakhir + Baris Total + Tanda Tangan dibungkus agar tidak terpisah */}
               <div className="keep-together">
                 <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0 border-t-0">
                   {colGroup}
                   <tbody className="pdf-report-block border-b-2 border-black">
                     {renderReportRows(reports[reports.length - 1], reports.length - 1)}
+                    
+                    {/* Baris Total BBM */}
+                    {recapMode === "with-fuel" && (
+                      <tr className="bg-slate-50 font-black">
+                        <td className="border-2 border-black p-2 text-right" colSpan={photoMode === "with-photo" ? 11 : 8}>TOTAL PEMAKAIAN BBM (VOUCHER RP):</td>
+                        <td className="border-2 border-black p-1.5 text-center">{totalPertamax.toLocaleString('id-ID')}</td>
+                        <td className="border-2 border-black p-1.5 text-center">{totalDexlite.toLocaleString('id-ID')}</td>
+                        <td className="border-2 border-black p-1.5 text-center">{totalSolar.toLocaleString('id-ID')}</td>
+                        <td className="border-2 border-black p-2" colSpan={3}></td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
 

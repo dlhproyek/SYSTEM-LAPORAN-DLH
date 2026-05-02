@@ -95,6 +95,11 @@ const FuelDailyRecap = () => {
 
   const { flatItems, regionSpans, teamSpans } = getTableSpans();
 
+  // Hitung Total
+  const totalPertamax = flatItems.reduce((acc, item) => acc + (item.fuel_type === 'Pertamax' ? item.amount : 0), 0);
+  const totalDexlite = flatItems.reduce((acc, item) => acc + (item.fuel_type === 'Dexlite' ? item.amount : 0), 0);
+  const totalOli = flatItems.reduce((acc, item) => acc + (item.fuel_type === 'Oli' ? item.amount : 0), 0);
+
   const handleExportExcel = async () => {
     if (flatItems.length === 0) {
       showError("Tidak ada data untuk diekspor");
@@ -159,6 +164,19 @@ const FuelDailyRecap = () => {
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
           cell.alignment = { vertical: 'middle', wrapText: true };
         });
+      });
+
+      // Baris Total Excel
+      const totalRow = worksheet.addRow({
+        vehicle: 'TOTAL PEMAKAIAN:',
+        pertamax: totalPertamax,
+        dexlite: totalDexlite,
+        oli: totalOli
+      });
+      totalRow.eachCell(cell => {
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+        cell.border = { top: { style: 'medium' }, left: { style: 'thin' }, bottom: { style: 'medium' }, right: { style: 'thin' } };
       });
 
       const buffer = await workbook.xlsx.writeBuffer();
@@ -231,19 +249,29 @@ const FuelDailyRecap = () => {
             </thead>
             <tbody>
               {flatItems.length > 0 ? (
-                flatItems.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
-                    {regionSpans[idx] > 0 && (<td className="border-2 border-black p-1 text-center font-bold align-middle" rowSpan={regionSpans[idx]}>{item.region}</td>)}
-                    {teamSpans[idx] > 0 && (<td className="border-2 border-black p-1 text-center align-middle" rowSpan={teamSpans[idx]}>{item.team}</td>)}
-                    <td className="border-2 border-black p-1 whitespace-normal font-medium">{item.vehicle_operator}</td>
-                    <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Pertamax' ? item.amount.toLocaleString('id-ID') : "-"}</td>
-                    <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Dexlite' ? item.amount.toLocaleString('id-ID') : "-"}</td>
-                    <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Oli' ? item.amount : "-"}</td>
-                    <td className="border-2 border-black p-1 break-words">{item.location.street}{item.location.subDistrict && item.location.subDistrict !== " " ? `, ${item.location.subDistrict}` : ""}{item.location.village && item.location.village !== " " ? `, ${item.location.village}` : ""}</td>
-                    <td className="border-2 border-black p-1 italic">{item.item_remarks || item.remarks || "-"}</td>
+                <>
+                  {flatItems.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
+                      {regionSpans[idx] > 0 && (<td className="border-2 border-black p-1 text-center font-bold align-middle" rowSpan={regionSpans[idx]}>{item.region}</td>)}
+                      {teamSpans[idx] > 0 && (<td className="border-2 border-black p-1 text-center align-middle" rowSpan={teamSpans[idx]}>{item.team}</td>)}
+                      <td className="border-2 border-black p-1 whitespace-normal font-medium">{item.vehicle_operator}</td>
+                      <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Pertamax' ? item.amount.toLocaleString('id-ID') : "-"}</td>
+                      <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Dexlite' ? item.amount.toLocaleString('id-ID') : "-"}</td>
+                      <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Oli' ? item.amount : "-"}</td>
+                      <td className="border-2 border-black p-1 break-words">{item.location.street}{item.location.subDistrict && item.location.subDistrict !== " " ? `, ${item.location.subDistrict}` : ""}{item.location.village && item.location.village !== " " ? `, ${item.location.village}` : ""}</td>
+                      <td className="border-2 border-black p-1 italic">{item.item_remarks || item.remarks || "-"}</td>
+                    </tr>
+                  ))}
+                  {/* Baris Total */}
+                  <tr className="bg-slate-100 font-black">
+                    <td className="border-2 border-black p-1 text-right" colSpan={4}>TOTAL PEMAKAIAN:</td>
+                    <td className="border-2 border-black p-1 text-right">{totalPertamax.toLocaleString('id-ID')}</td>
+                    <td className="border-2 border-black p-1 text-right">{totalDexlite.toLocaleString('id-ID')}</td>
+                    <td className="border-2 border-black p-1 text-center">{totalOli}</td>
+                    <td className="border-2 border-black p-1" colSpan={2}></td>
                   </tr>
-                ))
+                </>
               ) : (
                 <tr><td colSpan={9} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk tanggal ini</td></tr>
               )}
