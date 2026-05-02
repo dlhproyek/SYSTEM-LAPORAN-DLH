@@ -250,7 +250,7 @@ const WeeklyRecap = () => {
         }
       });
       if (error) throw error;
-return data;
+      return data;
     } catch (error: any) {
       console.error(error);
       showError("Gagal mengunggah: " + error.message);
@@ -512,8 +512,8 @@ return data;
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
@@ -647,7 +647,7 @@ return data;
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { background: white !important; }
+          body { background: white !important; margin: 0 !important; padding: 0 !important; }
           .no-print, 
           [data-radix-portal], 
           [role="menu"], 
@@ -664,6 +664,7 @@ return data;
             width: 100% !important; 
             max-width: none !important; 
             background-color: white !important;
+            overflow: visible !important;
           }
           @page { size: A3 landscape; margin: 1.5cm; }
           table { page-break-inside: auto; width: 100% !important; }
@@ -672,6 +673,8 @@ return data;
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }
           .bg-slate-50, .bg-slate-100 { background-color: white !important; }
+          .overflow-x-auto { overflow: visible !important; }
+          ::-webkit-scrollbar { display: none; }
         }
       `}} />
     </div>

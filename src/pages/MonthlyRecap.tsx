@@ -473,7 +473,7 @@ const MonthlyRecap = () => {
         defaultFileName={`Rekap_DLH_${selectedMonth === 'semua' ? 'Semua' : months[parseInt(selectedMonth)-1]}_${selectedYear}`}
       />
 
-      <div ref={printRef} className="print-area bg-white p-4 md:p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm] overflow-x-auto">
+      <div ref={printRef} className="print-area bg-white p-4 md:p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
         <div className="pdf-header">
           <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_MEDAN_URL} className="max-h-full max-w-full object-contain" alt="Logo Medan" /></div>
@@ -491,8 +491,8 @@ const MonthlyRecap = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
@@ -636,6 +636,8 @@ const MonthlyRecap = () => {
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }
           .bg-slate-50, .bg-slate-100 { background-color: white !important; }
+          .overflow-x-auto { overflow: visible !important; }
+          ::-webkit-scrollbar { display: none; }
         }
       `}} />
     </div>

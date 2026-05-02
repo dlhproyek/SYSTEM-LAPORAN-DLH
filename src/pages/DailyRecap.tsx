@@ -390,7 +390,7 @@ const DailyRecap = () => {
               </TooltipProvider>
             ) : (
               <Button variant="outline" size="sm" onClick={() => navigate('/login')} className="text-blue-600 border-blue-600 px-2 md:px-4 h-9">
-                <LogIn className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Masuk</span>
+                <LogIn className="mr-2 h-4 w-4" /> <span className="hidden md:inline">Masuk</span>
               </Button>
             )}
           </div>
@@ -443,7 +443,7 @@ const DailyRecap = () => {
               <SelectContent><SelectItem value="with-photo"><div className="flex items-center gap-2"><ImageIcon size={14} /> Dengan Foto</div></SelectItem><SelectItem value="without-photo"><div className="flex items-center gap-2"><ImageOff size={14} /> Tanpa Foto</div></SelectItem></SelectContent>
             </Select>
             <Select value={recapMode} onValueChange={(v) => setRecapMode(v as RecapMode)}>
-              <SelectTrigger className="w-[40px] md:w-[180px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium p-0 md:px-3 flex justify-center">
+              <SelectTrigger className="w-[40px] md:w-[160px] bg-blue-50 border-blue-200 h-10 text-blue-700 font-medium p-0 md:px-3 flex justify-center">
                 <div className="flex items-center gap-2">
                   <Fuel size={16} />
                   <span className="hidden md:inline"><SelectValue placeholder="Mode Rekap" /></span>
@@ -498,7 +498,7 @@ const DailyRecap = () => {
         defaultFileName={`Rekap_Harian_DLH_${selectedDate}`}
       />
 
-      <div ref={printRef} className="print-area bg-white p-4 md:p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm] overflow-x-auto">
+      <div ref={printRef} className="print-area bg-white p-4 md:p-10 mx-auto shadow-lg border min-h-[297mm] w-full max-w-[420mm]">
         <div className="pdf-header">
           <div className="flex items-center justify-center gap-8 border-b-4 border-double border-black pb-4 mb-6">
             <div className="w-20 h-20 flex items-center justify-center overflow-hidden"><img src={LOGO_MEDAN_URL} className="max-h-full max-w-full object-contain" alt="Logo Medan" /></div>
@@ -516,8 +516,8 @@ const DailyRecap = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full min-w-[1200px] border-collapse border-2 border-black text-[11px] table-fixed print:w-full print:min-w-0">
             <colgroup>
               <col style={{ width: '35px' }} />
               <col style={{ width: '70px' }} />
@@ -651,7 +651,7 @@ const DailyRecap = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { background: white !important; }
+          body { background: white !important; margin: 0 !important; padding: 0 !important; }
           .no-print, 
           [data-radix-portal], 
           [role="menu"], 
@@ -668,6 +668,7 @@ const DailyRecap = () => {
             width: 100% !important; 
             max-width: none !important; 
             background-color: white !important;
+            overflow: visible !important;
           }
           @page { size: A3 landscape; margin: 1.5cm; }
           table { page-break-inside: auto; width: 100% !important; }
@@ -676,6 +677,8 @@ const DailyRecap = () => {
           tfoot { display: table-footer-group; }
           .pdf-report-block { page-break-inside: avoid; }
           .bg-slate-50, .bg-slate-100 { background-color: white !important; }
+          .overflow-x-auto { overflow: visible !important; }
+          ::-webkit-scrollbar { display: none; }
         }
       `}} />
     </div>
