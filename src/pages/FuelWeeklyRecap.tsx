@@ -6,10 +6,13 @@ import { fuelService } from '@/services/fuelService';
 import { FuelReport } from '@/types/fuelReport';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Printer, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Printer, Calendar as CalendarIcon, Table } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -110,6 +113,82 @@ const FuelWeeklyRecap = () => {
 
   const { flatItems, dateSpans, regionSpans, teamSpans } = getTableSpans();
 
+  const handleExportExcel = async () => {
+    if (flatItems.length === 0) {
+      showError("Tidak ada data untuk diekspor");
+      return;
+    }
+    const toastId = showLoading("Menyiapkan file Excel...");
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Rekap Mingguan BBM');
+
+      const columns = [
+        { header: 'No', key: 'no', width: 5 },
+        { header: 'Tanggal', key: 'date', width: 12 },
+        { header: 'Wilayah', key: 'region', width: 15 },
+        { header: 'Tim / Operator', key: 'team', width: 20 },
+        { header: 'Kendaraan / Alat Operasional', key: 'vehicle', width: 30 },
+        { header: 'Pertamax (Rp)', key: 'pertamax', width: 15 },
+        { header: 'Dexlite (Rp)', key: 'dexlite', width: 15 },
+        { header: 'Oli (L)', key: 'oli', width: 10 },
+        { header: 'Lokasi Kerja', key: 'location', width: 40 },
+        { header: 'Keterangan', key: 'remarks', width: 30 },
+      ];
+
+      worksheet.columns = columns;
+
+      worksheet.mergeCells('A1:J1');
+      worksheet.getCell('A1').value = 'PEMERINTAH KOTA MEDAN - DINAS LINGKUNGAN HIDUP';
+      worksheet.getCell('A1').font = { bold: true, size: 14 };
+      worksheet.getCell('A1').alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A2:J2');
+      worksheet.getCell('A2').value = `REKAP MINGGUAN PEMAKAIAN BBM & OLI - PERIODE: ${format(weekStart, 'dd MMM')} s/d ${format(weekEnd, 'dd MMM yyyy')}`;
+      worksheet.getCell('A2').font = { bold: true, size: 12 };
+      worksheet.getCell('A2').alignment = { horizontal: 'center' };
+
+      worksheet.addRow([]);
+
+      const headerRow = worksheet.addRow(columns.map(c => c.header));
+      headerRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { bold: true };
+      });
+
+      flatItems.forEach((item, idx) => {
+        const row = worksheet.addRow({
+          no: idx + 1,
+          date: item.date,
+          region: item.region,
+          team: item.team,
+          vehicle: item.vehicle_operator,
+          pertamax: item.fuel_type === 'Pertamax' ? item.amount : 0,
+          dexlite: item.fuel_type === 'Dexlite' ? item.amount : 0,
+          oli: item.fuel_type === 'Oli' ? item.amount : 0,
+          location: `${item.location.street}${item.location.subDistrict ? ', ' + item.location.subDistrict : ''}`,
+          remarks: item.item_remarks || item.remarks || "-"
+        });
+
+        row.eachCell(cell => {
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          cell.alignment = { vertical: 'middle', wrapText: true };
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `Rekap_Mingguan_BBM_DLH_${format(weekStart, 'yyyy-MM-dd')}.xlsx`);
+      dismissToast(toastId);
+      showSuccess("Excel berhasil diunduh");
+    } catch (error) {
+      console.error(error);
+      dismissToast(toastId);
+      showError("Gagal membuat file Excel");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -126,9 +205,14 @@ const FuelWeeklyRecap = () => {
               {format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}
             </div>
           </div>
-          <Button onClick={() => window.print()} className="bg-blue-600 w-full md:w-auto">
-            <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportExcel} className="bg-white border-green-600 text-green-600 hover:bg-green-50">
+              <Table className="mr-2 h-4 w-4" /> Rekap Excel
+            </Button>
+            <Button onClick={() => window.print()} className="bg-blue-600 w-full md:w-auto">
+              <Printer className="mr-2 h-4 w-4" /> Cetak Rekap
+            </Button>
+          </div>
         </div>
       </div>
 
