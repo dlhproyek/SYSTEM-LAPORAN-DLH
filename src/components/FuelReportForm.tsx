@@ -35,12 +35,12 @@ const regions = [
 ];
 
 const teamOptions: Record<string, string[]> = {
-  "Pusat": ["Mobil Crane", "Mobil Tangga 30m", "Beco Loader"],
-  "Wilayah 1 Utara": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah"],
-  "Wilayah 2 Barat": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah"],
-  "Wilayah 3 Timur": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah"],
-  "Wilayah 4 Kota": ["Tim Babat", "Tim Siram", "Tim Pohon"],
-  "Wilayah 5 Selatan": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah"],
+  "Pusat": ["Mobil Crane", "Mobil Tangga 30m", "Beco Loader", "Dump Truck"],
+  "Wilayah 1 Utara": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah", "Dump Truck"],
+  "Wilayah 2 Barat": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah", "Dump Truck"],
+  "Wilayah 3 Timur": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah", "Dump Truck"],
+  "Wilayah 4 Kota": ["Tim Babat", "Tim Siram", "Tim Pohon", "Dump Truck"],
+  "Wilayah 5 Selatan": ["Tim Babat", "Tim Siram", "Tim Pohon", "Becak Siram", "Becak Sampah", "Dump Truck"],
 };
 
 const usageItemSchema = z.object({
