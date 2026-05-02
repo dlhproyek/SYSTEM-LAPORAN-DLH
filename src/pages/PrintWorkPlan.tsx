@@ -280,14 +280,7 @@ const PrintWorkPlan = () => {
         @media print {
           body { background: white !important; }
           .no-print { display: none !important; }
-          .print-container { 
-            box-shadow: none !important; 
-            border: none !important; 
-            padding: 0 !important; 
-            margin: 0 !important; 
-            width: 100% !important; 
-            max-width: none !important; 
-          }
+          .print-container { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
           @page { size: landscape; margin: 1cm; }
           table { border-color: black !important; }
           th, td { border-color: black !important; }
