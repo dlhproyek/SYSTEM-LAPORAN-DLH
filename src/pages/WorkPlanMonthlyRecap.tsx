@@ -200,6 +200,23 @@ const WorkPlanMonthlyRecap = () => {
     });
   };
 
+  const colGroup = (
+    <colgroup>
+      <col style={{ width: '25px' }} />
+      <col style={{ width: '55px' }} />
+      <col style={{ width: '55px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '120px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '25px' }} />
+      <col style={{ width: '90px' }} />
+      <col style={{ width: '75px' }} />
+      <col style={{ width: '35px' }} />
+      <col style={{ width: '90px' }} />
+      {hasRemarks && <col style={{ width: '90px' }} />}
+    </colgroup>
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
@@ -263,20 +280,21 @@ const WorkPlanMonthlyRecap = () => {
           {plans.length > 0 ? (
             <>
               <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed print:w-full print:min-w-0">
+                {colGroup}
                 <thead>
                   <tr className="bg-slate-100">
-                    <th className="border-2 border-black p-1 w-[25px]">No</th>
-                    <th className="border-2 border-black p-1 w-[55px]">Hari/Tgl</th>
-                    <th className="border-2 border-black p-1 w-[55px]">Tim/Kec</th>
-                    <th className="border-2 border-black p-1 w-[110px]">Detail Kegiatan</th>
-                    <th className="border-2 border-black p-1 w-[120px]">Lokasi</th>
-                    <th className="border-2 border-black p-1 w-[110px]">Alat Operasional</th>
-                    <th className="border-2 border-black p-1 w-[25px]">Unit</th>
-                    <th className="border-2 border-black p-1 w-[90px]">Kegunaan</th>
-                    <th className="border-2 border-black p-1 w-[75px]">Koordinator</th>
-                    <th className="border-2 border-black p-1 w-[35px]">Pers</th>
-                    <th className="border-2 border-black p-1 w-[90px]">Dasar Pengerjaan</th>
-                    {hasRemarks && <th className="border-2 border-black p-1 w-[90px]">Keterangan</th>}
+                    <th className="border-2 border-black p-1">No</th>
+                    <th className="border-2 border-black p-1">Hari/Tgl</th>
+                    <th className="border-2 border-black p-1">Tim/Kec</th>
+                    <th className="border-2 border-black p-1">Detail Kegiatan</th>
+                    <th className="border-2 border-black p-1">Lokasi</th>
+                    <th className="border-2 border-black p-1">Alat Operasional</th>
+                    <th className="border-2 border-black p-1">Unit</th>
+                    <th className="border-2 border-black p-1">Kegunaan</th>
+                    <th className="border-2 border-black p-1">Koordinator</th>
+                    <th className="border-2 border-black p-1">Pers</th>
+                    <th className="border-2 border-black p-1">Dasar Pengerjaan</th>
+                    {hasRemarks && <th className="border-2 border-black p-1">Keterangan</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -286,6 +304,7 @@ const WorkPlanMonthlyRecap = () => {
 
               <div className="keep-together">
                 <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed print:w-full print:min-w-0 border-t-0">
+                  {colGroup}
                   <tbody>
                     {renderPlanRows(plans[plans.length - 1], plans.length - 1)}
                   </tbody>
