@@ -218,22 +218,35 @@ const FuelYearlyRecap = () => {
         
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse border-2 border-black text-[9px] table-fixed">
+            <colgroup>
+              <col style={{ width: '30px' }} />
+              <col style={{ width: '58px' }} />
+              <col style={{ width: '75px' }} />
+              <col style={{ width: '85px' }} />
+              <col style={{ width: 'auto' }} />
+              <col style={{ width: '70px' }} />
+              <col style={{ width: '70px' }} />
+              <col style={{ width: '25px' }} />
+              <col style={{ width: '90px' }} />
+              <col style={{ width: '180px' }} />
+              <col style={{ width: '120px' }} />
+            </colgroup>
             <thead>
               <tr className="bg-slate-100">
-                <th className="border-2 border-black p-1 w-[30px]" rowSpan={2}>No</th>
-                <th className="border-2 border-black p-1 w-[63px]" rowSpan={2}>Tanggal</th>
-                <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Wilayah</th>
-                <th className="border-2 border-black p-1 w-[90px]" rowSpan={2}>Tim / Operator</th>
-                <th className="border-2 border-black p-1 w-auto" rowSpan={2}>Kendaraan / Alat Operasional</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>No</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Tanggal</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Wilayah</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Tim / Operator</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Kendaraan / Alat Operasional</th>
                 <th className="border-2 border-black p-1" colSpan={3}>Jenis BBM / Oli</th>
-                <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Keterangan Item</th>
-                <th className="border-2 border-black p-1 w-[180px]" rowSpan={2}>Lokasi Kerja</th>
-                <th className="border-2 border-black p-1 w-[120px]" rowSpan={2}>Keterangan Tambahan</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Keterangan Item</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Lokasi Kerja</th>
+                <th className="border-2 border-black p-1" rowSpan={2}>Keterangan Tambahan</th>
               </tr>
               <tr className="bg-slate-50">
-                <th className="border-2 border-black p-1 w-[70px]">Pertamax</th>
-                <th className="border-2 border-black p-1 w-[70px]">Dexlite</th>
-                <th className="border-2 border-black p-1 w-[30px]">Oli</th>
+                <th className="border-2 border-black p-1">Pertamax</th>
+                <th className="border-2 border-black p-1">Dexlite</th>
+                <th className="border-2 border-black p-1">Oli</th>
               </tr>
             </thead>
             <tbody>
@@ -266,7 +279,7 @@ const FuelYearlyRecap = () => {
                     <td className="border-2 border-black p-1 text-right">{totalPertamax.toLocaleString('id-ID')}</td>
                     <td className="border-2 border-black p-1 text-right">{totalDexlite.toLocaleString('id-ID')}</td>
                     <td className="border-2 border-black p-1 text-center">{totalOli}</td>
-                    <td className="border-2 border-black p-1" colSpan={3}></td>
+                    <td className="border-2 border-black p-1" colSpan={2}></td>
                   </tr>
                 </>
               ) : (
