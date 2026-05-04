@@ -41,7 +41,6 @@ const FuelDailyRecap = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedRegion, setSelectedRegion] = useState("semua");
 
-  // State untuk kontrol kolom (Hanya untuk Admin)
   const [visibleColumns, setVisibleColumns] = useState({
     region: true,
     team: true,
@@ -101,14 +100,13 @@ const FuelDailyRecap = () => {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Harian BBM');
       
-      // Kolom Excel mengikuti pilihan visibleColumns
       const columns: any[] = [{ header: 'No', key: 'no', width: 5 }];
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
       if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 20 });
       if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan / Alat Operasional', key: 'vehicle', width: 30 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax (Rp)', key: 'pertamax', width: 15 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite (Rp)', key: 'dexlite', width: 15 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 10 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 6 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi Kerja', key: 'location', width: 40 });
       if (visibleColumns.remarks) columns.push({ header: 'Keterangan', key: 'remarks', width: 30 });
 
@@ -163,7 +161,6 @@ const FuelDailyRecap = () => {
     }
   };
 
-  // Logika pengelompokan untuk tampilan cetak
   const groupedByRegion: Record<string, any[]> = {};
   flatItems.forEach(item => {
     if (!groupedByRegion[item.region]) groupedByRegion[item.region] = [];
@@ -174,7 +171,6 @@ const FuelDailyRecap = () => {
   const totalDexliteAll = flatItems.reduce((acc, item) => acc + (item.fuel_type === 'Dexlite' ? item.amount : 0), 0);
   const totalOliAll = flatItems.reduce((acc, item) => acc + (item.fuel_type === 'Oli' ? item.amount : 0), 0);
 
-  // Hitung berapa kolom BBM yang aktif
   const bbmColCount = (visibleColumns.pertamax ? 1 : 0) + (visibleColumns.dexlite ? 1 : 0) + (visibleColumns.oli ? 1 : 0);
 
   return (
@@ -252,7 +248,7 @@ const FuelDailyRecap = () => {
               {visibleColumns.vehicle && <col style={{ width: 'auto' }} />}
               {visibleColumns.pertamax && <col style={{ width: '75px' }} />}
               {visibleColumns.dexlite && <col style={{ width: '75px' }} />}
-              {visibleColumns.oli && <col style={{ width: '40px' }} />}
+              {visibleColumns.oli && <col style={{ width: '30px' }} />}
               {visibleColumns.location && <col style={{ width: '200px' }} />}
               {visibleColumns.remarks && <col style={{ width: '120px' }} />}
             </colgroup>

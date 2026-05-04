@@ -110,7 +110,7 @@ const FuelWeeklyRecap = () => {
       if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 25 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax (Rp)', key: 'pertamax', width: 12 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite (Rp)', key: 'dexlite', width: 12 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 8 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 6 });
       if (visibleColumns.item_remarks) columns.push({ header: 'Ket. Item', key: 'item_remarks', width: 20 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi Kerja', key: 'location', width: 35 });
       if (visibleColumns.remarks) columns.push({ header: 'Ket. Umum', key: 'remarks', width: 25 });
