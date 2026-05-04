@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft, Save, Loader2, Fuel, MapPin, Info, 
-  Plus, Trash2, MessageSquare, HelpCircle, Check, X 
+  Plus, Trash2, MessageSquare, HelpCircle, Check, X, MapPinned
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -49,6 +49,7 @@ const usageItemSchema = z.object({
   amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
   item_remarks: z.string().optional().default(""),
   is_location_same: z.boolean().optional().default(false),
+  requires_fuel: z.boolean().optional().default(true),
   location: z.object({
     street: z.string().min(1, "Jalan wajib diisi"),
     subDistrict: z.string().optional().default(""),
@@ -75,13 +76,18 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customTeamMode, setCustomTeamMode] = useState(false);
-  const [showLocationPrompt, setshowLocationPrompt] = useState(false);
+  const [showTypePrompt, setShowTypePrompt] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
-      items: initialData.items.map(item => ({ ...item, fuel_type: item.fuel_type as string })),
+      items: initialData.items.map(item => ({ 
+        ...item, 
+        fuel_type: item.fuel_type as string,
+        requires_fuel: item.requires_fuel ?? (item.amount > 0)
+      })),
     } : {
       date: new Date().toISOString().split('T')[0],
       region: "",
@@ -92,6 +98,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         amount: 0,
         item_remarks: "",
         is_location_same: false,
+        requires_fuel: true,
         location: { street: "", subDistrict: "", village: "" }
       }],
       remarks: "",
@@ -117,25 +124,33 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   const vehicleSuggestions = getVehicleSuggestions();
 
   const handleAddClick = () => {
-    if (selectedTeam === "Tim Pohon" && fields.length > 0) {
-      setshowLocationPrompt(true);
+    setShowTypePrompt(true);
+  };
+
+  const handleTypeSelection = (requiresFuel: boolean) => {
+    setShowTypePrompt(false);
+    if (requiresFuel) {
+      setShowLocationPrompt(true);
     } else {
-      performAppend(false);
+      performAppend(false, false);
     }
   };
 
-  const performAppend = (isSame: boolean) => {
-    const lastLocation = form.getValues(`items.${fields.length - 1}.location`);
+  const performAppend = (isSameLocation: boolean, requiresFuel: boolean) => {
+    const lastItem = form.getValues(`items.${fields.length - 1}`);
+    const lastLocation = lastItem.location;
+    const lastVehicle = lastItem.vehicle_operator;
 
     append({ 
-      vehicle_operator: "", 
+      vehicle_operator: requiresFuel ? "" : lastVehicle || "-", 
       fuel_type: "Pertamax", 
       amount: 0,
       item_remarks: "",
-      is_location_same: isSame,
-      location: isSame ? { ...lastLocation } : { street: "", subDistrict: "", village: "" }
+      is_location_same: isSameLocation,
+      requires_fuel: requiresFuel,
+      location: isSameLocation ? { ...lastLocation } : { street: "", subDistrict: "", village: "" }
     });
-    setshowLocationPrompt(false);
+    setShowLocationPrompt(false);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -154,7 +169,8 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         items: values.items.map(item => ({
           ...item,
           fuel_type: item.fuel_type as FuelType,
-          vehicle_operator: item.vehicle_operator || "-"
+          vehicle_operator: item.vehicle_operator || "-",
+          amount: item.requires_fuel ? item.amount : 0
         })),
         remarks: values.remarks,
       };
@@ -242,41 +258,50 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
 
           {fields.map((field, index) => {
             const isLocationSame = form.watch(`items.${index}.is_location_same`);
+            const requiresFuel = form.watch(`items.${index}.requires_fuel`);
+            
             return (
-              <Card key={field.id} className="border-l-4 border-l-orange-500 relative overflow-hidden shadow-sm">
+              <Card key={field.id} className={cn(
+                "border-l-4 relative overflow-hidden shadow-sm",
+                requiresFuel ? "border-l-orange-500" : "border-l-blue-400 bg-blue-50/10"
+              )}>
                 <CardContent className="pt-6 space-y-6">
                   <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Pemakaian #{index + 1}</Badge>
                     <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={requiresFuel ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-blue-50 text-blue-700 border-blue-200"}>
+                        Pemakaian #{index + 1} {requiresFuel ? "(BBM/Oli)" : "(Hanya Lokasi)"}
+                      </Badge>
                       {isLocationSame && <Badge className="bg-green-100 text-green-700 border-green-200"><Check size={10} className="mr-1" /> Lokasi Sama</Badge>}
-                      {fields.length > 1 && (
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-600" onClick={() => remove(index)}><Trash2 size={18} /></Button>
-                      )}
                     </div>
+                    {fields.length > 1 && (
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-600" onClick={() => remove(index)}><Trash2 size={18} /></Button>
+                    )}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="md:col-span-4">
-                      <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs font-bold">Kendaraan / Alat Operasional</FormLabel><FormControl><Input placeholder="BK 1234 XX / Nama" list="vehicle-suggestions" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
+                  {requiresFuel && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                      <div className="md:col-span-4">
+                        <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Kendaraan / Alat Operasional</FormLabel><FormControl><Input placeholder="BK 1234 XX / Nama" list="vehicle-suggestions" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </div>
+                      <div className="md:col-span-3">
+                        <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Jenis BBM / Oli</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem><SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem><SelectItem value="Oli">Oli (Liter)</SelectItem></SelectContent></Select></FormItem>
+                        )} />
+                      </div>
+                      <div className="md:col-span-2">
+                        <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jml (L)" : "Voucher (Rp)"}</FormLabel><FormControl><Input type="number" className="h-10" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </div>
+                      <div className="md:col-span-3">
+                        <FormField control={form.control} name={`items.${index}.item_remarks`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Keterangan Item</FormLabel><FormControl><Input placeholder="Catatan item..." className="h-10" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </div>
                     </div>
-                    <div className="md:col-span-3">
-                      <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs font-bold">Jenis BBM / Oli</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem><SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem><SelectItem value="Oli">Oli (Liter)</SelectItem></SelectContent></Select></FormItem>
-                      )} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs font-bold">{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jml (L)" : "Voucher (Rp)"}</FormLabel><FormControl><Input type="number" className="h-10" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                    <div className="md:col-span-3">
-                      <FormField control={form.control} name={`items.${index}.item_remarks`} render={({ field }) => (
-                        <FormItem><FormLabel className="text-xs font-bold">Keterangan Item</FormLabel><FormControl><Input placeholder="Catatan item..." className="h-10" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-                  </div>
+                  )}
 
                   {!isLocationSame ? (
                     <div className="pt-4 border-t border-slate-100 space-y-4">
@@ -324,7 +349,33 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
         </Card>
       </form>
 
-      <Dialog open={showLocationPrompt} onOpenChange={setshowLocationPrompt}>
+      {/* Dialog 1: Pilih Tipe Pemakaian */}
+      <Dialog open={showTypePrompt} onOpenChange={setShowTypePrompt}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-600">
+              <HelpCircle className="h-5 w-5" /> Tipe Pemakaian Baru
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Apakah pemakaian baru ini memerlukan penginputan <strong>BBM / Oli</strong> lagi?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 flex flex-col gap-3">
+            <Button onClick={() => handleTypeSelection(true)} className="h-12 justify-start px-6 bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200">
+              <Fuel className="mr-3 h-5 w-5" /> Ya, Perlu Input BBM / Oli
+            </Button>
+            <Button onClick={() => handleTypeSelection(false)} variant="outline" className="h-12 justify-start px-6 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
+              <MapPinned className="mr-3 h-5 w-5" /> Tidak, Hanya Tambah Lokasi
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowTypePrompt(false)}>Batal</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog 2: Konfirmasi Lokasi (Hanya muncul jika perlu BBM) */}
+      <Dialog open={showLocationPrompt} onOpenChange={setShowLocationPrompt}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-blue-600">
@@ -335,15 +386,15 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 flex flex-col gap-3">
-            <Button onClick={() => performAppend(true)} className="h-12 justify-start px-6 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
+            <Button onClick={() => performAppend(true, true)} className="h-12 justify-start px-6 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
               <Check className="mr-3 h-5 w-5" /> Ya, Lokasi Sama
             </Button>
-            <Button onClick={() => performAppend(false)} variant="outline" className="h-12 justify-start px-6">
+            <Button onClick={() => performAppend(false, true)} variant="outline" className="h-12 justify-start px-6">
               <Plus className="mr-3 h-5 w-5" /> Tidak, Lokasi Berbeda
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setshowLocationPrompt(false)}>Batal</Button>
+            <Button variant="ghost" onClick={() => setShowLocationPrompt(false)}>Batal</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

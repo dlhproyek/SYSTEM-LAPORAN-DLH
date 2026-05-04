@@ -8,6 +8,7 @@ export interface FuelUsageItem {
   amount: number;
   item_remarks?: string;
   is_location_same?: boolean;
+  requires_fuel?: boolean; // Field baru untuk menentukan apakah item ini mencatat BBM atau hanya lokasi
   location: {
     street: string;
     subDistrict?: string;
@@ -22,7 +23,7 @@ export interface FuelReport {
   team: string;
   items: FuelUsageItem[];
   remarks: string;
-  pimpinan_note?: string; // Field baru untuk penilaian pimpinan
+  pimpinan_note?: string;
   created_at?: string;
   deleted_at?: string | null;
 }
