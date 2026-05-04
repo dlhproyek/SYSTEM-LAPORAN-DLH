@@ -96,9 +96,9 @@ const FuelYearlyRecap = () => {
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
       if (visibleColumns.team) columns.push({ header: 'Tim', key: 'team', width: 20 });
       if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 25 });
-      if (visibleColumns.pertamax) columns.push({ header: 'Pertamax', key: 'pertamax', width: 14 });
-      if (visibleColumns.dexlite) columns.push({ header: 'Dexlite', key: 'dexlite', width: 14 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli', key: 'oli', width: 6 });
+      if (visibleColumns.pertamax) columns.push({ header: 'Pertamax', key: 'pertamax', width: 18 });
+      if (visibleColumns.dexlite) columns.push({ header: 'Dexlite', key: 'dexlite', width: 18 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli', key: 'oli', width: 8 });
       if (visibleColumns.item_remarks) columns.push({ header: 'Ket. Item', key: 'item_remarks', width: 20 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi', key: 'location', width: 35 });
       if (visibleColumns.remarks) columns.push({ header: 'Ket. Umum', key: 'remarks', width: 25 });
@@ -215,23 +215,36 @@ const FuelYearlyRecap = () => {
         
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse border-2 border-black text-[9px] table-fixed">
+            <colgroup>
+              <col style={{ width: '35px' }} />
+              {visibleColumns.date && <col style={{ width: '60px' }} />}
+              {visibleColumns.region && <col style={{ width: '80px' }} />}
+              {visibleColumns.team && <col style={{ width: '100px' }} />}
+              {visibleColumns.vehicle && <col style={{ width: 'auto' }} />}
+              {visibleColumns.pertamax && <col style={{ width: '110px' }} />}
+              {visibleColumns.dexlite && <col style={{ width: '110px' }} />}
+              {visibleColumns.oli && <col style={{ width: '30px' }} />}
+              {visibleColumns.item_remarks && <col style={{ width: '100px' }} />}
+              {visibleColumns.location && <col style={{ width: '180px' }} />}
+              {visibleColumns.remarks && <col style={{ width: '120px' }} />}
+            </colgroup>
             <thead>
               <tr className="bg-slate-100">
-                <th className="border-2 border-black p-1 w-[30px]" rowSpan={bbmColCount > 0 ? 2 : 1}>No</th>
-                {visibleColumns.date && <th className="border-2 border-black p-1 w-[60px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Tanggal</th>}
-                {visibleColumns.region && <th className="border-2 border-black p-1 w-[80px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Wilayah</th>}
-                {visibleColumns.team && <th className="border-2 border-black p-1 w-[100px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Tim / Operator</th>}
-                {visibleColumns.vehicle && <th className="border-2 border-black p-1 w-auto" rowSpan={bbmColCount > 0 ? 2 : 1}>Kendaraan / Alat Operasional</th>}
+                <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>No</th>
+                {visibleColumns.date && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Tanggal</th>}
+                {visibleColumns.region && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Wilayah</th>}
+                {visibleColumns.team && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Tim / Operator</th>}
+                {visibleColumns.vehicle && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Kendaraan / Alat Operasional</th>}
                 {bbmColCount > 0 && <th className="border-2 border-black p-1" colSpan={bbmColCount}>Jenis BBM / Oli</th>}
-                {visibleColumns.item_remarks && <th className="border-2 border-black p-1 w-[100px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Ket. Item</th>}
-                {visibleColumns.location && <th className="border-2 border-black p-1 w-[180px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Lokasi Kerja</th>}
-                {visibleColumns.remarks && <th className="border-2 border-black p-1 w-[120px]" rowSpan={bbmColCount > 0 ? 2 : 1}>Ket. Umum</th>}
+                {visibleColumns.item_remarks && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Ket. Item</th>}
+                {visibleColumns.location && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Lokasi Kerja</th>}
+                {visibleColumns.remarks && <th className="border-2 border-black p-1" rowSpan={bbmColCount > 0 ? 2 : 1}>Ket. Umum</th>}
               </tr>
               {bbmColCount > 0 && (
                 <tr className="bg-slate-50">
-                  {visibleColumns.pertamax && <th className="border-2 border-black p-1 w-[80px]">Pertamax</th>}
-                  {visibleColumns.dexlite && <th className="border-2 border-black p-1 w-[80px]">Dexlite</th>}
-                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[30px]">Oli</th>}
+                  {visibleColumns.pertamax && <th className="border-2 border-black p-1">Pertamax</th>}
+                  {visibleColumns.dexlite && <th className="border-2 border-black p-1">Dexlite</th>}
+                  {visibleColumns.oli && <th className="border-2 border-black p-1">Oli</th>}
                 </tr>
               )}
             </thead>
