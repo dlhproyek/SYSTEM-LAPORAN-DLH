@@ -104,10 +104,10 @@ const FuelWeeklyRecap = () => {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Rekap Mingguan BBM');
       const columns: any[] = [{ header: 'No', key: 'no', width: 5 }];
-      if (visibleColumns.date) columns.push({ header: 'Tanggal', key: 'date', width: 15 });
+      if (visibleColumns.date) columns.push({ header: 'Tanggal', key: 'date', width: 14 });
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
-      if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 20 });
-      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 20 });
+      if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 18 });
+      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 24 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax (Rp)', key: 'pertamax', width: 15 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite (Rp)', key: 'dexlite', width: 15 });
       if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 6 });
@@ -230,10 +230,10 @@ const FuelWeeklyRecap = () => {
           <table className="w-full min-w-[1100px] border-collapse border-2 border-black text-[9px] table-fixed">
             <colgroup>
               <col style={{ width: '35px' }} />
-              {visibleColumns.date && <col style={{ width: '60px' }} />}
+              {visibleColumns.date && <col style={{ width: '55px' }} />}
               {visibleColumns.region && <col style={{ width: '80px' }} />}
-              {visibleColumns.team && <col style={{ width: '100px' }} />}
-              {visibleColumns.vehicle && <col style={{ width: '130px' }} />}
+              {visibleColumns.team && <col style={{ width: '90px' }} />}
+              {visibleColumns.vehicle && <col style={{ width: '125px' }} />}
               {visibleColumns.pertamax && <col style={{ width: '90px' }} />}
               {visibleColumns.dexlite && <col style={{ width: '90px' }} />}
               {visibleColumns.oli && <col style={{ width: '30px' }} />}
@@ -276,7 +276,7 @@ const FuelWeeklyRecap = () => {
                             <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
                             {visibleColumns.date && <td className="border-2 border-black p-1 text-center leading-tight">{format(parseISO(item.date), 'dd/MM/yy')}</td>}
                             {visibleColumns.region && idx === 0 && (<td className="border-2 border-black p-1 text-center font-bold align-middle" rowSpan={items.length}>{item.region}</td>)}
-                            {visibleColumns.team && <td className="border-2 border-black p-1 text-center align-middle">{item.team}</td>}
+                            {visibleColumns.team && <td className="border-2 border-black p-1 text-center align-middle whitespace-normal break-words leading-tight">{item.team}</td>}
                             {visibleColumns.vehicle && <td className="border-2 border-black p-1 whitespace-normal break-words font-medium leading-tight">{item.vehicle_operator}</td>}
                             {visibleColumns.pertamax && <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Pertamax' ? item.amount.toLocaleString('id-ID') : "-"}</td>}
                             {visibleColumns.dexlite && <td className="border-2 border-black p-1 text-right">{item.fuel_type === 'Dexlite' ? item.amount.toLocaleString('id-ID') : "-"}</td>}
