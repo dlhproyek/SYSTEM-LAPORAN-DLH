@@ -6,7 +6,7 @@ import { fuelService } from '@/services/fuelService';
 import { FuelReport } from '@/types/fuelReport';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Table, Filter, Settings2 } from 'lucide-react';
+import { ArrowLeft, Printer, Table, Filter, Settings2, PenTool } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -30,6 +30,8 @@ const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", 
 const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 const regions = ["Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"];
 
+type SignatureMode = "with-signature" | "without-signature";
+
 const FuelMonthlyRecap = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -38,6 +40,7 @@ const FuelMonthlyRecap = () => {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedRegion, setSelectedRegion] = useState("semua");
+  const [signatureMode, setSignatureMode] = useState<SignatureMode>("with-signature");
 
   const [visibleColumns, setVisibleColumns] = useState({
     date: true,
@@ -186,7 +189,20 @@ const FuelMonthlyRecap = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
+              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
+                <div className="flex items-center gap-2">
+                  <PenTool size={16} />
+                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
+              </SelectContent>
+            </Select>
+
             {isAdmin && (
               <Popover>
                 <PopoverTrigger asChild>
@@ -303,15 +319,17 @@ const FuelMonthlyRecap = () => {
           </table>
         </div>
 
-        <div className="mt-12">
-          <div className="flex justify-end mb-4 text-[10px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
-          <div className="grid grid-cols-4 gap-4 text-[10px] leading-normal">
-            <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
-            <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
-            <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
-            <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Koordinator Laporan BBM</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p>NIP. 19860404 201001 1 015</p></div></div>
+        {signatureMode === "with-signature" && (
+          <div className="mt-12">
+            <div className="flex justify-end mb-4 text-[10px]"><p className="w-1/4 text-center">Medan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+            <div className="grid grid-cols-4 gap-4 text-[10px] leading-normal">
+              <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Pengawas Taman Penghijauan</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div></div>
+              <div className="text-center flex flex-col justify-between min-h-[180px] pb-4"><div><p>Diketahui :</p><p className="font-bold">Koordinator Laporan BBM</p><p>Dinas Lingkungan Hidup</p><p>Kota Medan</p></div><div><p className="font-bold underline">Ardiansyah Siregar</p><p>NIP. 19860404 201001 1 015</p></div></div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
