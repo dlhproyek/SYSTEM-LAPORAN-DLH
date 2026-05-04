@@ -107,10 +107,10 @@ const FuelWeeklyRecap = () => {
       if (visibleColumns.date) columns.push({ header: 'Tanggal', key: 'date', width: 15 });
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
       if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 20 });
-      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 25 });
+      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 20 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax (Rp)', key: 'pertamax', width: 15 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite (Rp)', key: 'dexlite', width: 15 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 8 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 6 });
       if (visibleColumns.item_remarks) columns.push({ header: 'Ket. Item', key: 'item_remarks', width: 20 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi Kerja', key: 'location', width: 35 });
       if (visibleColumns.remarks) columns.push({ header: 'Ket. Umum', key: 'remarks', width: 25 });
@@ -233,7 +233,7 @@ const FuelWeeklyRecap = () => {
               {visibleColumns.date && <col style={{ width: '60px' }} />}
               {visibleColumns.region && <col style={{ width: '80px' }} />}
               {visibleColumns.team && <col style={{ width: '100px' }} />}
-              {visibleColumns.vehicle && <col style={{ width: 'auto' }} />}
+              {visibleColumns.vehicle && <col style={{ width: '130px' }} />}
               {visibleColumns.pertamax && <col style={{ width: '90px' }} />}
               {visibleColumns.dexlite && <col style={{ width: '90px' }} />}
               {visibleColumns.oli && <col style={{ width: '30px' }} />}

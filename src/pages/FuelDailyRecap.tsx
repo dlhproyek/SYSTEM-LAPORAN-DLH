@@ -103,7 +103,7 @@ const FuelDailyRecap = () => {
       const columns: any[] = [{ header: 'No', key: 'no', width: 5 }];
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
       if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 20 });
-      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan / Alat Operasional', key: 'vehicle', width: 30 });
+      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan / Alat Operasional', key: 'vehicle', width: 25 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax (Rp)', key: 'pertamax', width: 17 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite (Rp)', key: 'dexlite', width: 17 });
       if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 6 });
@@ -245,7 +245,7 @@ const FuelDailyRecap = () => {
               <col style={{ width: '35px' }} />
               {visibleColumns.region && <col style={{ width: '100px' }} />}
               {visibleColumns.team && <col style={{ width: '100px' }} />}
-              {visibleColumns.vehicle && <col style={{ width: 'auto' }} />}
+              {visibleColumns.vehicle && <col style={{ width: '130px' }} />}
               {visibleColumns.pertamax && <col style={{ width: '85px' }} />}
               {visibleColumns.dexlite && <col style={{ width: '85px' }} />}
               {visibleColumns.oli && <col style={{ width: '30px' }} />}

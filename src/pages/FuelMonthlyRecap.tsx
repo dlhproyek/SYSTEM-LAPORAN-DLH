@@ -97,7 +97,7 @@ const FuelMonthlyRecap = () => {
       if (visibleColumns.date) columns.push({ header: 'Tanggal', key: 'date', width: 15 });
       if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
       if (visibleColumns.team) columns.push({ header: 'Tim', key: 'team', width: 20 });
-      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 25 });
+      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 20 });
       if (visibleColumns.pertamax) columns.push({ header: 'Pertamax', key: 'pertamax', width: 16 });
       if (visibleColumns.dexlite) columns.push({ header: 'Dexlite', key: 'dexlite', width: 16 });
       if (visibleColumns.oli) columns.push({ header: 'Oli', key: 'oli', width: 8 });
@@ -223,7 +223,7 @@ const FuelMonthlyRecap = () => {
               {visibleColumns.date && <col style={{ width: '60px' }} />}
               {visibleColumns.region && <col style={{ width: '80px' }} />}
               {visibleColumns.team && <col style={{ width: '100px' }} />}
-              {visibleColumns.vehicle && <col style={{ width: 'auto' }} />}
+              {visibleColumns.vehicle && <col style={{ width: '130px' }} />}
               {visibleColumns.pertamax && <col style={{ width: '100px' }} />}
               {visibleColumns.dexlite && <col style={{ width: '100px' }} />}
               {visibleColumns.oli && <col style={{ width: '30px' }} />}
