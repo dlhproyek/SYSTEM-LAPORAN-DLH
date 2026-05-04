@@ -18,6 +18,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
+const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+const regions = ["Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"];
+
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
   return data.publicUrl;
@@ -25,9 +28,6 @@ const getLogoUrl = (fileName: string) => {
 
 const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
-
-const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-const regions = ["Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"];
 
 const FuelYearlyRecap = () => {
   const navigate = useNavigate();
