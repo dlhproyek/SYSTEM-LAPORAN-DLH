@@ -104,9 +104,9 @@ const FuelSpjDailyRecap = () => {
                 <th className="border-2 border-black p-1 w-[70px]" rowSpan={2}>Wilayah</th>
                 <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Kendaraan / Alat Operasional</th>
                 <th className="border-2 border-black p-1" colSpan={5}>Jenis BBM / Oli</th>
+                <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Keterangan</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Penerima / Operator</th>
                 <th className="border-2 border-black p-1 w-[120px]" rowSpan={2}>Lokasi Kerja</th>
-                <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Keterangan</th>
               </tr>
               <tr className="bg-slate-50">
                 <th className="border-2 border-black p-1 w-[50px]">Pertamax (Rp)</th>
@@ -134,11 +134,11 @@ const FuelSpjDailyRecap = () => {
                   <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Dexlite' ? item.amount_liter : "-"}</td>
                   <td className="border-2 border-black p-1 text-center">{item.fuel_type === 'Oli' ? item.amount_liter : "-"}</td>
 
+                  <td className="border-2 border-black p-1 italic whitespace-normal break-words leading-tight">{item.remarks || "-"}</td>
                   <td className="border-2 border-black p-1 whitespace-normal break-words leading-tight">{item.receiver}</td>
                   <td className="border-2 border-black p-1 whitespace-normal break-words leading-tight">
                     {item.street}{item.subDistrict ? `, ${item.subDistrict}` : ""}{item.village ? `, ${item.village}` : ""}
                   </td>
-                  <td className="border-2 border-black p-1 italic whitespace-normal break-words leading-tight">{item.remarks || "-"}</td>
                 </tr>
               )) : (
                 <tr><td colSpan={13} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk tanggal ini</td></tr>
