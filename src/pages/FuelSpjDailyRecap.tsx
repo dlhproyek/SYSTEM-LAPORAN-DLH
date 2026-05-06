@@ -147,22 +147,14 @@ const FuelSpjDailyRecap = () => {
           </table>
         </div>
 
-        <div className="mt-12 grid grid-cols-4 gap-4 text-[10px] leading-normal">
+        <div className="mt-12 grid grid-cols-2 gap-8 text-[10px] leading-normal max-w-[700px] mx-auto">
           <div className="text-center flex flex-col justify-between min-h-[150px]">
             <div><p>Mengetahui :</p><p className="font-bold">Kabid Tata Lingkungan</p></div>
             <div><p className="font-bold underline">Heni Rustati, ST, M.Si</p><p>NIP. 19720223 200604 2 002</p></div>
           </div>
           <div className="text-center flex flex-col justify-between min-h-[150px]">
-            <div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan</p></div>
+            <div><p>Diketahui :</p><p className="font-bold">Ketua Tim Pemeliharaan Lingkungan</p></div>
             <div><p className="font-bold underline">Anitha Florida Ginting, ST, M. Si</p><p>NIP. 19811128 201001 2 011</p></div>
-          </div>
-          <div className="text-center flex flex-col justify-between min-h-[150px]">
-            <div><p>Diketahui :</p><p className="font-bold">Pengawas Taman</p></div>
-            <div><p className="font-bold underline">Jhosua Sibarani, S.T</p><p>NIP. 19740907 200903 1 002</p></div>
-          </div>
-          <div className="text-center flex flex-col justify-between min-h-[150px]">
-            <div><p>Dibuat Oleh :</p><p className="font-bold">Admin SPJ BBM</p></div>
-            <div><p className="font-bold underline">( ............................................ )</p></div>
           </div>
         </div>
       </div>
