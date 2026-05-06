@@ -39,5 +39,17 @@ export const auditLogService = {
     
     if (error) throw error;
     return data;
+  },
+
+  async deleteOldLogs() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const { error } = await supabase
+      .from('audit_logs')
+      .delete()
+      .lt('created_at', sevenDaysAgo.toISOString());
+      
+    if (error) throw error;
   }
 };

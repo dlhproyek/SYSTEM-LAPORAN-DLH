@@ -11,7 +11,7 @@ import {
   Loader2, Database, Users, History,
   FileText, ClipboardList,
   RotateCcw, HardDrive, TrendingUp, BarChart3, Eye, Info, X,
-  Zap, Activity, Globe, Cpu
+  Zap, Activity, Globe, Cpu, Eraser
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -52,17 +52,15 @@ const Maintenance = () => {
     photosToday: 0,
     photosThisMonth: 0,
     totalUsers: 0,
-    dbSizeEstimate: 0 // Estimasi dalam bytes
+    dbSizeEstimate: 0 
   });
   
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
 
-  const STORAGE_LIMIT = 1024 * 1024 * 1024; // 1GB
-  const DB_LIMIT = 500 * 1024 * 1024; // 500MB
-  const BANDWIDTH_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB
+  const STORAGE_LIMIT = 1024 * 1024 * 1024; 
+  const DB_LIMIT = 500 * 1024 * 1024; 
   const AUTH_LIMIT = 50000;
-  const EDGE_LIMIT = 500000;
 
   const isAdmin = profile?.role === 'admin' || session?.user?.email === 'admin@gmail.com';
 
@@ -78,8 +76,6 @@ const Maintenance = () => {
     setAnalyzing(true);
     try {
       const now = new Date();
-      
-      // 1. Ambil Data Laporan & Hitung Statistik
       const { data: reports, error: dbError } = await supabase
         .from('reports')
         .select('tasks, date, category');
@@ -91,14 +87,12 @@ const Maintenance = () => {
       let reportsThisMonth = 0;
       let photosToday = 0;
       let photosThisMonth = 0;
-      let totalChars = 0; // Untuk estimasi ukuran DB
+      let totalChars = 0;
 
       reports?.forEach(report => {
         const reportDate = parseISO(report.date);
         if (isSameDay(reportDate, now)) reportsToday++;
         if (isSameMonth(reportDate, now)) reportsThisMonth++;
-        
-        // Estimasi ukuran record (kasar)
         totalChars += JSON.stringify(report).length;
 
         report.tasks?.forEach((task: any) => {
@@ -116,15 +110,12 @@ const Maintenance = () => {
         });
       });
 
-      // 2. Ambil Data Storage
       const { data: storageFiles, error: storageError } = await supabase.storage.from('report-photos').list('', { limit: 5000 });
       if (storageError) throw storageError;
 
       let totalStorageSize = 0;
       storageFiles?.forEach(file => { totalStorageSize += file.metadata?.size || 0; });
       const orphaned = storageFiles?.filter(file => !usedFileNames.has(file.name)) || [];
-
-      // 3. Ambil Data User
       const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
 
       setOrphanedFiles(orphaned);
@@ -140,7 +131,7 @@ const Maintenance = () => {
         photosToday,
         photosThisMonth,
         totalUsers: userCount || 0,
-        dbSizeEstimate: totalChars * 2 // Estimasi 2 bytes per char (UTF-16)
+        dbSizeEstimate: totalChars * 2
       }));
 
     } catch (error: any) {
@@ -150,9 +141,26 @@ const Maintenance = () => {
     }
   }, []);
 
+  const handleCleanupLogs = async () => {
+    setLoading(true);
+    try {
+      await auditLogService.deleteOldLogs();
+      showSuccess("Log aktivitas yang lebih dari seminggu telah dihapus");
+      const logsData = await auditLogService.getLogs();
+      setLogs(logsData);
+    } catch (e) {
+      showError("Gagal membersihkan log");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // Jalankan pembersihan log otomatis saat load
+      await auditLogService.deleteOldLogs();
+      
       const [logsData, delReports, delPlans] = await Promise.all([
         auditLogService.getLogs(),
         reportService.getAllReports('semua', true),
@@ -243,7 +251,6 @@ const Maintenance = () => {
           </div>
         </div>
 
-        {/* Ringkasan Statistik Utama */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-white border-l-4 border-l-blue-600 shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-[10px] font-bold uppercase text-slate-500 flex items-center gap-2"><HardDrive size={14} /> File Storage</CardTitle></CardHeader>
@@ -363,7 +370,18 @@ const Maintenance = () => {
 
           <TabsContent value="history">
             <Card className="shadow-md border-t-4 border-t-blue-600">
-              <CardHeader><CardTitle className="text-lg flex items-center gap-2"><History className="text-blue-600" /> Riwayat Aktivitas Pengguna</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2"><History className="text-blue-600" /> Riwayat Aktivitas Pengguna</CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCleanupLogs} 
+                  disabled={loading}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Eraser className="h-4 w-4 mr-2" /> Bersihkan Log {'>'} 7 Hari
+                </Button>
+              </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -481,7 +499,6 @@ const Maintenance = () => {
         </Tabs>
       </div>
 
-      {/* Dialog Preview Gambar */}
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black/95 border-none">
           <DialogHeader className="p-4 bg-white/10 backdrop-blur text-white flex flex-row items-center justify-between space-y-0">
