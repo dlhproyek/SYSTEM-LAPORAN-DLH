@@ -54,9 +54,9 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prices, setPrices] = useState({ Pertamax: 13500, Dexlite: 14500 });
   
-  // State untuk saran otomatis
   const [vehicleSuggestions, setVehicleSuggestions] = useState<string[]>([]);
   const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
+  const [existingSpjNumbers, setExistingSpjNumbers] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -97,16 +97,22 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
       const reports = await fuelSpjService.getAllReports();
       const vehicles = new Set<string>();
       const receivers = new Set<string>();
+      const spjNumbers: string[] = [];
       
       reports.forEach(report => {
+        // Jika sedang edit, jangan masukkan nomor SPJ dari laporan ini ke daftar "sudah ada"
+        if (isEditing && initialData && report.id === initialData.id) return;
+        
         report.entries.forEach(entry => {
           if (entry.vehicle_operator) vehicles.add(entry.vehicle_operator);
           if (entry.receiver_name) receivers.add(entry.receiver_name);
+          if (entry.spj_no) spjNumbers.push(entry.spj_no.toLowerCase().trim());
         });
       });
       
       setVehicleSuggestions(Array.from(vehicles).sort());
       setReceiverSuggestions(Array.from(receivers).sort());
+      setExistingSpjNumbers(spjNumbers);
     } catch (e) { console.error(e); }
   };
 
@@ -120,6 +126,23 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // 1. Validasi Duplikasi Nomor SPJ
+    const currentSpjNumbers = values.entries.map(e => e.spj_no.toLowerCase().trim());
+    
+    // Cek duplikasi di dalam form itu sendiri
+    const hasInternalDuplicate = currentSpjNumbers.some((no, idx) => currentSpjNumbers.indexOf(no) !== idx);
+    if (hasInternalDuplicate) {
+      showError("Nomor SPJ sudah Ada (Duplikat di dalam form)");
+      return;
+    }
+
+    // Cek duplikasi dengan database
+    const duplicateInDb = currentSpjNumbers.find(no => existingSpjNumbers.includes(no));
+    if (duplicateInDb) {
+      showError(`Nomor SPJ sudah Ada: ${duplicateInDb.toUpperCase()}`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const finalData = { 
@@ -131,7 +154,6 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
           locations: entry.locations.map(loc => ({
             ...loc,
             fuel_type: loc.fuel_type as FuelType,
-            // Pastikan nilai " " (Abaikan) disimpan sebagai string kosong
             subDistrict: loc.subDistrict === " " ? "" : loc.subDistrict,
             village: loc.village === " " ? "" : loc.village
           }))
@@ -156,7 +178,6 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-5xl mx-auto pb-20">
-        {/* Datalist untuk saran otomatis */}
         <datalist id="spj-vehicle-list">
           {vehicleSuggestions.map(v => <option key={v} value={v} />)}
         </datalist>
