@@ -10,7 +10,8 @@ import {
   ArrowLeft, Trash2, RefreshCw, ShieldAlert, 
   Loader2, Database, Users, History,
   FileText, ClipboardList, Pencil, PlusCircle,
-  RotateCcw, AlertTriangle, HardDrive, TrendingUp, BarChart3, Eye, Info, X
+  RotateCcw, AlertTriangle, HardDrive, TrendingUp, BarChart3, Eye, Info, X,
+  Zap, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
@@ -122,8 +123,7 @@ const Maintenance = () => {
     setAnalyzing(true);
     try {
       const now = new Date();
-      // Ambil SEMUA laporan (termasuk yang di tempat sampah agar fotonya tidak terhapus)
-      const { data: reports, error: dbError, count: reportCount } = await supabase
+      const { data: reports, error: dbError } = await supabase
         .from('reports')
         .select('tasks, date, createdAt');
       
@@ -155,14 +155,12 @@ const Maintenance = () => {
         });
       });
 
-      // Ambil daftar file di storage
       const { data: storageFiles, error: storageError } = await supabase.storage.from('report-photos').list('', { limit: 5000 });
       if (storageError) throw storageError;
 
       let totalSize = 0;
       storageFiles?.forEach(file => { totalSize += file.metadata?.size || 0; });
       
-      // File dianggap sampah JIKA namanya tidak ada di daftar usedFileNames (database)
       const orphaned = storageFiles?.filter(file => !usedFileNames.has(file.name)) || [];
       
       setOrphanedFiles(orphaned);
@@ -232,7 +230,7 @@ const Maintenance = () => {
           </TabsList>
 
           <TabsContent value="storage" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-white border-l-4 border-l-blue-600 shadow-sm">
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-bold flex items-center gap-2 text-blue-700"><TrendingUp size={16} /> Aktivitas Hari Ini</CardTitle></CardHeader>
                 <CardContent><div className="grid grid-cols-2 gap-4"><div><p className="text-[10px] font-bold uppercase text-slate-400">Laporan Baru</p><p className="text-2xl font-black text-slate-900">{stats.reportsToday}</p></div><div><p className="text-[10px] font-bold uppercase text-slate-400">Foto Diunggah</p><p className="text-2xl font-black text-slate-900">{stats.photosToday}</p></div></div></CardContent>
@@ -241,11 +239,19 @@ const Maintenance = () => {
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-bold flex items-center gap-2 text-purple-700"><BarChart3 size={16} /> Aktivitas Bulan Ini</CardTitle></CardHeader>
                 <CardContent><div className="grid grid-cols-2 gap-4"><div><p className="text-[10px] font-bold uppercase text-slate-400">Total Laporan</p><p className="text-2xl font-black text-slate-900">{stats.reportsThisMonth}</p></div><div><p className="text-[10px] font-bold uppercase text-slate-400">Total Foto</p><p className="text-2xl font-black text-slate-900">{stats.photosThisMonth}</p></div></div></CardContent>
               </Card>
+              <Card className="bg-white border-l-4 border-l-amber-500 shadow-sm">
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-700"><Zap size={16} /> Info Limit Gratis</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between items-center text-xs"><span className="text-slate-500">Database:</span><span className="font-bold">500 MB</span></div>
+                  <div className="flex justify-between items-center text-xs"><span className="text-slate-500">Bandwidth:</span><span className="font-bold">2 GB / bln</span></div>
+                  <div className="flex justify-between items-center text-xs"><span className="text-slate-500">Edge Func:</span><span className="font-bold">500k / bln</span></div>
+                </CardContent>
+              </Card>
             </div>
 
             <Card className={cn("bg-white border-t-4", storageUsagePercent > 80 ? "border-t-red-500" : "border-t-blue-500")}>
-              <CardHeader className="pb-2"><CardTitle className="text-sm font-bold flex items-center justify-between"><span className="flex items-center gap-2"><HardDrive className="h-4 w-4 text-blue-500" /> Kapasitas Storage (Supabase)</span><Badge variant={storageUsagePercent > 80 ? "destructive" : "outline"}>{storageUsagePercent.toFixed(1)}%</Badge></CardTitle></CardHeader>
-              <CardContent className="space-y-3"><Progress value={storageUsagePercent} className="h-2" /><div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase"><span>Terpakai: {formatSize(stats.totalStorageSize)}</span><span>Limit: 1 GB</span></div></CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-bold flex items-center justify-between"><span className="flex items-center gap-2"><HardDrive className="h-4 w-4 text-blue-500" /> Kapasitas File Storage (Foto)</span><Badge variant={storageUsagePercent > 80 ? "destructive" : "outline"}>{storageUsagePercent.toFixed(1)}%</Badge></CardTitle></CardHeader>
+              <CardContent className="space-y-3"><Progress value={storageUsagePercent} className="h-2" /><div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase"><span>Terpakai: {formatSize(stats.totalStorageSize)}</span><span>Limit Gratis: 1 GB</span></div></CardContent>
             </Card>
 
             <Card className="shadow-md border-t-4 border-t-blue-600">
