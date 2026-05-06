@@ -63,7 +63,7 @@ const Login = () => {
         <CardHeader className="text-center space-y-2 pb-6">
           <div className="space-y-1">
             <CardTitle className="text-xl md:text-2xl font-bold leading-tight">
-              Sistem Laporan Wilayah Medan Kota
+              SISTEM LAPORAN
             </CardTitle>
             <p className="text-sm md:text-base font-semibold text-blue-700">
               Dinas Lingkungan Hidup Kota Medan
