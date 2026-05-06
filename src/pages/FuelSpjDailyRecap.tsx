@@ -104,7 +104,7 @@ const FuelSpjDailyRecap = () => {
                 <th className="border-2 border-black p-1 w-[70px]" rowSpan={2}>Wilayah</th>
                 <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Kendaraan / Alat Operasional</th>
                 <th className="border-2 border-black p-1" colSpan={5}>Jenis BBM / Oli</th>
-                <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Keterangan</th>
+                <th className="border-2 border-black p-1 w-[100px]" rowSpan={2}>Ket. BBM/ Oli</th>
                 <th className="border-2 border-black p-1 w-[80px]" rowSpan={2}>Penerima / Operator</th>
                 <th className="border-2 border-black p-1 w-[120px]" rowSpan={2}>Lokasi Kerja</th>
               </tr>
