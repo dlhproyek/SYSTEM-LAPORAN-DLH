@@ -53,6 +53,10 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prices, setPrices] = useState({ Pertamax: 13500, Dexlite: 14500 });
+  
+  // State untuk saran otomatis
+  const [vehicleSuggestions, setVehicleSuggestions] = useState<string[]>([]);
+  const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +80,7 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
 
   useEffect(() => {
     fetchPrices();
+    fetchSuggestions();
   }, []);
 
   const fetchPrices = async () => {
@@ -84,6 +89,24 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
       const p = data.find(x => x.type === 'Pertamax')?.price || 13500;
       const d = data.find(x => x.type === 'Dexlite')?.price || 14500;
       setPrices({ Pertamax: p, Dexlite: d });
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSuggestions = async () => {
+    try {
+      const reports = await fuelSpjService.getAllReports();
+      const vehicles = new Set<string>();
+      const receivers = new Set<string>();
+      
+      reports.forEach(report => {
+        report.entries.forEach(entry => {
+          if (entry.vehicle_operator) vehicles.add(entry.vehicle_operator);
+          if (entry.receiver_name) receivers.add(entry.receiver_name);
+        });
+      });
+      
+      setVehicleSuggestions(Array.from(vehicles).sort());
+      setReceiverSuggestions(Array.from(receivers).sort());
     } catch (e) { console.error(e); }
   };
 
@@ -107,7 +130,10 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
           ...entry,
           locations: entry.locations.map(loc => ({
             ...loc,
-            fuel_type: loc.fuel_type as FuelType
+            fuel_type: loc.fuel_type as FuelType,
+            // Pastikan nilai " " (Abaikan) disimpan sebagai string kosong
+            subDistrict: loc.subDistrict === " " ? "" : loc.subDistrict,
+            village: loc.village === " " ? "" : loc.village
           }))
         }))
       };
@@ -130,6 +156,14 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-5xl mx-auto pb-20">
+        {/* Datalist untuk saran otomatis */}
+        <datalist id="spj-vehicle-list">
+          {vehicleSuggestions.map(v => <option key={v} value={v} />)}
+        </datalist>
+        <datalist id="spj-receiver-list">
+          {receiverSuggestions.map(r => <option key={r} value={r} />)}
+        </datalist>
+
         <div className="flex items-center justify-between mb-6">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
           <h1 className="text-2xl font-bold text-blue-700">{isEditing ? "Edit SPJ BBM" : "Input SPJ BBM Baru"}</h1>
@@ -168,10 +202,10 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
                     <FormItem><FormLabel className="text-red-600 font-bold">No. SPJ (Wajib)</FormLabel><FormControl><Input placeholder="Contoh: 001/SPJ/..." {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name={`entries.${index}.vehicle_operator`} render={({ field }) => (
-                    <FormItem><FormLabel>Kendaraan / Alat</FormLabel><FormControl><Input placeholder="Nama Alat (Plat)" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>Kendaraan / Alat</FormLabel><FormControl><Input placeholder="Nama Alat (Plat)" list="spj-vehicle-list" {...field} /></FormControl></FormItem>
                   )} />
                   <FormField control={form.control} name={`entries.${index}.receiver_name`} render={({ field }) => (
-                    <FormItem><FormLabel>Penerima / Operator</FormLabel><FormControl><Input placeholder="Nama Personil" {...field} /></FormControl></FormItem>
+                    <FormItem><FormLabel>Penerima / Operator</FormLabel><FormControl><Input placeholder="Nama Personil" list="spj-receiver-list" {...field} /></FormControl></FormItem>
                   )} />
                 </div>
 
@@ -191,18 +225,24 @@ const FuelSpjReportForm = ({ initialData, isEditing = false }: { initialData?: a
                           <FormItem><FormLabel className="text-[10px] uppercase">Nama Jalan</FormLabel><FormControl><Input className="h-8 text-xs" {...field} /></FormControl></FormItem>
                         )} />
                         <FormField control={form.control} name={`entries.${index}.locations.${locIdx}.subDistrict`} render={({ field }) => (
-                          <FormItem><FormLabel className="text-[10px] uppercase">Kecamatan</FormLabel>
+                          <FormItem><FormLabel className="text-[10px] uppercase">Kecamatan (Opsional)</FormLabel>
                             <Select onValueChange={(v) => { field.onChange(v); form.setValue(`entries.${index}.locations.${locIdx}.village`, ""); }} value={field.value}>
                               <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl>
-                              <SelectContent>{Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                              <SelectContent>
+                                <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                                {Object.keys(medanDistricts).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                              </SelectContent>
                             </Select>
                           </FormItem>
                         )} />
                         <FormField control={form.control} name={`entries.${index}.locations.${locIdx}.village`} render={({ field }) => (
-                          <FormItem><FormLabel className="text-[10px] uppercase">Kelurahan</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!form.watch(`entries.${index}.locations.${locIdx}.subDistrict`)}>
+                          <FormItem><FormLabel className="text-[10px] uppercase">Kelurahan (Opsional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!form.watch(`entries.${index}.locations.${locIdx}.subDistrict`) || form.watch(`entries.${index}.locations.${locIdx}.subDistrict`) === " "}>
                               <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pilih..." /></SelectTrigger></FormControl>
-                              <SelectContent>{form.watch(`entries.${index}.locations.${locIdx}.subDistrict`) && medanDistricts[form.watch(`entries.${index}.locations.${locIdx}.subDistrict`)!]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                              <SelectContent>
+                                <SelectItem value=" ">Abaikan / Kosong</SelectItem>
+                                {form.watch(`entries.${index}.locations.${locIdx}.subDistrict`) && form.watch(`entries.${index}.locations.${locIdx}.subDistrict`) !== " " && medanDistricts[form.watch(`entries.${index}.locations.${locIdx}.subDistrict`)!]?.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                              </SelectContent>
                             </Select>
                           </FormItem>
                         )} />
