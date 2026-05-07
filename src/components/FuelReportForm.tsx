@@ -11,12 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft, Save, Loader2, Fuel, MapPin, Info, 
-  Plus, Trash2, MessageSquare, HelpCircle, Check, X, MapPinned, AlertCircle
+  Plus, Trash2, MessageSquare, HelpCircle, Check, X, MapPinned, AlertCircle, Calculator
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError } from '@/utils/toast';
 import { FuelReport, FuelType } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
+import { fuelPriceService } from '@/services/fuelPriceService';
 import { medanDistricts } from '@/data/medan-districts';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,8 @@ const teamOptions: Record<string, string[]> = {
 const usageItemSchema = z.object({
   vehicle_operator: z.string().min(1, "Wajib diisi"),
   fuel_type: z.string().min(1, "Jenis wajib dipilih"),
-  amount: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+  amount_rp: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
+  amount_liter: z.coerce.number().min(0, "Jumlah tidak boleh negatif"),
   item_remarks: z.string().optional().default(""),
   is_location_same: z.boolean().optional().default(false),
   requires_fuel: z.boolean().optional().default(true),
@@ -78,6 +80,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
   const [customTeamMode, setCustomTeamMode] = useState(false);
   const [showTypePrompt, setShowTypePrompt] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [prices, setPrices] = useState({ Pertamax: 13500, Dexlite: 14500 });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,7 +89,10 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
       items: initialData.items.map(item => ({ 
         ...item, 
         fuel_type: item.fuel_type as string,
-        requires_fuel: item.requires_fuel ?? (item.amount > 0)
+        requires_fuel: item.requires_fuel ?? (item.amount_rp > 0 || item.amount_liter > 0 || item.amount > 0),
+        // Handle data lama: jika amount_rp kosong tapi amount ada, gunakan amount
+        amount_rp: item.amount_rp || (item.fuel_type !== 'Oli' ? item.amount : 0),
+        amount_liter: item.amount_liter || (item.fuel_type === 'Oli' ? item.amount : 0)
       })),
     } : {
       date: new Date().toISOString().split('T')[0],
@@ -95,7 +101,8 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
       items: [{ 
         vehicle_operator: "", 
         fuel_type: "Pertamax", 
-        amount: 0,
+        amount_rp: 0,
+        amount_liter: 0,
         item_remarks: "",
         is_location_same: false,
         requires_fuel: true,
@@ -109,6 +116,28 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
     control: form.control,
     name: "items"
   });
+
+  useEffect(() => {
+    fetchPrices();
+  }, []);
+
+  const fetchPrices = async () => {
+    try {
+      const data = await fuelPriceService.getPrices();
+      const p = data.find(x => x.type === 'Pertamax')?.price || 13500;
+      const d = data.find(x => x.type === 'Dexlite')?.price || 14500;
+      setPrices({ Pertamax: p, Dexlite: d });
+    } catch (e) { console.error(e); }
+  };
+
+  const calculateLiter = (index: number, rp: number, type: string) => {
+    if (type === 'Oli') return;
+    const price = type === 'Pertamax' ? prices.Pertamax : prices.Dexlite;
+    if (price > 0) {
+      const liter = parseFloat((rp / price).toFixed(2));
+      form.setValue(`items.${index}.amount_liter`, liter);
+    }
+  };
 
   const selectedRegion = form.watch("region");
   const selectedTeam = form.watch("team");
@@ -144,7 +173,8 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
     append({ 
       vehicle_operator: requiresFuel ? "" : lastVehicle || "-", 
       fuel_type: "Pertamax", 
-      amount: 0,
+      amount_rp: 0,
+      amount_liter: 0,
       item_remarks: "",
       is_location_same: isSameLocation,
       requires_fuel: requiresFuel,
@@ -170,7 +200,9 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
           ...item,
           fuel_type: item.fuel_type as FuelType,
           vehicle_operator: item.vehicle_operator || "-",
-          amount: item.requires_fuel ? item.amount : 0
+          amount_rp: item.requires_fuel ? item.amount_rp : 0,
+          amount_liter: item.requires_fuel ? item.amount_liter : 0,
+          amount: item.fuel_type === 'Oli' ? item.amount_liter : item.amount_rp // Fallback untuk data lama
         })),
         remarks: values.remarks,
       };
@@ -259,6 +291,7 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
           {fields.map((field, index) => {
             const isLocationSame = form.watch(`items.${index}.is_location_same`);
             const requiresFuel = form.watch(`items.${index}.requires_fuel`);
+            const fuelType = form.watch(`items.${index}.fuel_type`);
             
             return (
               <Card key={field.id} className={cn(
@@ -280,29 +313,31 @@ const FuelReportForm = ({ initialData, isEditing = false }: FuelReportFormProps)
                   
                   {requiresFuel && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                      <div className="md:col-span-4">
-                        <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
-                          <FormItem><FormLabel className="text-xs font-bold">Kendaraan / Alat Operasional</FormLabel><FormControl><Input placeholder="nama alat/ kendaraan (Plat Nomor)" list="vehicle-suggestions" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                      </div>
                       <div className="md:col-span-3">
-                        <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
-                          <FormItem><FormLabel className="text-xs font-bold">Jenis BBM / Oli</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Pertamax">Pertamax (Voucher)</SelectItem><SelectItem value="Dexlite">Dexlite (Voucher)</SelectItem><SelectItem value="Oli">Oli (Liter)</SelectItem></SelectContent></Select></FormItem>
+                        <FormField control={form.control} name={`items.${index}.vehicle_operator`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Kendaraan / Alat</FormLabel><FormControl><Input placeholder="Plat Nomor" list="vehicle-suggestions" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                       </div>
                       <div className="md:col-span-2">
-                        <FormField control={form.control} name={`items.${index}.amount`} render={({ field }) => (
-                          <FormItem><FormLabel className="text-xs font-bold">{form.watch(`items.${index}.fuel_type`) === "Oli" ? "Jml (L)" : "Voucher (Rp)"}</FormLabel><FormControl><Input type="number" className="h-10" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormField control={form.control} name={`items.${index}.fuel_type`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Jenis</FormLabel><Select onValueChange={(v) => { field.onChange(v); calculateLiter(index, form.getValues(`items.${index}.amount_rp`), v); }} value={field.value}><FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Pilih" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Pertamax">Pertamax</SelectItem><SelectItem value="Dexlite">Dexlite</SelectItem><SelectItem value="Oli">Oli</SelectItem></SelectContent></Select></FormItem>
+                        )} />
+                      </div>
+                      <div className="md:col-span-2">
+                        <FormField control={form.control} name={`items.${index}.amount_rp`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold">Rupiah (Rp)</FormLabel><FormControl><Input type="number" className="h-10" {...field} onChange={(e) => { field.onChange(e); calculateLiter(index, Number(e.target.value), fuelType); }} disabled={fuelType === 'Oli'} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                      </div>
+                      <div className="md:col-span-2">
+                        <FormField control={form.control} name={`items.${index}.amount_liter`} render={({ field }) => (
+                          <FormItem><FormLabel className="text-xs font-bold flex items-center gap-1">Liter <Calculator size={10} className="text-blue-500" /></FormLabel><FormControl><Input type="number" step="0.01" className={cn("h-10 font-bold", fuelType !== 'Oli' ? "bg-blue-50" : "bg-white")} {...field} readOnly={fuelType !== 'Oli'} /></FormControl><FormMessage /></FormItem>
                         )} />
                       </div>
                       <div className="md:col-span-3">
                         <FormField control={form.control} name={`items.${index}.item_remarks`} render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-xs font-bold">Keterangan</FormLabel>
-                            <FormControl><Input placeholder="Catatan..." className="h-10" {...field} /></FormControl>
-                            <FormDescription className="text-[10px] text-amber-600 flex items-center gap-1 font-medium">
-                              <AlertCircle size={10} /> Mohon cantumkan Nama Petugasnya di sini.
-                            </FormDescription>
+                            <FormControl><Input placeholder="Nama Petugas..." className="h-10" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />

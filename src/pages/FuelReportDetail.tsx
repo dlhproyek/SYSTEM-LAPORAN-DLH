@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Fuel, MapPin, Calendar, ShieldCheck, Edit } from 'lucide-react';
+import { ArrowLeft, Fuel, MapPin, Calendar, ShieldCheck, Edit, Calculator } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
 import { useAuth } from '@/context/AuthContext';
@@ -49,7 +49,7 @@ const FuelReportDetail = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl auto space-y-6">
         <div className="flex items-center justify-between no-print">
           <Button variant="ghost" onClick={() => navigate('/fuel-reports')} className="px-2 md:px-4 h-9">
             <ArrowLeft className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Kembali</span>
@@ -97,14 +97,24 @@ const FuelReportDetail = () => {
                 <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-black text-slate-800">{item.vehicle_operator}</span>
-                    <Badge className={cn(
-                      "font-bold",
-                      item.fuel_type === 'Pertamax' ? "bg-blue-100 text-blue-700" :
-                      item.fuel_type === 'Dexlite' ? "bg-green-100 text-green-700" :
-                      "bg-purple-100 text-purple-700"
-                    )}>
-                      {item.fuel_type}: {item.fuel_type === 'Oli' ? `${item.amount} L` : `Rp ${item.amount.toLocaleString('id-ID')}`}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge className={cn(
+                        "font-bold",
+                        item.fuel_type === 'Pertamax' ? "bg-blue-100 text-blue-700" :
+                        item.fuel_type === 'Dexlite' ? "bg-green-100 text-green-700" :
+                        "bg-purple-100 text-purple-700"
+                      )}>
+                        {item.fuel_type}
+                      </Badge>
+                      {item.fuel_type !== 'Oli' && (
+                        <Badge variant="outline" className="font-bold border-slate-200">
+                          Rp {(item.amount_rp || item.amount).toLocaleString('id-ID')}
+                        </Badge>
+                      )}
+                      <Badge className="bg-blue-600 text-white font-bold">
+                        <Calculator size={10} className="mr-1" /> {(item.amount_liter || (item.fuel_type === 'Oli' ? item.amount : 0))} L
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex items-start gap-2 text-sm text-slate-600">
                     <MapPin className="h-4 w-4 mt-0.5 text-red-500 shrink-0" />

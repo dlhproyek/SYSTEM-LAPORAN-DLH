@@ -5,10 +5,12 @@ export type FuelType = "Pertamax" | "Dexlite" | "Oli";
 export interface FuelUsageItem {
   vehicle_operator: string;
   fuel_type: FuelType;
-  amount: number;
+  amount: number; // Tetap dipertahankan untuk kompatibilitas data lama
+  amount_rp: number; // Kolom baru
+  amount_liter: number; // Kolom baru
   item_remarks?: string;
   is_location_same?: boolean;
-  requires_fuel?: boolean; // Field baru untuk menentukan apakah item ini mencatat BBM atau hanya lokasi
+  requires_fuel?: boolean;
   location: {
     street: string;
     subDistrict?: string;
