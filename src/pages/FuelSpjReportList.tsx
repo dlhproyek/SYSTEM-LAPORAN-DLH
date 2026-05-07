@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
   Search, FilterX, ArrowLeft, RefreshCw, Printer, ChevronDown,
-  Table, FileText, Settings2, Eye, LogOut
+  Table, FileText, Settings2, Eye, LogOut, CalendarDays
 } from 'lucide-react';
 import { fuelSpjService } from '@/services/fuelSpjService';
 import { FuelSpjReport } from '@/types/fuelSpjReport';
@@ -69,6 +69,7 @@ const FuelSpjReportList = () => {
   const filteredReports = reports.filter(r => {
     const search = searchQuery.toLowerCase();
     return r.region.toLowerCase().includes(search) || 
+           (r.team && r.team.toLowerCase().includes(search)) ||
            r.entries.some(e => e.spj_no.toLowerCase().includes(search) || e.vehicle_operator.toLowerCase().includes(search));
   });
 
@@ -104,8 +105,15 @@ const FuelSpjReportList = () => {
                 <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/daily-rekap')} className="cursor-pointer py-2">
                   <Calendar className="mr-2 h-4 w-4 text-blue-600" /> Rekap Harian
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-2 opacity-50">Rekap Mingguan</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-2 opacity-50">Rekap Bulanan</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/weekly-rekap')} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/monthly-rekap')} className="cursor-pointer py-2">
+                  <FileText className="mr-2 h-4 w-4 text-purple-600" /> Rekap Bulanan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/yearly-rekap')} className="cursor-pointer py-2">
+                  <CalendarDays className="mr-2 h-4 w-4 text-orange-600" /> Rekap Tahunan
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -119,7 +127,7 @@ const FuelSpjReportList = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
-              placeholder="Cari No. SPJ, Kendaraan, atau Wilayah..." 
+              placeholder="Cari No. SPJ, Kendaraan, Tim, atau Wilayah..." 
               className="pl-10 bg-slate-50 border-slate-200 h-11" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
@@ -140,7 +148,10 @@ const FuelSpjReportList = () => {
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center text-[10px] text-slate-500 font-medium"><Calendar className="h-3 w-3 mr-1" /> {report.date}</div>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 text-[10px]">{report.region}</Badge>
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 text-[10px]">{report.region}</Badge>
+                        {report.team && <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-100 text-[10px]">{report.team}</Badge>}
+                      </div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={(e) => handleDelete(e, report.id)}><Trash2 size={14} /></Button>

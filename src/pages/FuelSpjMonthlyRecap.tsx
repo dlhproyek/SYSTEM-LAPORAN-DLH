@@ -5,9 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { fuelSpjService } from '@/services/fuelSpjService';
 import { FuelSpjReport } from '@/types/fuelSpjReport';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter } from 'lucide-react';
+import { ArrowLeft, Printer, Settings2, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -28,17 +27,21 @@ const getLogoUrl = (fileName: string) => {
 const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
 const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
+const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 const regions = ["Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"];
 
-const FuelSpjDailyRecap = () => {
+const FuelSpjMonthlyRecap = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [reports, setReports] = useState<FuelSpjReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedRegion, setSelectedRegion] = useState("semua");
   
   const [visibleColumns, setVisibleColumns] = useState({
+    date: true,
     spj_no: true,
     region: true,
     team: false,
@@ -53,13 +56,16 @@ const FuelSpjDailyRecap = () => {
 
   useEffect(() => {
     if (isAllowed) loadData();
-  }, [selectedDate, isAllowed]);
+  }, [selectedMonth, selectedYear, isAllowed]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const data = await fuelSpjService.getAllReports();
-      const filtered = data.filter(r => r.date === selectedDate);
+      const filtered = data.filter(r => {
+        const rDate = parseISO(r.date);
+        return (rDate.getMonth() + 1).toString() === selectedMonth && rDate.getFullYear().toString() === selectedYear;
+      });
       setReports(filtered);
     } catch (error) {
       console.error(error);
@@ -95,12 +101,16 @@ const FuelSpjDailyRecap = () => {
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <Button variant="ghost" onClick={() => navigate('/fuel-reports/spj')}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
-            <div className="relative">
-              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-[200px]" />
-            </div>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[130px] md:w-[150px]"><SelectValue placeholder="Bulan" /></SelectTrigger>
+              <SelectContent>{months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[90px] md:w-[100px]"><SelectValue placeholder="Tahun" /></SelectTrigger>
+              <SelectContent>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
+            </Select>
             <Select value={selectedRegion} onValueChange={setSelectedRegion}>
               <SelectTrigger className="w-[180px] bg-slate-50 border-slate-200"><Filter className="mr-2 h-4 w-4 text-slate-400" /><SelectValue placeholder="Pilih Wilayah" /></SelectTrigger>
               <SelectContent>
@@ -122,6 +132,7 @@ const FuelSpjDailyRecap = () => {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tampilkan Kolom:</p>
                   <div className="space-y-2">
                     {Object.entries({
+                      date: "Tanggal",
                       spj_no: "No. SPJ",
                       region: "Wilayah",
                       team: "Tim / Operator",
@@ -161,8 +172,8 @@ const FuelSpjDailyRecap = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h3 className="text-lg font-bold underline uppercase text-blue-800">REKAP HARIAN SPJ PEMAKAIAN BBM & OLI</h3>
-          <p className="text-sm font-bold">Tanggal: {format(parseISO(selectedDate), 'EEEE, d MMMM yyyy', { locale: localeId })}</p>
+          <h3 className="text-lg font-bold underline uppercase text-blue-800">REKAP BULANAN SPJ PEMAKAIAN BBM & OLI</h3>
+          <p className="text-sm font-bold">Bulan: {months[parseInt(selectedMonth)-1]} {selectedYear}</p>
           {selectedRegion !== "semua" && <p className="text-xs font-bold uppercase text-slate-500">{selectedRegion}</p>}
         </div>
         
@@ -171,6 +182,7 @@ const FuelSpjDailyRecap = () => {
             <thead>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-1 w-[30px]" rowSpan={visibleColumns.fuel ? 2 : 1}>No</th>
+                {visibleColumns.date && <th className="border-2 border-black p-1 w-[55px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Tanggal</th>}
                 {visibleColumns.spj_no && <th className="border-2 border-black p-1 w-[80px]" rowSpan={visibleColumns.fuel ? 2 : 1}>No. SPJ</th>}
                 {visibleColumns.region && <th className="border-2 border-black p-1 w-[70px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Wilayah</th>}
                 {visibleColumns.team && <th className="border-2 border-black p-1 w-[80px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Tim / Operator</th>}
@@ -196,6 +208,7 @@ const FuelSpjDailyRecap = () => {
                   {flatItems.map((item, idx) => (
                     <tr key={idx}>
                       <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
+                      {visibleColumns.date && <td className="border-2 border-black p-1 text-center">{format(parseISO(item.date), 'dd/MM/yy')}</td>}
                       {visibleColumns.spj_no && <td className="border-2 border-black p-1 text-center font-bold">{item.spj_no}</td>}
                       {visibleColumns.region && <td className="border-2 border-black p-1 text-center">{item.region}</td>}
                       {visibleColumns.team && <td className="border-2 border-black p-1 text-center">{item.team}</td>}
@@ -221,7 +234,7 @@ const FuelSpjDailyRecap = () => {
                     </tr>
                   ))}
                   <tr className="bg-slate-100 font-bold">
-                    <td className="border-2 border-black p-1 text-right" colSpan={1 + (visibleColumns.spj_no ? 1 : 0) + (visibleColumns.region ? 1 : 0) + (visibleColumns.team ? 1 : 0) + (visibleColumns.vehicle ? 1 : 0)}>TOTAL:</td>
+                    <td className="border-2 border-black p-1 text-right" colSpan={1 + (visibleColumns.date ? 1 : 0) + (visibleColumns.spj_no ? 1 : 0) + (visibleColumns.region ? 1 : 0) + (visibleColumns.team ? 1 : 0) + (visibleColumns.vehicle ? 1 : 0)}>TOTAL:</td>
                     {visibleColumns.fuel && (
                       <>
                         <td className="border-2 border-black p-1 text-right" colSpan={2}>{totalRp.toLocaleString('id-ID')}</td>
@@ -232,7 +245,7 @@ const FuelSpjDailyRecap = () => {
                   </tr>
                 </>
               ) : (
-                <tr><td colSpan={12} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk tanggal ini</td></tr>
+                <tr><td colSpan={13} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk periode ini</td></tr>
               )}
             </tbody>
           </table>
@@ -263,4 +276,4 @@ const FuelSpjDailyRecap = () => {
   );
 };
 
-export default FuelSpjDailyRecap;
+export default FuelSpjMonthlyRecap;

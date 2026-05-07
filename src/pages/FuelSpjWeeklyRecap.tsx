@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { format, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -30,7 +30,7 @@ const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
 const regions = ["Pusat", "Wilayah 1 Utara", "Wilayah 2 Barat", "Wilayah 3 Timur", "Wilayah 4 Kota", "Wilayah 5 Selatan"];
 
-const FuelSpjDailyRecap = () => {
+const FuelSpjWeeklyRecap = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [reports, setReports] = useState<FuelSpjReport[]>([]);
@@ -39,6 +39,7 @@ const FuelSpjDailyRecap = () => {
   const [selectedRegion, setSelectedRegion] = useState("semua");
   
   const [visibleColumns, setVisibleColumns] = useState({
+    date: true,
     spj_no: true,
     region: true,
     team: false,
@@ -48,6 +49,9 @@ const FuelSpjDailyRecap = () => {
     receiver: true,
     location: true
   });
+
+  const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
 
   const isAllowed = profile?.role === 'admin' || profile?.role === 'admin_spj_bbm';
 
@@ -59,7 +63,10 @@ const FuelSpjDailyRecap = () => {
     try {
       setLoading(true);
       const data = await fuelSpjService.getAllReports();
-      const filtered = data.filter(r => r.date === selectedDate);
+      const filtered = data.filter(r => {
+        const rDate = parseISO(r.date);
+        return isWithinInterval(rDate, { start: weekStart, end: weekEnd });
+      });
       setReports(filtered);
     } catch (error) {
       console.error(error);
@@ -108,6 +115,9 @@ const FuelSpjDailyRecap = () => {
                 {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
               </SelectContent>
             </Select>
+            <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-100">
+              {format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}
+            </div>
           </div>
           
           <div className="flex gap-2">
@@ -122,6 +132,7 @@ const FuelSpjDailyRecap = () => {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tampilkan Kolom:</p>
                   <div className="space-y-2">
                     {Object.entries({
+                      date: "Tanggal",
                       spj_no: "No. SPJ",
                       region: "Wilayah",
                       team: "Tim / Operator",
@@ -161,8 +172,8 @@ const FuelSpjDailyRecap = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h3 className="text-lg font-bold underline uppercase text-blue-800">REKAP HARIAN SPJ PEMAKAIAN BBM & OLI</h3>
-          <p className="text-sm font-bold">Tanggal: {format(parseISO(selectedDate), 'EEEE, d MMMM yyyy', { locale: localeId })}</p>
+          <h3 className="text-lg font-bold underline uppercase text-blue-800">REKAP MINGGUAN SPJ PEMAKAIAN BBM & OLI</h3>
+          <p className="text-sm font-bold">Periode: {format(weekStart, 'dd MMMM', { locale: localeId })} s/d {format(weekEnd, 'dd MMMM yyyy', { locale: localeId })}</p>
           {selectedRegion !== "semua" && <p className="text-xs font-bold uppercase text-slate-500">{selectedRegion}</p>}
         </div>
         
@@ -171,6 +182,7 @@ const FuelSpjDailyRecap = () => {
             <thead>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-1 w-[30px]" rowSpan={visibleColumns.fuel ? 2 : 1}>No</th>
+                {visibleColumns.date && <th className="border-2 border-black p-1 w-[55px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Tanggal</th>}
                 {visibleColumns.spj_no && <th className="border-2 border-black p-1 w-[80px]" rowSpan={visibleColumns.fuel ? 2 : 1}>No. SPJ</th>}
                 {visibleColumns.region && <th className="border-2 border-black p-1 w-[70px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Wilayah</th>}
                 {visibleColumns.team && <th className="border-2 border-black p-1 w-[80px]" rowSpan={visibleColumns.fuel ? 2 : 1}>Tim / Operator</th>}
@@ -196,6 +208,7 @@ const FuelSpjDailyRecap = () => {
                   {flatItems.map((item, idx) => (
                     <tr key={idx}>
                       <td className="border-2 border-black p-1 text-center">{idx + 1}</td>
+                      {visibleColumns.date && <td className="border-2 border-black p-1 text-center">{format(parseISO(item.date), 'dd/MM/yy')}</td>}
                       {visibleColumns.spj_no && <td className="border-2 border-black p-1 text-center font-bold">{item.spj_no}</td>}
                       {visibleColumns.region && <td className="border-2 border-black p-1 text-center">{item.region}</td>}
                       {visibleColumns.team && <td className="border-2 border-black p-1 text-center">{item.team}</td>}
@@ -221,7 +234,7 @@ const FuelSpjDailyRecap = () => {
                     </tr>
                   ))}
                   <tr className="bg-slate-100 font-bold">
-                    <td className="border-2 border-black p-1 text-right" colSpan={1 + (visibleColumns.spj_no ? 1 : 0) + (visibleColumns.region ? 1 : 0) + (visibleColumns.team ? 1 : 0) + (visibleColumns.vehicle ? 1 : 0)}>TOTAL:</td>
+                    <td className="border-2 border-black p-1 text-right" colSpan={1 + (visibleColumns.date ? 1 : 0) + (visibleColumns.spj_no ? 1 : 0) + (visibleColumns.region ? 1 : 0) + (visibleColumns.team ? 1 : 0) + (visibleColumns.vehicle ? 1 : 0)}>TOTAL:</td>
                     {visibleColumns.fuel && (
                       <>
                         <td className="border-2 border-black p-1 text-right" colSpan={2}>{totalRp.toLocaleString('id-ID')}</td>
@@ -232,7 +245,7 @@ const FuelSpjDailyRecap = () => {
                   </tr>
                 </>
               ) : (
-                <tr><td colSpan={12} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk tanggal ini</td></tr>
+                <tr><td colSpan={13} className="border-2 border-black p-8 text-center italic text-slate-400">Tidak ada data untuk periode ini</td></tr>
               )}
             </tbody>
           </table>
@@ -263,4 +276,4 @@ const FuelSpjDailyRecap = () => {
   );
 };
 
-export default FuelSpjDailyRecap;
+export default FuelSpjWeeklyRecap;
