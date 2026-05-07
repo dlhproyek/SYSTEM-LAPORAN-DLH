@@ -135,7 +135,7 @@ const FuelDailyRecap = () => {
       headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
         cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.font = { bold: true };
       });
 
@@ -145,7 +145,6 @@ const FuelDailyRecap = () => {
         if (visibleColumns.team) rowData.team = item.team;
         if (visibleColumns.vehicle) rowData.vehicle = item.vehicle_operator;
         
-        // Handle data lama & baru
         const p_rp = item.fuel_type === 'Pertamax' ? (item.amount_rp || item.amount) : 0;
         const p_ltr = item.fuel_type === 'Pertamax' ? (item.amount_liter || 0) : 0;
         const d_rp = item.fuel_type === 'Dexlite' ? (item.amount_rp || item.amount) : 0;
@@ -286,11 +285,11 @@ const FuelDailyRecap = () => {
               </tr>
               {bbmColCount > 0 && (
                 <tr className="bg-slate-50">
-                  {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px]">P (Rp)</th>}
-                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px]">P (L)</th>}
-                  {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px]">D (Rp)</th>}
-                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px]">D (L)</th>}
-                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px]">Oli (L)</th>}
+                  {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Pertamax<br/>(Rp)</th>}
+                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Pertamax<br/>(L)</th>}
+                  {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Dexlite<br/>(Rp)</th>}
+                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Dexlite<br/>(L)</th>}
+                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Oli<br/>(L)</th>}
                 </tr>
               )}
             </thead>

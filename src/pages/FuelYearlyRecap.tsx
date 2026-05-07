@@ -127,7 +127,7 @@ const FuelYearlyRecap = () => {
       headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
         cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.font = { bold: true };
       });
 
@@ -258,11 +258,11 @@ const FuelYearlyRecap = () => {
               </tr>
               {bbmColCount > 0 && (
                 <tr className="bg-slate-50">
-                  {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px]">P (Rp)</th>}
-                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px]">P (L)</th>}
-                  {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px]">D (Rp)</th>}
-                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px]">D (L)</th>}
-                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px]">Oli (L)</th>}
+                  {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Pertamax<br/>(Rp)</th>}
+                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Pertamax<br/>(L)</th>}
+                  {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Dexlite<br/>(Rp)</th>}
+                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Dexlite<br/>(L)</th>}
+                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Oli<br/>(L)</th>}
                 </tr>
               )}
             </thead>
@@ -270,9 +270,9 @@ const FuelYearlyRecap = () => {
               {Object.keys(groupedByRegion).length > 0 ? (
                 <>
                   {Object.entries(groupedByRegion).map(([regionName, items], rIdx) => {
-                    const subPertamaxRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_rp || it.amount) : 0), 0);
+                    const subPertamaxRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (item.amount_rp || item.amount) : 0), 0);
                     const subPertamaxLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_liter || 0) : 0), 0);
-                    const subDexliteRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || it.amount) : 0), 0);
+                    const subDexliteRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || item.amount) : 0), 0);
                     const subDexliteLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_liter || 0) : 0), 0);
                     const subOli = items.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || it.amount) : 0), 0);
 
