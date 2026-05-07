@@ -104,10 +104,10 @@ const FuelMonthlyRecap = () => {
       if (visibleColumns.team) columns.push({ header: 'Tim', key: 'team', width: 18 });
       if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 24 });
       if (visibleColumns.pertamax_rp) columns.push({ header: 'Pertamax (Rp)', key: 'p_rp', width: 15 });
-      if (visibleColumns.pertamax_ltr) columns.push({ header: 'Pertamax (L)', key: 'p_ltr', width: 8 });
+      if (visibleColumns.pertamax_ltr) columns.push({ header: 'Pertamax (Liter)', key: 'p_ltr', width: 10 });
       if (visibleColumns.dexlite_rp) columns.push({ header: 'Dexlite (Rp)', key: 'd_rp', width: 15 });
-      if (visibleColumns.dexlite_ltr) columns.push({ header: 'Dexlite (L)', key: 'd_ltr', width: 8 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 8 });
+      if (visibleColumns.dexlite_ltr) columns.push({ header: 'Dexlite (Liter)', key: 'd_ltr', width: 10 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli (Liter)', key: 'oli', width: 10 });
       if (visibleColumns.item_remarks) columns.push({ header: 'Ket. Item', key: 'item_remarks', width: 20 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi', key: 'location', width: 35 });
       if (visibleColumns.remarks) columns.push({ header: 'Ket. Umum', key: 'remarks', width: 25 });
@@ -225,7 +225,7 @@ const FuelMonthlyRecap = () => {
               <PopoverContent className="w-56 p-3" align="end">
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tampilkan Kolom:</p>
-                  {Object.entries({ date: "Tanggal", region: "Wilayah", team: "Tim", vehicle: "Kendaraan", pertamax_rp: "Pertamax (Rp)", pertamax_ltr: "Pertamax (L)", dexlite_rp: "Dexlite (Rp)", dexlite_ltr: "Dexlite (L)", oli: "Oli", item_remarks: "Ket. Item", location: "Lokasi", remarks: "Ket. Umum" }).map(([key, label]) => (
+                  {Object.entries({ date: "Tanggal", region: "Wilayah", team: "Tim", vehicle: "Kendaraan", pertamax_rp: "Pertamax (Rp)", pertamax_ltr: "Pertamax (Liter)", dexlite_rp: "Dexlite (Rp)", dexlite_ltr: "Dexlite (Liter)", oli: "Oli", item_remarks: "Ket. Item", location: "Lokasi", remarks: "Ket. Umum" }).map(([key, label]) => (
                     <div key={key} className="flex items-center space-x-2"><Checkbox id={`col-${key}`} checked={visibleColumns[key as keyof typeof visibleColumns]} onCheckedChange={() => toggleColumn(key as keyof typeof visibleColumns)} /><Label htmlFor={`col-${key}`} className="text-sm cursor-pointer">{label}</Label></div>
                   ))}
                 </div>
@@ -262,10 +262,10 @@ const FuelMonthlyRecap = () => {
               {bbmColCount > 0 && (
                 <tr className="bg-slate-50">
                   {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Pertamax<br/>(Rp)</th>}
-                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Pertamax<br/>(L)</th>}
+                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Pertamax<br/>(Liter)</th>}
                   {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Dexlite<br/>(Rp)</th>}
-                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Dexlite<br/>(L)</th>}
-                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Oli<br/>(L)</th>}
+                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Dexlite<br/>(Liter)</th>}
+                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Oli<br/>(Liter)</th>}
                 </tr>
               )}
             </thead>

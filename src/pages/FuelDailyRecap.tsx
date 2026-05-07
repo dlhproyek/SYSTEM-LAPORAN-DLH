@@ -110,10 +110,10 @@ const FuelDailyRecap = () => {
       if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 18 });
       if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 24 });
       if (visibleColumns.pertamax_rp) columns.push({ header: 'Pertamax (Rp)', key: 'p_rp', width: 15 });
-      if (visibleColumns.pertamax_ltr) columns.push({ header: 'Pertamax (L)', key: 'p_ltr', width: 8 });
+      if (visibleColumns.pertamax_ltr) columns.push({ header: 'Pertamax (Liter)', key: 'p_ltr', width: 10 });
       if (visibleColumns.dexlite_rp) columns.push({ header: 'Dexlite (Rp)', key: 'd_rp', width: 15 });
-      if (visibleColumns.dexlite_ltr) columns.push({ header: 'Dexlite (L)', key: 'd_ltr', width: 8 });
-      if (visibleColumns.oli) columns.push({ header: 'Oli (L)', key: 'oli', width: 8 });
+      if (visibleColumns.dexlite_ltr) columns.push({ header: 'Dexlite (Liter)', key: 'd_ltr', width: 10 });
+      if (visibleColumns.oli) columns.push({ header: 'Oli (Liter)', key: 'oli', width: 10 });
       if (visibleColumns.location) columns.push({ header: 'Lokasi Kerja', key: 'location', width: 40 });
       if (visibleColumns.remarks) columns.push({ header: 'Keterangan', key: 'remarks', width: 30 });
 
@@ -236,9 +236,9 @@ const FuelDailyRecap = () => {
                       team: "Tim / Operator",
                       vehicle: "Kendaraan",
                       pertamax_rp: "Pertamax (Rp)",
-                      pertamax_ltr: "Pertamax (L)",
+                      pertamax_ltr: "Pertamax (Liter)",
                       dexlite_rp: "Dexlite (Rp)",
-                      dexlite_ltr: "Dexlite (L)",
+                      dexlite_ltr: "Dexlite (Liter)",
                       oli: "Oli",
                       location: "Lokasi Kerja",
                       remarks: "Keterangan"
@@ -286,10 +286,10 @@ const FuelDailyRecap = () => {
               {bbmColCount > 0 && (
                 <tr className="bg-slate-50">
                   {visibleColumns.pertamax_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Pertamax<br/>(Rp)</th>}
-                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Pertamax<br/>(L)</th>}
+                  {visibleColumns.pertamax_ltr && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Pertamax<br/>(Liter)</th>}
                   {visibleColumns.dexlite_rp && <th className="border-2 border-black p-1 w-[60px] text-center leading-tight">Dexlite<br/>(Rp)</th>}
-                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Dexlite<br/>(L)</th>}
-                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[40px] text-center leading-tight">Oli<br/>(L)</th>}
+                  {visibleColumns.dexlite_ltr && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Dexlite<br/>(Liter)</th>}
+                  {visibleColumns.oli && <th className="border-2 border-black p-1 w-[50px] text-center leading-tight">Oli<br/>(Liter)</th>}
                 </tr>
               )}
             </thead>
