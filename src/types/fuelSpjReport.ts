@@ -23,11 +23,12 @@ export interface FuelSpjReport {
   id: string;
   date: string;
   region: string;
-  team: string; // Field baru
+  team: string;
   entries: FuelSpjEntry[];
   remarks: string;
   price_pertamax: number;
   price_dexlite: number;
+  pimpinan_note?: string; // Menambahkan field catatan pimpinan agar konsisten
   created_at?: string;
   deleted_at?: string | null;
 }
