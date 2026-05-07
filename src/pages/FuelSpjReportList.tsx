@@ -153,7 +153,7 @@ const FuelSpjReportList = () => {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={(e) => handleDelete(e, report.id)}><Trash2 size={14} /></Button>
                     </div>
                   </div>
-                  <CardTitle className="text-base mt-2">Laporan SPJ - {report.entries.length} Kendaraan</CardTitle>
+                  <CardTitle className="text-base mt-2">Laporan SPJ - {report.entries.length} Kendaraan / Alat</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
                   <div className="space-y-2">
@@ -166,7 +166,7 @@ const FuelSpjReportList = () => {
                         <div className="text-slate-500 italic mt-1">Penerima: {entry.receiver_name}</div>
                       </div>
                     ))}
-                    {report.entries.length > 2 && <div className="text-[10px] text-center text-slate-400">+{report.entries.length - 2} kendaraan lainnya</div>}
+                    {report.entries.length > 2 && <div className="text-[10px] text-center text-slate-400">+{report.entries.length - 2} item lainnya</div>}
                   </div>
                 </CardContent>
               </Card>
