@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Plus, Calendar, MapPin, Fuel, Trash2, Edit, 
   Search, FilterX, ArrowLeft, RefreshCw, Printer, ChevronDown,
-  Table, FileText, CalendarDays, LogOut, Eye, MessageSquare, ArrowRight
+  Table, FileText, CalendarDays, LogOut, Eye, MessageSquare, ArrowRight, Settings2
 } from 'lucide-react';
 import { FuelReport } from '@/types/fuelReport';
 import { fuelService } from '@/services/fuelService';
@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { showSuccess, showError } from '@/utils/toast';
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import FuelPriceSettings from '@/components/FuelPriceSettings';
 import {
   Select,
   SelectContent,
@@ -49,6 +50,7 @@ const FuelReportList = () => {
   const [reports, setReports] = useState<FuelReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isPriceSettingsOpen, setIsPriceSettingsOpen] = useState(false);
   
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("semua");
@@ -161,6 +163,10 @@ const FuelReportList = () => {
                 <FileText className="h-4 w-4 mr-2" /> Ke Laporan SPJ <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
+
+            <Button variant="outline" onClick={() => setIsPriceSettingsOpen(true)} className="bg-white border-slate-200 h-10 px-3 flex-1 md:flex-none font-bold">
+              <Settings2 className="mr-2 h-4 w-4 text-blue-600" /> Master Harga BBM
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -301,7 +307,7 @@ const FuelReportList = () => {
                         <div className="flex justify-between items-center text-[11px]">
                           <span className="font-bold text-slate-700">{item.vehicle_operator} ({item.fuel_type})</span>
                           <span className="font-black text-orange-700">
-                            {item.fuel_type === 'Oli' ? `${item.amount} L` : `Rp ${item.amount.toLocaleString('id-ID')}`}
+                            {item.fuel_type === 'Oli' ? `${item.amount_liter || item.amount} L` : `Rp ${(item.amount_rp || item.amount).toLocaleString('id-ID')}`}
                           </span>
                         </div>
                         <div className="flex items-start gap-1.5 text-[10px] text-slate-500">
@@ -330,6 +336,11 @@ const FuelReportList = () => {
           </div>
         )}
       </div>
+
+      <FuelPriceSettings 
+        isOpen={isPriceSettingsOpen} 
+        onClose={() => setIsPriceSettingsOpen(false)} 
+      />
     </div>
   );
 };
