@@ -40,9 +40,6 @@ import FuelSpjReportList from "./pages/FuelSpjReportList";
 import CreateFuelSpjReport from "./pages/CreateFuelSpjReport";
 import EditFuelSpjReport from "./pages/EditFuelSpjReport";
 import FuelSpjDailyRecap from "./pages/FuelSpjDailyRecap";
-import FuelSpjWeeklyRecap from "./pages/FuelSpjWeeklyRecap";
-import FuelSpjMonthlyRecap from "./pages/FuelSpjMonthlyRecap";
-import FuelSpjYearlyRecap from "./pages/FuelSpjYearlyRecap";
 
 const queryClient = new QueryClient();
 
@@ -109,9 +106,6 @@ const App = () => (
             <Route path="/fuel-reports/spj/create" element={<AdminRoute><CreateFuelSpjReport /></AdminRoute>} />
             <Route path="/fuel-reports/spj/edit/:id" element={<AdminRoute><EditFuelSpjReport /></AdminRoute>} />
             <Route path="/fuel-reports/spj/daily-rekap" element={<AdminRoute><FuelSpjDailyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/spj/weekly-rekap" element={<AdminRoute><FuelSpjWeeklyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/spj/monthly-rekap" element={<AdminRoute><FuelSpjMonthlyRecap /></AdminRoute>} />
-            <Route path="/fuel-reports/spj/yearly-rekap" element={<AdminRoute><FuelSpjYearlyRecap /></AdminRoute>} />
             
             <Route path="/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditReport /></ProtectedRoute>} />
