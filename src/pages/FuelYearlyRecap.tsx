@@ -270,9 +270,9 @@ const FuelYearlyRecap = () => {
               {Object.keys(groupedByRegion).length > 0 ? (
                 <>
                   {Object.entries(groupedByRegion).map(([regionName, items], rIdx) => {
-                    const subPertamaxRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (item.amount_rp || item.amount) : 0), 0);
+                    const subPertamaxRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_rp || it.amount) : 0), 0);
                     const subPertamaxLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_liter || 0) : 0), 0);
-                    const subDexliteRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || item.amount) : 0), 0);
+                    const subDexliteRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || it.amount) : 0), 0);
                     const subDexliteLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_liter || 0) : 0), 0);
                     const subOli = items.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || it.amount) : 0), 0);
 
