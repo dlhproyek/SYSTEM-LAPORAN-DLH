@@ -7,11 +7,14 @@ import { FuelSpjReport } from '@/types/fuelSpjReport';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter } from 'lucide-react';
+import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter, Table } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { useAuth } from '@/context/AuthContext';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import {
   Popover,
   PopoverContent,
@@ -84,7 +87,6 @@ const FuelSpjDailyRecap = () => {
     )
   );
 
-  // Grouping logic
   const groupedData: Record<string, any[]> = {};
   flatItems.forEach(item => {
     const key = groupBy === "region" ? item.region : item.team;
@@ -97,6 +99,140 @@ const FuelSpjDailyRecap = () => {
   const totalDexliteRp = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? it.amount_rp : 0), 0);
   const totalDexliteLtr = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? it.amount_liter : 0), 0);
   const totalOliLtr = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? it.amount_liter : 0), 0);
+
+  const handleExportExcel = async () => {
+    if (flatItems.length === 0) {
+      showError("Tidak ada data untuk diekspor");
+      return;
+    }
+    const toastId = showLoading("Menyiapkan file Excel...");
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Rekap Harian SPJ');
+      
+      const columns: any[] = [{ header: 'No', key: 'no', width: 5 }];
+      if (visibleColumns.spj_no) columns.push({ header: 'No. SPJ', key: 'spj_no', width: 15 });
+      if (visibleColumns.region) columns.push({ header: 'Wilayah', key: 'region', width: 15 });
+      if (visibleColumns.team) columns.push({ header: 'Tim / Operator', key: 'team', width: 18 });
+      if (visibleColumns.vehicle) columns.push({ header: 'Kendaraan', key: 'vehicle', width: 24 });
+      if (visibleColumns.fuel) {
+        columns.push(
+          { header: 'Pertamax (Rp)', key: 'p_rp', width: 15 },
+          { header: 'Ltr', key: 'p_ltr', width: 8 },
+          { header: 'Dexlite (Rp)', key: 'd_rp', width: 15 },
+          { header: 'Ltr', key: 'd_ltr', width: 8 },
+          { header: 'Oli (L)', key: 'o_ltr', width: 8 }
+        );
+      }
+      if (visibleColumns.remarks) columns.push({ header: 'Keterangan', key: 'remarks', width: 25 });
+      if (visibleColumns.receiver) columns.push({ header: 'Penerima', key: 'receiver', width: 20 });
+      if (visibleColumns.location) columns.push({ header: 'Lokasi', key: 'location', width: 35 });
+
+      worksheet.columns = columns;
+      
+      const lastColLetter = String.fromCharCode(64 + columns.length);
+      worksheet.mergeCells(`A1:${lastColLetter}1`);
+      worksheet.getCell('A1').value = 'PEMERINTAH KOTA MEDAN - DINAS LINGKUNGAN HIDUP';
+      worksheet.getCell('A1').font = { bold: true, size: 14 };
+      worksheet.getCell('A1').alignment = { horizontal: 'center' };
+      
+      worksheet.mergeCells(`A2:${lastColLetter}2`);
+      worksheet.getCell('A2').value = `REKAP HARIAN SPJ BBM - TANGGAL: ${selectedDate}`;
+      worksheet.getCell('A2').font = { bold: true, size: 12 };
+      worksheet.getCell('A2').alignment = { horizontal: 'center' };
+      worksheet.addRow([]);
+      
+      const headerRow = worksheet.addRow(columns.map(c => c.header));
+      headerRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { bold: true };
+      });
+
+      Object.entries(groupedData).forEach(([groupName, items]) => {
+        const groupRow = worksheet.addRow([`${groupBy.toUpperCase()}: ${groupName.toUpperCase()}`]);
+        worksheet.mergeCells(groupRow.number, 1, groupRow.number, columns.length);
+        groupRow.getCell(1).font = { bold: true };
+        groupRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E2E8F0' } };
+
+        items.forEach((item, idx) => {
+          const rowData: any = { no: idx + 1 };
+          if (visibleColumns.spj_no) rowData.spj_no = item.spj_no;
+          if (visibleColumns.region) rowData.region = item.region;
+          if (visibleColumns.team) rowData.team = item.team;
+          if (visibleColumns.vehicle) rowData.vehicle = item.vehicle;
+          if (visibleColumns.fuel) {
+            rowData.p_rp = item.fuel_type === 'Pertamax' ? item.amount_rp : 0;
+            rowData.p_ltr = item.fuel_type === 'Pertamax' ? item.amount_liter : 0;
+            rowData.d_rp = item.fuel_type === 'Dexlite' ? item.amount_rp : 0;
+            rowData.d_ltr = item.fuel_type === 'Dexlite' ? item.amount_liter : 0;
+            rowData.o_ltr = item.fuel_type === 'Oli' ? item.amount_liter : 0;
+          }
+          if (visibleColumns.remarks) rowData.remarks = item.remarks || "-";
+          if (visibleColumns.receiver) rowData.receiver = item.receiver;
+          if (visibleColumns.location) rowData.location = `${item.street}${item.subDistrict ? ', ' + item.subDistrict : ''}`;
+
+          const row = worksheet.addRow(rowData);
+          row.eachCell(cell => {
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            cell.alignment = { vertical: 'middle', wrapText: true };
+          });
+        });
+
+        // Sub-total row
+        const subP_Rp = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? it.amount_rp : 0), 0);
+        const subP_Ltr = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? it.amount_liter : 0), 0);
+        const subD_Rp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? it.amount_rp : 0), 0);
+        const subD_Ltr = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? it.amount_liter : 0), 0);
+        const subO_Ltr = items.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? it.amount_liter : 0), 0);
+
+        const subTotalRowData: any = { no: `SUB-TOTAL ${groupName.toUpperCase()}:` };
+        if (visibleColumns.fuel) {
+          subTotalRowData.p_rp = subP_Rp;
+          subTotalRowData.p_ltr = subP_Ltr;
+          subTotalRowData.d_rp = subD_Rp;
+          subTotalRowData.d_ltr = subD_Ltr;
+          subTotalRowData.o_ltr = subO_Ltr;
+        }
+        const subTotalRow = worksheet.addRow(subTotalRowData);
+        const leadingCols = 1 + (visibleColumns.spj_no?1:0) + (visibleColumns.region?1:0) + (visibleColumns.team?1:0) + (visibleColumns.vehicle?1:0);
+        worksheet.mergeCells(subTotalRow.number, 1, subTotalRow.number, leadingCols);
+        subTotalRow.eachCell(cell => {
+          cell.font = { bold: true, italic: true };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8FAFC' } };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+      });
+
+      // Grand Total
+      const totalRowData: any = { no: 'TOTAL KESELURUHAN:' };
+      if (visibleColumns.fuel) {
+        totalRowData.p_rp = totalPertamaxRp;
+        totalRowData.p_ltr = totalPertamaxLtr;
+        totalRowData.d_rp = totalDexliteRp;
+        totalRowData.d_ltr = totalDexliteLtr;
+        totalRowData.o_ltr = totalOliLtr;
+      }
+      const totalRow = worksheet.addRow(totalRowData);
+      const leadingCols = 1 + (visibleColumns.spj_no?1:0) + (visibleColumns.region?1:0) + (visibleColumns.team?1:0) + (visibleColumns.vehicle?1:0);
+      worksheet.mergeCells(totalRow.number, 1, totalRow.number, leadingCols);
+      totalRow.eachCell(cell => {
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `Rekap_Harian_SPJ_BBM_${selectedDate}.xlsx`);
+      dismissToast(toastId);
+      showSuccess("Excel berhasil diunduh");
+    } catch (error) {
+      console.error(error);
+      dismissToast(toastId);
+      showError("Gagal membuat file Excel");
+    }
+  };
 
   if (!isAllowed) return null;
 
@@ -116,7 +252,7 @@ const FuelSpjDailyRecap = () => {
             </Select>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50">
@@ -146,6 +282,7 @@ const FuelSpjDailyRecap = () => {
                 </div>
               </PopoverContent>
             </Popover>
+            <Button variant="outline" onClick={handleExportExcel} className="bg-white border-green-600 text-green-600 hover:bg-green-50"><Table className="mr-2 h-4 w-4" /> Rekap Excel</Button>
             <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap</Button>
           </div>
         </div>
@@ -168,7 +305,7 @@ const FuelSpjDailyRecap = () => {
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border-2 border-black text-[9px] table-fixed">
+          <table className="w-full min-w-[1000px] border-collapse border-2 border-black text-[9px] table-fixed">
             <thead>
               <tr className="bg-slate-100">
                 <th className="border-2 border-black p-1 w-[30px]" rowSpan={visibleColumns.fuel ? 2 : 1}>No</th>
