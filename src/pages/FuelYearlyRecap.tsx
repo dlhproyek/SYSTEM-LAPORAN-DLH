@@ -183,7 +183,7 @@ const FuelYearlyRecap = () => {
 
   const totalPertamaxRpAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_rp || it.amount) : 0), 0);
   const totalPertamaxLtrAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_liter || 0) : 0), 0);
-  const totalDexliteRpAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || item.amount) : 0), 0);
+  const totalDexliteRpAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || it.amount) : 0), 0);
   const totalDexliteLtrAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_liter || 0) : 0), 0);
   const totalOliAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || it.amount) : 0), 0);
 

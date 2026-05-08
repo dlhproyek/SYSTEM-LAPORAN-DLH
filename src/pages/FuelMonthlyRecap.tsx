@@ -607,13 +607,13 @@ const MonthlyRecap = () => {
                   <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
                 </DropdownMenuItem>
                 <div className="h-px bg-slate-100 my-1" />
-                <DropdownMenuItem onClick={() => navigate('/daily-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/daily-rekap')} className="cursor-pointer py-2">
                   <Calendar className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/weekly-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/weekly-rekap')} className="cursor-pointer py-2">
                   <Table className="mr-2 h-4 w-4 text-purple-500" /> Rekap Mingguan
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/monthly-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/monthly-rekap')} className="cursor-pointer py-2">
                   <FileText className="mr-2 h-4 w-4 text-orange-500" /> Rekap Bulanan
                 </DropdownMenuItem>
               </DropdownMenuContent>
