@@ -25,6 +25,18 @@ import { supabase } from '@/lib/supabase';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import DriveUploadDialog from '@/components/DriveUploadDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const allCategories = [
   "Taman Kota", "Taman Amplas", "Taman Area", "Tim Babat", "Tim Siram", "Tim Pohon"
