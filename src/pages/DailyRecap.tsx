@@ -365,7 +365,6 @@ const DailyRecap = () => {
 
   const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 5 : 0);
 
-  // Hitung Total BBM
   const totalPertamax = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.pertamax || 0), 0) || 0), 0), 0);
   const totalPertamaxLtr = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.pertamax_liter || 0), 0) || 0), 0), 0);
   const totalDexlite = reports.reduce((acc, r) => acc + r.tasks.reduce((tAcc, t) => tAcc + (t.heavyEquipment?.reduce((heAcc, he) => heAcc + (he.fuel?.dexlite || 0), 0) || 0), 0), 0);
