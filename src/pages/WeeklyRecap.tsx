@@ -8,7 +8,7 @@ import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { 
   ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
   Table, LogOut, LogIn, CloudUpload, 
-  Loader2, Lock, ChevronDown, Calendar as CalendarIcon,
+  Loader2, Lock, ChevronDown,
   Image as ImageIcon, ImageOff, PenTool, Calendar, Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -582,7 +582,7 @@ const WeeklyRecap = () => {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="relative">
-                <CalendarIcon className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
+                <Calendar className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-slate-400" />
                 <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-7 md:pl-10 w-[130px] md:w-[180px] h-10 text-xs md:text-sm" />
               </div>
               <div className="text-[10px] md:text-xs font-medium text-slate-500 bg-slate-100 px-2 md:px-3 py-2 rounded-md border">
