@@ -8,7 +8,7 @@ import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { 
   ArrowLeft, Printer, Fuel, FileText, ChevronsUpDown, 
   Table, Image as ImageIcon, ImageOff, LogOut, LogIn, CloudUpload, 
-  Loader2, Lock, ChevronDown, PenTool 
+  Loader2, Lock, ChevronDown, PenTool, Calendar 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -594,16 +594,26 @@ const MonthlyRecap = () => {
               <DropdownMenuTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700 h-10 px-2 md:px-4">
                   <Printer className="h-4 w-4 md:mr-2" /> 
-                  <span className="hidden md:inline">Cetak</span>
+                  <span className="hidden md:inline">Cetak Rekap</span>
                   <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={handlePrint} className="cursor-pointer py-2">
-                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Rekap
+                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Halaman Ini
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
                   <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
+                </DropdownMenuItem>
+                <div className="h-px bg-slate-100 my-1" />
+                <DropdownMenuItem onClick={() => navigate('/daily-rekap')} className="cursor-pointer py-2">
+                  <Calendar className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/weekly-rekap')} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-purple-500" /> Rekap Mingguan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/monthly-rekap')} className="cursor-pointer py-2">
+                  <FileText className="mr-2 h-4 w-4 text-orange-500" /> Rekap Bulanan
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
