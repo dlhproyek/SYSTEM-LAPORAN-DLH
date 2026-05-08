@@ -323,7 +323,7 @@ const FuelSpjDailyRecap = () => {
                 </DropdownMenuItem>
                 <div className="h-px bg-slate-100 my-1" />
                 <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/daily-rekap')} className="cursor-pointer py-2">
-                  <Calendar className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
+                  <CalendarIcon className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/weekly-rekap')} className="cursor-pointer py-2">
                   <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan

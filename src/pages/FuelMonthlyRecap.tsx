@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fuelService } from '@/services/fuelService';
-import { FuelReport } from '@/types/fuelReport';
+import { Report as AppReport, Task } from '@/types/report';
 import { reportService } from '@/services/reportService';
 import { getUnitByCategory, sortByCategory } from '@/utils/report-helpers';
 import { 
@@ -63,7 +62,7 @@ type SignatureMode = "with-signature" | "without-signature";
 const MonthlyRecap = () => {
   const navigate = useNavigate();
   const { session, profile, signOut } = useAuth();
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<AppReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   
@@ -309,17 +308,17 @@ const MonthlyRecap = () => {
             desc: task.description,
             loc: `${task.location.street}, ${villages}`,
             vol: `${task.volume} ${getUnitByCategory(report.category)}`,
-            eq_type: task.equipment?.map(e => e.type).join("\n"),
-            eq_qty: task.equipment?.map(e => e.quantity).join("\n"),
-            he: task.heavyEquipment?.map(he => `${he.type} ${he.vehicle || ""}`).join("\n"),
+            eq_type: task.equipment?.map((e: any) => e.type).join("\n"),
+            eq_qty: task.equipment?.map((e: any) => e.quantity).join("\n"),
+            he: task.heavyEquipment?.map((he: any) => `${he.type} ${he.vehicle || ""}`).join("\n"),
             coord: task.personnel.coordinator,
             members: task.personnel.members,
             rem: [task.remarks, i === 0 ? report.remarks : ""].filter(Boolean).join(" | ")
           };
           if (recapMode === "with-fuel") {
-            rowData.fp = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
-            rowData.fd = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
-            rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
+            rowData.fp = task.heavyEquipment?.reduce((acc: number, he: any) => acc + (he.fuel?.pertamax || 0), 0) || 0;
+            rowData.fd = task.heavyEquipment?.reduce((acc: number, he: any) => acc + (he.fuel?.dexlite || 0), 0) || 0;
+            rowData.fs = task.heavyEquipment?.reduce((acc: number, he: any) => acc + (he.fuel?.solar || 0), 0) || 0;
           }
           const row = worksheet.addRow(rowData);
           if (photoMode === "with-photo") row.height = 100;
@@ -363,7 +362,7 @@ const MonthlyRecap = () => {
     let currentNo = 0;
     let lastDate = "";
     
-    const flatTasks = reports.flatMap(r => r.tasks.map(t => ({ ...t, reportDate: r.date, reportId: r.id, category: r.category, reportRemarks: r.remarks })));
+    const flatTasks = reports.flatMap(r => r.tasks.map((t: Task) => ({ ...t, reportDate: r.date, reportId: r.id, category: r.category, reportRemarks: r.remarks })));
     
     flatTasks.forEach((task, idx) => {
       if (task.reportDate !== lastDate) {
@@ -607,13 +606,13 @@ const MonthlyRecap = () => {
                   <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
                 </DropdownMenuItem>
                 <div className="h-px bg-slate-100 my-1" />
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/daily-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/daily-rekap')} className="cursor-pointer py-2">
                   <Calendar className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/weekly-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/weekly-rekap')} className="cursor-pointer py-2">
                   <Table className="mr-2 h-4 w-4 text-purple-500" /> Rekap Mingguan
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/monthly-rekap')} className="cursor-pointer py-2">
+                <DropdownMenuItem onClick={() => navigate('/monthly-rekap')} className="cursor-pointer py-2">
                   <FileText className="mr-2 h-4 w-4 text-orange-500" /> Rekap Bulanan
                 </DropdownMenuItem>
               </DropdownMenuContent>
