@@ -6,7 +6,7 @@ import { fuelService } from '@/services/fuelService';
 import { FuelReport } from '@/types/fuelReport';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Table, Filter, Settings2, PenTool, ChevronDown, FileText, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Printer, Table, Filter, Settings2, PenTool, ChevronDown, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -23,14 +23,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const getLogoUrl = (fileName: string) => {
-  const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
-  return data.publicUrl;
-};
-
-const LOGO_MEDAN_URL = getLogoUrl('logo-medan.jpg');
-const LOGO_DLH_URL = getLogoUrl('logo-dlh.jpg');
 
 const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
@@ -133,7 +125,7 @@ const FuelMonthlyRecap = () => {
       headerRow.eachCell(cell => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F1F5F9' } };
         cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.font = { bold: true };
       });
 
@@ -262,7 +254,7 @@ const FuelMonthlyRecap = () => {
                   <FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/fuel-reports/yearly-rekap')} className="cursor-pointer py-2">
-                  <CalendarDays className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
+                  <CalendarIcon className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

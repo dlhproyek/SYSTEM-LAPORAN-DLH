@@ -7,7 +7,7 @@ import { FuelSpjReport } from '@/types/fuelSpjReport';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter, Table } from 'lucide-react';
+import { ArrowLeft, Printer, Calendar as CalendarIcon, Settings2, Filter, Table, ChevronDown, FileText, CalendarDays } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -22,6 +22,12 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const getLogoUrl = (fileName: string) => {
   const { data } = supabase.storage.from('assets').getPublicUrl(fileName);
@@ -299,8 +305,37 @@ const FuelSpjDailyRecap = () => {
                 </div>
               </PopoverContent>
             </Popover>
-            <Button variant="outline" onClick={handleExportExcel} className="bg-white border-green-600 text-green-600 hover:bg-green-50"><Table className="mr-2 h-4 w-4" /> Rekap Excel</Button>
-            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap</Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 h-10 px-2 md:px-4">
+                  <Printer className="h-4 w-4 md:mr-2" /> 
+                  <span className="hidden md:inline">Cetak Rekap</span>
+                  <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
+                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Halaman Ini
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
+                </DropdownMenuItem>
+                <div className="h-px bg-slate-100 my-1" />
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/daily-rekap')} className="cursor-pointer py-2">
+                  <CalendarIcon className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/weekly-rekap')} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/monthly-rekap')} className="cursor-pointer py-2">
+                  <FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/yearly-rekap')} className="cursor-pointer py-2">
+                  <CalendarDays className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
