@@ -281,7 +281,11 @@ const WeeklyRecap = () => {
       }
       columns.push({ header: 'Vol', key: 'vol', width: 10 }, { header: 'Jenis Alat', key: 'eq_type', width: 20 }, { header: 'Jumlah Alat', key: 'eq_qty', width: 10 }, { header: 'Alat Berat', key: 'he', width: 25 });
       if (recapMode === "with-fuel") {
-        columns.push({ header: 'P', key: 'fp', width: 6 }, { header: 'D', key: 'fd', width: 6 }, { header: 'S', key: 'fs', width: 6 });
+        columns.push(
+          { header: 'P (Rp)', key: 'fp', width: 10 }, { header: 'P (L)', key: 'fpl', width: 8 },
+          { header: 'D (Rp)', key: 'fd', width: 10 }, { header: 'D (L)', key: 'fdl', width: 8 },
+          { header: 'S (Rp)', key: 'fs', width: 10 }, { header: 'S (L)', key: 'fsl', width: 8 }
+        );
       }
       columns.push({ header: 'Koordinator', key: 'coord', width: 20 }, { header: 'Anggota', key: 'members', width: 10 }, { header: 'Keterangan', key: 'rem', width: 35 });
       worksheet.columns = columns;
@@ -331,8 +335,11 @@ const WeeklyRecap = () => {
           };
           if (recapMode === "with-fuel") {
             rowData.fp = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax || 0), 0) || 0;
+            rowData.fpl = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.pertamax_liter || 0), 0) || 0;
             rowData.fd = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite || 0), 0) || 0;
+            rowData.fdl = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.dexlite_liter || 0), 0) || 0;
             rowData.fs = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar || 0), 0) || 0;
+            rowData.fsl = task.heavyEquipment?.reduce((acc, he) => acc + (he.fuel?.solar_liter || 0), 0) || 0;
           }
           const row = worksheet.addRow(rowData);
           if (photoMode === "with-photo") row.height = 100;
@@ -368,7 +375,7 @@ const WeeklyRecap = () => {
   const headerStyle = { backgroundColor: '#f1f5f9', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
   const subHeaderStyle = { backgroundColor: '#f8fafc', color: '#000000', fontWeight: 'bold', textAlign: 'center' as const, verticalAlign: 'middle' as const };
 
-  const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 3 : 0);
+  const totalCols = 12 + (photoMode === "with-photo" ? 3 : 0) + (recapMode === "with-fuel" ? 6 : 0);
 
   // Hitung Spans untuk No dan Tanggal
   const getTableSpans = () => {
@@ -439,8 +446,11 @@ const WeeklyRecap = () => {
         {recapMode === "with-fuel" && (
           <>
             <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax || 0}</div>))}</td>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight bg-blue-50/30">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.pertamax_liter || 0}</div>))}</td>
             <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite || 0}</div>))}</td>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight bg-green-50/30">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.dexlite_liter || 0}</div>))}</td>
             <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.solar || 0}</div>))}</td>
+            <td className="border-2 border-black p-1.5 align-top text-[10px] text-center leading-tight bg-slate-50/30">{task.heavyEquipment?.map((he: any, i: number) => (<div key={i} className="mb-0.5">{he.fuel?.solar_liter || 0}</div>))}</td>
           </>
         )}
         <td className="border-2 border-black p-2 text-center align-top font-medium">{task.personnel.coordinator}</td>
@@ -480,9 +490,12 @@ const WeeklyRecap = () => {
       <col style={{ width: '120px' }} />
       {recapMode === "with-fuel" && (
         <>
-          <col style={{ width: '40px' }} />
-          <col style={{ width: '40px' }} />
-          <col style={{ width: '40px' }} />
+          <col style={{ width: '45px' }} />
+          <col style={{ width: '35px' }} />
+          <col style={{ width: '45px' }} />
+          <col style={{ width: '35px' }} />
+          <col style={{ width: '45px' }} />
+          <col style={{ width: '35px' }} />
         </>
       )}
       <col style={{ width: '90px' }} />
@@ -503,7 +516,7 @@ const WeeklyRecap = () => {
         <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Vol</div></th>
         <th style={headerStyle} className="border-2 border-black p-2" colSpan={2}>Peralatan</th>
         <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Alat Berat</div></th>
-        {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-2" colSpan={3}>BBM (Liter)</th>)}
+        {recapMode === "with-fuel" && (<th style={headerStyle} className="border-2 border-black p-1" colSpan={6}>BBM (Voucher Rp & Liter)</th>)}
         <th style={headerStyle} className="border-2 border-black p-2" colSpan={2}>Personil</th>
         <th style={headerStyle} className="border-2 border-black p-2" rowSpan={2}><div className="flex items-center justify-center h-full">Keterangan</div></th>
       </tr>
@@ -511,7 +524,16 @@ const WeeklyRecap = () => {
         {photoMode === "with-photo" && (<><th style={subHeaderStyle} className="border-2 border-black p-1">0%</th><th style={subHeaderStyle} className="border-2 border-black p-1">50%</th><th style={subHeaderStyle} className="border-2 border-black p-1">100%</th></>)}
         <th style={subHeaderStyle} className="border-2 border-black p-1">Jenis Alat</th>
         <th style={subHeaderStyle} className="border-2 border-black p-1 px-0">Jml</th>
-        {recapMode === "with-fuel" && (<><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">P</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">D</th><th style={subHeaderStyle} className="border-2 border-black p-1 text-[9px]">S</th></>)}
+        {recapMode === "with-fuel" && (
+          <>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">P (Rp)</th>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">P (L)</th>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">D (Rp)</th>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">D (L)</th>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">S (Rp)</th>
+            <th style={subHeaderStyle} className="border-2 border-black p-1 text-[8px]">S (L)</th>
+          </>
+        )}
         <th style={subHeaderStyle} className="border-2 border-black p-1">Koordinator</th>
         <th style={subHeaderStyle} className="border-2 border-black p-1">Anggota</th>
       </tr>
