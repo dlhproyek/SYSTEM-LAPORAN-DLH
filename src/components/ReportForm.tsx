@@ -308,7 +308,6 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
         return task;
       });
 
-      // JANGAN kirim price_pertamax dan price_dexlite ke database karena kolomnya tidak ada di tabel 'reports'
       const reportData: Omit<Report, 'id' | 'createdAt'> = {
         date: values.date,
         category: values.category as ReportCategory,
@@ -417,27 +416,29 @@ const ReportForm = ({ initialData, isEditing = false }: ReportFormProps) => {
               )} />
             </div>
 
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2 mb-3">
-                <Lock className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-bold uppercase text-slate-500">Harga BBM Hari Ini (Otomatis dari Master)</span>
+            {!isTamanCategory && (
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lock className="h-4 w-4 text-slate-400" />
+                  <span className="text-xs font-bold uppercase text-slate-500">Harga BBM Hari Ini (Otomatis dari Master)</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
+                  <FormField control={form.control} name="price_pertamax" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-bold text-blue-700 flex items-center gap-1">HARGA PERTAMAX (RP/LITER) <Lock size={10} /></FormLabel>
+                      <FormControl><Input type="number" className="bg-slate-100 font-bold cursor-not-allowed" {...field} readOnly /></FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="price_dexlite" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-bold text-green-700 flex items-center gap-1">HARGA DEXLITE (RP/LITER) <Lock size={10} /></FormLabel>
+                      <FormControl><Input type="number" className="bg-slate-100 font-bold cursor-not-allowed" {...field} readOnly /></FormControl>
+                    </FormItem>
+                  )} />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 italic">* Harga ini dikunci dan dikelola oleh Admin BBM / SPJ.</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
-                <FormField control={form.control} name="price_pertamax" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] font-bold text-blue-700 flex items-center gap-1">HARGA PERTAMAX (RP/LITER) <Lock size={10} /></FormLabel>
-                    <FormControl><Input type="number" className="bg-slate-100 font-bold cursor-not-allowed" {...field} readOnly /></FormControl>
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="price_dexlite" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] font-bold text-green-700 flex items-center gap-1">HARGA DEXLITE (RP/LITER) <Lock size={10} /></FormLabel>
-                    <FormControl><Input type="number" className="bg-slate-100 font-bold cursor-not-allowed" {...field} readOnly /></FormControl>
-                  </FormItem>
-                )} />
-              </div>
-              <p className="text-[10px] text-slate-400 mt-2 italic">* Harga ini dikunci dan dikelola oleh Admin BBM / SPJ.</p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
