@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fuelService } from '@/services/fuelService';
 import { FuelReport } from '@/types/fuelReport';
@@ -203,77 +203,107 @@ const FuelWeeklyRecap = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-0 md:p-8">
       <div className="max-w-[1200px] mx-auto space-y-4 no-print mb-8 p-4 bg-white rounded-xl shadow-sm border">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <Button variant="ghost" onClick={() => navigate('/fuel-reports')} className="px-2 md:px-4"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Button>
-            <div className="relative flex-1 md:flex-none"><CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="pl-10 w-full md:w-[200px]" /></div>
-            <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-              <SelectTrigger className="w-[180px] bg-slate-50 border-slate-200"><Filter className="mr-2 h-4 w-4 text-slate-400" /><SelectValue placeholder="Pilih Wilayah" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua Wilayah</SelectItem>
-                {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <div className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-100 w-full md:w-auto text-center">{format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}</div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
-              <SelectTrigger className="w-[40px] md:w-[180px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium p-0 md:px-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <PenTool size={16} />
-                  <span className="hidden md:inline"><SelectValue placeholder="Tanda Tangan" /></span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
-                <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50"><Settings2 className="mr-2 h-4 w-4" /> Pilih Kolom</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-3" align="end">
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tampilkan Kolom:</p>
-                  {Object.entries({ date: "Tanggal", region: "Wilayah", team: "Tim", vehicle: "Kendaraan", pertamax_rp: "Pertamax (Rp)", pertamax_ltr: "Pertamax (Liter)", dexlite_rp: "Dexlite (Rp)", dexlite_ltr: "Dexlite (Liter)", oli: "Oli", location: "Lokasi", remarks: "Ket. Umum" }).map(([key, label]) => (
-                    <div key={key} className="flex items-center space-x-2"><Checkbox id={`col-${key}`} checked={visibleColumns[key as keyof typeof visibleColumns]} onCheckedChange={() => toggleColumn(key as keyof typeof visibleColumns)} /><Label htmlFor={`col-${key}`} className="text-sm cursor-pointer">{label}</Label></div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+        <div className="flex flex-col gap-4">
+          {/* Baris Atas: Kembali dan Info Periode */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+            <Button variant="ghost" onClick={() => navigate('/fuel-reports')} className="h-9 px-3">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+            </Button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 h-10 px-2 md:px-4">
-                  <Printer className="h-4 w-4 md:mr-2" /> 
-                  <span className="hidden md:inline">Cetak Rekap</span>
-                  <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
-                  <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Halaman Ini
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
-                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
-                </DropdownMenuItem>
-                <div className="h-px bg-slate-100 my-1" />
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/daily-rekap')} className="cursor-pointer py-2">
-                  <CalendarIcon className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/weekly-rekap')} className="cursor-pointer py-2">
-                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/monthly-rekap')} className="cursor-pointer py-2">
-                  <FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/fuel-reports/yearly-rekap')} className="cursor-pointer py-2">
-                  <CalendarDays className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 shadow-sm">
+              <CalendarDays className="h-4 w-4 text-blue-600" />
+              <span className="text-xs md:text-sm font-bold text-blue-700">
+                {format(weekStart, 'dd MMM', { locale: localeId })} - {format(weekEnd, 'dd MMM yyyy', { locale: localeId })}
+              </span>
+            </div>
+          </div>
+
+          {/* Baris Bawah: Filter dan Aksi */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-full md:w-auto">
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                  type="date" 
+                  value={selectedDate} 
+                  onChange={(e) => setSelectedDate(e.target.value)} 
+                  className="pl-10 w-full md:w-[180px] h-10 bg-slate-50" 
+                />
+              </div>
+              
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger className="w-full md:w-[180px] h-10 bg-slate-50 border-slate-200">
+                  <Filter className="mr-2 h-4 w-4 text-slate-400" />
+                  <SelectValue placeholder="Pilih Wilayah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Wilayah</SelectItem>
+                  {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={signatureMode} onValueChange={(v) => setSignatureMode(v as SignatureMode)}>
+                <SelectTrigger className="flex-1 md:w-[160px] bg-amber-50 border-amber-200 h-10 text-amber-700 font-medium px-3">
+                  <div className="flex items-center gap-2">
+                    <PenTool size={16} />
+                    <span className="text-xs md:text-sm"><SelectValue placeholder="Tanda Tangan" /></span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="with-signature">Ada Tanda Tangan</SelectItem>
+                  <SelectItem value="without-signature">Tanpa Tanda Tangan</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex-1 md:w-auto bg-white border-blue-200 text-blue-600 hover:bg-blue-50 h-10">
+                    <Settings2 className="mr-2 h-4 w-4" /> Pilih Kolom
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3" align="end">
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tampilkan Kolom:</p>
+                    {Object.entries({ date: "Tanggal", region: "Wilayah", team: "Tim", vehicle: "Kendaraan", pertamax_rp: "Pertamax (Rp)", pertamax_ltr: "Pertamax (Liter)", dexlite_rp: "Dexlite (Rp)", dexlite_ltr: "Dexlite (Liter)", oli: "Oli", location: "Lokasi", remarks: "Ket. Umum" }).map(([key, label]) => (
+                      <div key={key} className="flex items-center space-x-2"><Checkbox id={`col-${key}`} checked={visibleColumns[key as keyof typeof visibleColumns]} onCheckedChange={() => toggleColumn(key as keyof typeof visibleColumns)} /><Label htmlFor={`col-${key}`} className="text-sm cursor-pointer">{label}</Label></div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex-1 md:w-auto bg-blue-600 hover:bg-blue-700 h-10 px-4 shadow-md">
+                    <Printer className="h-4 w-4 mr-2" /> 
+                    <span className="text-xs md:text-sm font-bold">Cetak Rekap</span>
+                    <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => window.print()} className="cursor-pointer py-2">
+                    <Printer className="mr-2 h-4 w-4 text-blue-600" /> Cetak Halaman Ini
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer py-2">
+                    <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Excel
+                  </DropdownMenuItem>
+                  <div className="h-px bg-slate-100 my-1" />
+                  <DropdownMenuItem onClick={() => navigate('/fuel-reports/daily-rekap')} className="cursor-pointer py-2">
+                    <CalendarIcon className="mr-2 h-4 w-4 text-blue-500" /> Rekap Harian
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/fuel-reports/weekly-rekap')} className="cursor-pointer py-2">
+                    <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/fuel-reports/monthly-rekap')} className="cursor-pointer py-2">
+                    <FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/fuel-reports/yearly-rekap')} className="cursor-pointer py-2">
+                    <CalendarDays className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
@@ -317,7 +347,7 @@ const FuelWeeklyRecap = () => {
                     const subPertamaxLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_liter || 0) : 0), 0);
                     const subDexliteRp = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || it.amount) : 0), 0);
                     const subDexliteLtr = items.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_liter || 0) : 0), 0);
-                    const subOli = items.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || it.amount) : 0), 0);
+                    const subOli = items.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || item.amount) : 0), 0);
 
                     return (
                       <React.Fragment key={regionName}>
