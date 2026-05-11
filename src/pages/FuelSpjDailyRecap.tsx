@@ -336,7 +336,6 @@ const FuelSpjDailyRecap = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => window.print()} className="bg-blue-600"><Printer className="mr-2 h-4 w-4" /> Cetak Rekap</Button>
           </div>
         </div>
       </div>
