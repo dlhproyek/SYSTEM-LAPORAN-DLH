@@ -356,6 +356,14 @@ const Index = () => {
           </div>
 
           <TabsContent value="reports" className="space-y-4">
+            {isLoggedIn && !isPimpinan && (
+              <div className="flex justify-end">
+                <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto font-bold shadow-sm">
+                  <Plus className="mr-2 h-5 w-5" /> Tambah Laporan Baru
+                </Button>
+              </div>
+            )}
+            
             {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredReports.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredReports.map((report) => (
@@ -380,6 +388,14 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="workplans" className="space-y-4">
+            {isLoggedIn && !isPimpinan && (
+              <div className="flex justify-end">
+                <Button onClick={() => navigate('/work-plans/create')} className="bg-green-600 hover:bg-green-700 w-full md:w-auto font-bold shadow-sm">
+                  <Plus className="mr-2 h-5 w-5" /> Tambah Rencana Baru
+                </Button>
+              </div>
+            )}
+
             {loading ? <div className="text-center py-20 text-slate-500">Memuat data...</div> : filteredWorkPlans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredWorkPlans.map((plan) => (
