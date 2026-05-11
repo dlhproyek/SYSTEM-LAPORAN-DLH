@@ -8,12 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Calendar, FileText, Trash2, Edit, 
-  Search, RefreshCw, ArrowRight, FilterX, CalendarDays
+  Search, RefreshCw, ArrowRight, FilterX, CalendarDays, Printer, ChevronDown, Table
 } from 'lucide-react';
 import { FuelSpjReport } from '@/types/fuelSpjReport';
 import { fuelSpjService } from '@/services/fuelSpjService';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const FuelSpjTab = () => {
   const navigate = useNavigate();
@@ -86,7 +92,7 @@ const FuelSpjTab = () => {
               />
             </div>
           </div>
-          <div className="lg:col-span-4 flex gap-2">
+          <div className="lg:col-span-4 flex flex-wrap gap-2">
             <Button 
               variant="outline" 
               size="icon" 
@@ -95,6 +101,29 @@ const FuelSpjTab = () => {
             >
               <FilterX size={18} />
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-10 border-slate-200 bg-white px-3">
+                  <Printer className="h-4 w-4 mr-2" /> Cetak <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/daily-rekap')} className="cursor-pointer py-2">
+                  <Calendar className="mr-2 h-4 w-4 text-blue-600" /> Rekap Harian
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/weekly-rekap')} className="cursor-pointer py-2">
+                  <Table className="mr-2 h-4 w-4 text-green-600" /> Rekap Mingguan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/monthly-rekap')} className="cursor-pointer py-2">
+                  <FileText className="mr-2 h-4 w-4 text-purple-600" /> Rekap Bulanan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fuel-reports/spj/yearly-rekap')} className="cursor-pointer py-2">
+                  <CalendarDays className="mr-2 h-4 w-4 text-orange-600" /> Rekap Tahunan
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button variant="outline" size="icon" onClick={loadReports} disabled={loading} className="h-10 w-10 shrink-0 border-slate-200">
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </Button>
