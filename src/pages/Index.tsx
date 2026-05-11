@@ -341,15 +341,15 @@ const Index = () => {
         <Tabs defaultValue="reports" onValueChange={setActiveTab} className="w-full space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <TabsList className={cn(
-              "flex w-full h-12 bg-white border shadow-sm p-1 overflow-x-auto no-scrollbar",
-              isAdmin ? "md:max-w-4xl" : "md:max-w-md"
+              "grid w-full grid-cols-2 gap-1 bg-slate-100 border shadow-sm p-1 h-auto",
+              isAdmin ? "md:flex md:w-auto md:max-w-4xl" : "md:flex md:w-auto md:max-w-md"
             )}>
-              <TabsTrigger value="reports" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center justify-center gap-2 min-w-[140px]"><FileText size={16} /> Laporan Harian</TabsTrigger>
-              <TabsTrigger value="workplans" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center justify-center gap-2 min-w-[140px]"><ClipboardList size={16} /> Rencana Kerja</TabsTrigger>
+              <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm"><FileText size={14} className="shrink-0" /> Laporan Harian</TabsTrigger>
+              <TabsTrigger value="workplans" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm"><ClipboardList size={14} className="shrink-0" /> Rencana Kerja</TabsTrigger>
               {isAdmin && (
                 <>
-                  <TabsTrigger value="fuel_reports" className="flex-1 data-[state=active]:bg-orange-600 data-[state=active]:text-white flex items-center justify-center gap-2 min-w-[140px]"><Fuel size={16} /> Admin BBM</TabsTrigger>
-                  <TabsTrigger value="fuel_spj" className="flex-1 data-[state=active]:bg-blue-800 data-[state=active]:text-white flex items-center justify-center gap-2 min-w-[140px]"><FileText size={16} /> Laporan SPJ</TabsTrigger>
+                  <TabsTrigger value="fuel_reports" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm"><Fuel size={14} className="shrink-0" /> Admin BBM</TabsTrigger>
+                  <TabsTrigger value="fuel_spj" className="data-[state=active]:bg-blue-800 data-[state=active]:text-white flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm"><FileText size={14} className="shrink-0" /> Laporan SPJ</TabsTrigger>
                 </>
               )}
             </TabsList>
