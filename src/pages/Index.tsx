@@ -209,6 +209,55 @@ const Index = () => {
     return matchSearch && matchSpecificDate && matchMonth && matchYear && matchCategory && restrictionMatch;
   });
 
+  const FilterSection = () => (
+    <div className="bg-white p-4 rounded-xl shadow-sm border mb-6 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <div className="md:col-span-4 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Cari Uraian / Lokasi</label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input placeholder="Ketik kata kunci..." className="pl-10 bg-slate-50 border-slate-200 h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          </div>
+        </div>
+        <div className="md:col-span-2 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isUserRestricted}>
+            <SelectTrigger className="bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
+            <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-2 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Tanggal</label>
+          <div className="relative">
+            <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input type="date" className="pl-10 bg-slate-50 border-slate-200 h-10" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+          </div>
+        </div>
+        <div className="md:col-span-2 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Bulan</label>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth} disabled={!!selectedDate}>
+            <SelectTrigger className={cn("bg-slate-50 border-slate-200 h-10", selectedDate && "opacity-50")}>
+              <SelectValue placeholder="Pilih Bulan" />
+            </SelectTrigger>
+            <SelectContent><SelectItem value="semua">Semua Bulan</SelectItem>{months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-1 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Tahun</label>
+          <Select value={selectedYear} onValueChange={setSelectedYear} disabled={!!selectedDate}>
+            <SelectTrigger className={cn("bg-slate-50 border-slate-200 h-10", selectedDate && "opacity-50")}>
+              <SelectValue placeholder="Pilih Tahun" />
+            </SelectTrigger>
+            <SelectContent><SelectItem value="semua">Semua Tahun</SelectItem>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-1 flex justify-end">
+          <Button variant="ghost" size="icon" onClick={resetFilters} className="h-10 w-10 text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"><FilterX className="h-5 w-5" /></Button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50">
@@ -289,55 +338,6 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {(activeTab === "reports" || activeTab === "workplans") && (
-          <div className="bg-white p-4 rounded-xl shadow-sm border mb-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-              <div className="md:col-span-4 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Cari Uraian / Lokasi</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input placeholder="Ketik kata kunci..." className="pl-10 bg-slate-50 border-slate-200 h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </div>
-              </div>
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Kategori</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isUserRestricted}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200 h-10"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
-                  <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat === 'semua' ? 'Semua Kategori' : cat}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Tanggal</label>
-                <div className="relative">
-                  <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input type="date" className="pl-10 bg-slate-50 border-slate-200 h-10" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                </div>
-              </div>
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Bulan</label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth} disabled={!!selectedDate}>
-                  <SelectTrigger className={cn("bg-slate-50 border-slate-200 h-10", selectedDate && "opacity-50")}>
-                    <SelectValue placeholder="Pilih Bulan" />
-                  </SelectTrigger>
-                  <SelectContent><SelectItem value="semua">Semua Bulan</SelectItem>{months.map((m, i) => <SelectItem key={i+1} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-1 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-slate-500 ml-1">Tahun</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear} disabled={!!selectedDate}>
-                  <SelectTrigger className={cn("bg-slate-50 border-slate-200 h-10", selectedDate && "opacity-50")}>
-                    <SelectValue placeholder="Pilih Tahun" />
-                  </SelectTrigger>
-                  <SelectContent><SelectItem value="semua">Semua Tahun</SelectItem>{years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-1 flex justify-end">
-                <Button variant="ghost" size="icon" onClick={resetFilters} className="h-10 w-10 text-slate-400 hover:text-red-500 hover:bg-red-50 shrink-0"><FilterX className="h-5 w-5" /></Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <Tabs defaultValue="reports" onValueChange={setActiveTab} className="w-full space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <TabsList className={cn(
@@ -356,6 +356,7 @@ const Index = () => {
           </div>
 
           <TabsContent value="reports" className="space-y-4">
+            <FilterSection />
             {isLoggedIn && !isPimpinan && (
               <div className="flex justify-end">
                 <Button onClick={() => navigate('/create')} className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto font-bold shadow-sm">
@@ -388,6 +389,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="workplans" className="space-y-4">
+            <FilterSection />
             {isLoggedIn && !isPimpinan && (
               <div className="flex justify-end">
                 <Button onClick={() => navigate('/work-plans/create')} className="bg-green-600 hover:bg-green-700 w-full md:w-auto font-bold shadow-sm">
