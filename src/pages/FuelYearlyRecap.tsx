@@ -6,7 +6,7 @@ import { fuelService } from '@/services/fuelService';
 import { FuelReport } from '@/types/fuelReport';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Printer, Table, Filter, Settings2, PenTool, ChevronDown, FileText, Calendar } from 'lucide-react';
+import { ArrowLeft, Printer, Table, Filter, Settings2, PenTool, ChevronDown, FileText, Calendar, CalendarDays } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -185,7 +185,7 @@ const FuelYearlyRecap = () => {
   const totalPertamaxLtrAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Pertamax' ? (it.amount_liter || 0) : 0), 0);
   const totalDexliteRpAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_rp || it.amount) : 0), 0);
   const totalDexliteLtrAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Dexlite' ? (it.amount_liter || 0) : 0), 0);
-  const totalOliAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || it.amount) : 0), 0);
+  const totalOliAll = flatItems.reduce((acc, it) => acc + (it.fuel_type === 'Oli' ? (it.amount_liter || item.amount) : 0), 0);
 
   const bbmColCount = (visibleColumns.pertamax_rp ? 1 : 0) + (visibleColumns.pertamax_ltr ? 1 : 0) + (visibleColumns.dexlite_rp ? 1 : 0) + (visibleColumns.dexlite_ltr ? 1 : 0) + (visibleColumns.oli ? 1 : 0);
   const leadingCols = 1 + (visibleColumns.date ? 1 : 0) + (visibleColumns.region ? 1 : 0) + (visibleColumns.team ? 1 : 0) + (visibleColumns.vehicle ? 1 : 0);
@@ -221,13 +221,35 @@ const FuelYearlyRecap = () => {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50"><Settings2 className="mr-2 h-4 w-4" /> Pilih Kolom</Button>
+                <Button variant="outline" className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50">
+                  <Settings2 className="mr-2 h-4 w-4" /> Pilih Kolom
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-3" align="end">
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tampilkan Kolom:</p>
-                  {Object.entries({ date: "Tanggal", region: "Wilayah", team: "Tim", vehicle: "Kendaraan", pertamax_rp: "Pertamax (Rp)", pertamax_ltr: "Pertamax (Liter)", dexlite_rp: "Dexlite (Rp)", dexlite_ltr: "Dexlite (Liter)", oli: "Oli", item_remarks: "Ket. Item", location: "Lokasi", remarks: "Ket. Umum" }).map(([key, label]) => (
-                    <div key={key} className="flex items-center space-x-2"><Checkbox id={`col-${key}`} checked={visibleColumns[key as keyof typeof visibleColumns]} onCheckedChange={() => toggleColumn(key as keyof typeof visibleColumns)} /><Label htmlFor={`col-${key}`} className="text-sm cursor-pointer">{label}</Label></div>
+                  {Object.entries({
+                    date: "Tanggal",
+                    region: "Wilayah",
+                    team: "Tim",
+                    vehicle: "Kendaraan",
+                    pertamax_rp: "Pertamax (Rp)",
+                    pertamax_ltr: "Pertamax (Liter)",
+                    dexlite_rp: "Dexlite (Rp)",
+                    dexlite_ltr: "Dexlite (Liter)",
+                    oli: "Oli",
+                    item_remarks: "Ket. Item",
+                    location: "Lokasi",
+                    remarks: "Ket. Umum"
+                  }).map(([key, label]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`col-${key}`} 
+                        checked={visibleColumns[key as keyof typeof visibleColumns]} 
+                        onCheckedChange={() => toggleColumn(key as keyof typeof visibleColumns)}
+                      />
+                      <Label htmlFor={`col-${key}`} className="text-sm cursor-pointer">{label}</Label>
+                    </div>
                   ))}
                 </div>
               </PopoverContent>
@@ -259,7 +281,7 @@ const FuelYearlyRecap = () => {
                   <FileText className="mr-2 h-4 w-4 text-orange-600" /> Rekap Bulanan
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/fuel-reports/yearly-rekap')} className="cursor-pointer py-2">
-                  <Calendar className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
+                  <CalendarDays className="mr-2 h-4 w-4 text-red-500" /> Rekap Tahunan
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -376,7 +398,7 @@ const FuelYearlyRecap = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body { background: white !important; }
-          .no-print { display: none !important; }
+          .no-print, [data-radix-portal], [role="menu"], [data-radix-popper-content-wrapper], .sonner-toaster { display: none !important; }
           .print-area { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
           @page { size: landscape; margin: 1cm; }
           .overflow-x-auto { overflow: visible !important; }
