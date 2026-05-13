@@ -2,6 +2,16 @@
 
 Aplikasi manajemen laporan kegiatan harian Dinas Lingkungan Hidup.
 
+## Konfigurasi Repositori (GitHub)
+
+Repositori resmi: `https://github.com/dlhproyek/SYSTEM-LAPORAN-DLH.git`
+
+Jika Anda sudah memiliki salinan kode di lokal dan ingin mengarahkan ke repositori baru ini, jalankan perintah berikut di terminal:
+
+```bash
+git remote set-url origin https://github.com/dlhproyek/SYSTEM-LAPORAN-DLH.git
+```
+
 ## Cara Update ke Repositori (Git)
 
 Jalankan perintah ini secara berurutan di terminal Anda:
